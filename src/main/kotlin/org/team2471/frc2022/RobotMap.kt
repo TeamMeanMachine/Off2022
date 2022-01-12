@@ -3,6 +3,8 @@
 package org.team2471.frc2022
 
 object Talons {
+    const val SHOOTER = 19
+    const val INTAKE = 25
 }
 
 object Victors {

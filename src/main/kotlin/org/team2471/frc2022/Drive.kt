@@ -1,9 +1,7 @@
 package org.team2471.frc2022
 
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.wpilibj.ADXRS450_Gyro
-import edu.wpi.first.wpilibj.AnalogInput
-import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.*
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
