@@ -1,13 +1,12 @@
-package org.team2471.frc2020
+package org.team2471.frc2022
 
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.team2471.frc2020.Drive.gyro
-import org.team2471.frc2020.Drive.heading
+import org.team2471.frc2022.Drive.gyro
+import org.team2471.frc2022.Drive.heading
 import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.halt
 import org.team2471.frc.lib.coroutines.periodic

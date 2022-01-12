@@ -1,4 +1,4 @@
-package org.team2471.frc2020
+package org.team2471.frc2022
 
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.ADXRS450_Gyro
@@ -69,7 +69,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 //    private var analogDevices: ADXRS450_Gyro? = ADXRS450_Gyro()
 //    private var meanGyro : TheBestGyroEver? = TheBestGyroEver()
 //    val gyro: NavxWrapper? = NavxWrapper()
-    val gyro = if(isCompBotIHateEverything) NavxWrapper() else ADXRS450_Gyro()
+    val gyro =  ADXRS450_Gyro()
 
 //    val gyro = navX /*if (navXGyroEntry.getBoolean(true) && navX != null) navX else if (analogDevices != null) analogDevices else meanGyro*/
 
@@ -153,7 +153,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             SmartDashboard.setPersistent("Gyro Type")
 
             useGyroEntry.setBoolean(true)
-            navXGyroEntry.setBoolean(isCompBotIHateEverything)
+            navXGyroEntry.setBoolean(false)
 
 
 //            aimPEntry.setDouble(0.015)
@@ -184,7 +184,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             var turn = 0.0
             if (OI.driveRotation.absoluteValue > 0.001) {
                 turn = OI.driveRotation
-            } else if (FrontLimelight.hasValidTarget && Shooter.prepShotOn) {
+            } else if (FrontLimelight.hasValidTarget ) {
                 turn = aimPDController.update(FrontLimelight.aimError)
                 println("FrontLimeLightAimError=${FrontLimelight.aimError}")
             }

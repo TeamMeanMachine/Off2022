@@ -1,26 +1,15 @@
 @file:JvmName("Main")
 
-package org.team2471.frc2020
+package org.team2471.frc2022
 
 import FRC____.BuildConfig
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.wpilibj.DigitalInput
-import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.RobotBase
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.MeanlibRobot
 import org.team2471.frc.lib.units.degrees
-import org.team2471.frc2020.testing.*
+import org.team2471.frc2022.testing.*
 import java.net.NetworkInterface
-import com.github.gmazzo.gradle.plugins.BuildConfigTask
-
-//import org.team2471.frc2020.testing.intakeFeedAndShootTest
-
-//import org.team2471.frc2020.testing.solenoidTest
-
-//val PDP = PowerDistributionPanel()
-
-var isCompBotIHateEverything = true
 
 object Robot : MeanlibRobot() {
 
@@ -35,7 +24,6 @@ object Robot : MeanlibRobot() {
                 }
                 println("FORMATTED---->$macString<-----")
 
-            isCompBotIHateEverything = (macString != "0-128472587-69")
            }
         }
 
@@ -50,24 +38,14 @@ object Robot : MeanlibRobot() {
         Drive.heading = 0.0.degrees
         AutoChooser
         FrontLimelight.startUp()
-        BackLimelight.startUp()
-        BackLimelight.ledEnabled = false
         FrontLimelight.ledEnabled = true
     }
 
     override suspend fun enable() {
         println("starting enable")
         Drive.enable()
-        ControlPanel.enable()
-        BackLimelight.enable()
         FrontLimelight.enable()
         Drive.initializeSteeringMotors()
-        Shooter.enable()
-        Feeder.enable()
-        Intake.enable()
-        EndGame.enable()
-        Tester.enable()
-        println("Comp Bot = $isCompBotIHateEverything")
         println("ending enable")
     }
 
@@ -83,44 +61,18 @@ object Robot : MeanlibRobot() {
     }
 
     override suspend fun test()  {
-//        Drive.disable()
-//        ControlPanel.test()
-//
-        println("ajfslkdjaslk;fjkldsajflkd;sa")
+
         Drive.steeringTests()
         Drive.driveTests()
-//        Feeder.test()
-//        Intake.solenoidTest()
-//        ControlPanel.motorTest()
-//        ControlPanel.soleniodTest()
-//        Intake.intakeFeedAndShootTest()
-//        EndGame.climbSolenoidTest()
-//        EndGame.brakeSolenoidTest()
-//        EndGame.climbTest()
-//        Shooter.distance2RpmTest()
-//        Shooter.countBallsShotTest()
-//        Shooter.motorTest()
-//        Drive.tuneDrivePositionController()
     }
 
 
     override suspend fun disable() {
-        Intake.setPower(0.0)
-        Intake.extend = false
         Drive.disable()
-        BackLimelight.disable()
         FrontLimelight.disable()
-        ControlPanel.disable()
-        Shooter.disable()
-        Feeder.disable()
-        Intake.disable()
-        EndGame.disable()
-        Tester.disable()
 
-        BackLimelight.ledEnabled = false
         FrontLimelight.ledEnabled = false
 
-        Shooter.rpmOffsetEntry.setPersistent()
         FrontLimelight.parallaxThresholdEntry.setPersistent()
 
         val table = NetworkTableInstance.getDefault().getTable(Drive.name)
