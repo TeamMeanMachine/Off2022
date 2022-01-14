@@ -7,7 +7,7 @@ plugins {
     id "com.github.gmazzo.buildconfig" version "3.0.0"
 }
 
-def ROBOT_MAIN_CLASS = "org.team2471.frc2020.Main"
+def ROBOT_MAIN_CLASS = "org.team2471.frc2022.Main"
 
 buildConfig {
     buildConfigField("long", "BUILD_TIME", "${System.currentTimeMillis()}L")
@@ -43,6 +43,7 @@ deploy {
     }
 }
 
+def deployArtifact = deploy.targets.roborio.artifacts.frcJava
 
 // Set this to true to enable desktop support.
 //def includeDesktopSupport = false
@@ -101,11 +102,11 @@ jar {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
-//deployArtifact.jarTask = jar
-//wpi.java.configureExecutableTasks(jar)
+deployArtifact.jarTask = jar
+wpi.java.configureExecutableTasks(jar)
 
 wrapper {
-    gradleVersion = '7.1.1'
+    gradleVersion = '7.3.3'
     distributionType = Wrapper.DistributionType.BIN
 }
 
