@@ -3,25 +3,11 @@
 package org.team2471.frc2022
 
 object Talons {
-    const val SHOOTER = 19
-    const val INTAKE = 25
+    const val HOOD = 19
 }
 
-object Victors {
-
-}
 
 object Sparks {
-    const val DRIVE_FRONTLEFT = 12 //
-    const val DRIVE_BACKLEFT = 3 //
-    const val DRIVE_BACKRIGHT = 16 //
-
-    const val DRIVE_FRONTRIGHT = 15 //
-
-    const val STEER_FRONTLEFT = 8 //
-    const val STEER_BACKLEFT = 7 //
-    const val STEER_BACKRIGHT = 4 //
-    const val STEER_FRONTRIGHT = 11 //
 
 }
 
@@ -33,9 +19,13 @@ object AnalogSensors {
 }
 
 object Falcons {
+    const val INTAKE = 25
+    const val INTAKE_PIVOT = 26
 
-}
+    const val SHOOTER = 30
+    const val SHOOTER_TWO = 31
 
- object Solenoids {
-
+    const val CLIMB = 32
+    const val CLIMB_TWO = 33
+    const val CLIMB_PIVOT = 34
 }
