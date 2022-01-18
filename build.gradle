@@ -53,7 +53,9 @@ repositories {
     maven { setUrl("https://frcmaven.wpi.edu/artifactory/release/")}
     maven { setUrl("https://plugins.gradle.org/m2/")}
     maven { setUrl("https://maven.ctr-electronics.com/release/") }
-    maven { setUrl("https://www.revrobotics.com/content/sw/max/sdk/maven/") }
+    maven { setUrl("https://www.revrobotics.com/content/sw/max/sdk/maven/")
+    maven { setUrl("https://maven.photonvision.org/repository/snapshots")}
+    }
 }
 // Defining my dependencies. In this case, WPILib (+ friends), and vendor libraries.
 // Also defines JUnit 4.
