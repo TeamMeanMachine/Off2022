@@ -28,4 +28,13 @@ object Falcons {
     const val CLIMB = 32
     const val CLIMB_TWO = 33
     const val CLIMB_PIVOT = 34
+
+    const val DRIVE_FRONTLEFT = 45
+    const val STEER_FRONTLEFT = 46
+    const val DRIVE_FRONTRIGHT = 47
+    const val STEER_FRONTRIGHT = 48
+    const val DRIVE_BACKRIGHT = 49
+    const val STEER_BACKRIGHT = 50
+    const val DRIVE_BACKLEFT  = 51
+    const val STEER_BACKLEFT = 52
 }

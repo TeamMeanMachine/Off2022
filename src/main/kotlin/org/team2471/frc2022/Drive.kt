@@ -6,8 +6,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
-import org.team2471.frc.lib.actuators.SparkMaxID
 import org.team2471.frc.lib.control.PDConstantFController
 import org.team2471.frc.lib.control.PDController
 import org.team2471.frc.lib.coroutines.*
@@ -31,29 +31,29 @@ object Drive : Subsystem("Drive"), SwerveDrive {
      * **/
     val origModules: Array<SwerveDrive.Module> = arrayOf(
         Module(
-            MotorController(SparkMaxID(Sparks.DRIVE_FRONTLEFT)),
-            MotorController(SparkMaxID(Sparks.STEER_FRONTLEFT)),
+            MotorController(FalconID(Falcons.DRIVE_FRONTLEFT)),
+            MotorController(FalconID(Falcons.STEER_FRONTLEFT)),
             Vector2(-11.5, 14.0),
             (-315.0).degrees,
             AnalogSensors.SWERVE_FRONT_LEFT
         ),
         Module(
-            MotorController(SparkMaxID(Sparks.DRIVE_FRONTRIGHT)),
-            MotorController(SparkMaxID(Sparks.STEER_FRONTRIGHT)),
+            MotorController(FalconID(Falcons.DRIVE_FRONTRIGHT)),
+            MotorController(FalconID(Falcons.STEER_FRONTRIGHT)),
             Vector2(11.5, 14.0),
             (-225.0).degrees,
             AnalogSensors.SWERVE_FRONT_RIGHT
         ),
         Module(
-            MotorController(SparkMaxID(Sparks.DRIVE_BACKRIGHT)),
-            MotorController(SparkMaxID(Sparks.STEER_BACKRIGHT)),
+            MotorController(FalconID(Falcons.DRIVE_BACKRIGHT)),
+            MotorController(FalconID(Falcons.STEER_BACKRIGHT)),
             Vector2(11.5, -14.0),
             (-135.0).degrees,
             AnalogSensors.SWERVE_BACK_RIGHT
         ),
         Module(
-            MotorController(SparkMaxID(Sparks.DRIVE_BACKLEFT)),
-            MotorController(SparkMaxID(Sparks.STEER_BACKLEFT)),
+            MotorController(FalconID(Falcons.DRIVE_BACKLEFT)),
+            MotorController(FalconID(Falcons.STEER_BACKLEFT)),
             Vector2(-11.5, -14.0),
             (-45.0).degrees,
             AnalogSensors.SWERVE_BACK_LEFT

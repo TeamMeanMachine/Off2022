@@ -69,9 +69,6 @@ object Shooter : Subsystem("Shooter") {
                 }
                 if(OI.operatorController.dPad != Controller.Direction.DOWN && downPressed) {
                     downPressed = false
-
-
-
                     decrementRpmOffset()
                 }
                 if (hoodPDEnable) {
