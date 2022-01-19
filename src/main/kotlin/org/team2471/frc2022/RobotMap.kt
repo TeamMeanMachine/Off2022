@@ -22,8 +22,8 @@ object Falcons {
     const val INTAKE = 25
     const val INTAKE_PIVOT = 26
 
-    const val SHOOTER = 30
-    const val SHOOTER_TWO = 31
+    const val SHOOTER = 1
+    const val SHOOTER_TWO = 13
 
     const val CLIMB = 32
     const val CLIMB_TWO = 33

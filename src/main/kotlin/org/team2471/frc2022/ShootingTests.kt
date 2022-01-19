@@ -30,10 +30,17 @@ object ShootingTests : Subsystem("ShootingTests") {
 
     init {
         shootingMotor.config {
+            feedbackCoefficient = 60.0 / (2048 * 0.49825)
             coastMode()
+            pid {
+                p(0.8e-5) //1.5e-8)
+                i(0.0)//i(0.0)
+                d(0.0)//d(1.5e-3) //1.5e-3  -- we tried 1.5e9 and 1.5e-9, no notable difference  // we printed values at the MotorController and the wrapper
+                f(0.03696) //0.000045
+            }
         }
 
-        rpmSetpointEntry.setDouble(7000.0)
+        rpmSetpointEntry.setDouble(1600.0)
 
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
@@ -41,7 +48,10 @@ object ShootingTests : Subsystem("ShootingTests") {
                 rpmErrorEntry.setDouble(rpmSetpoint - rpm)
                 if(OI.driverController.rightTrigger > 0.5) {
                     rpm = rpmSetpoint
-                }else {
+                    println("Got into rpm tests $rpm $rpmSetpoint. Hi.")
+//                    shootingMotor.setPercentOutput(OI.driveRightTrigger)
+
+                } else {
                     rpm = 0.0
                 }
             }
@@ -50,7 +60,10 @@ object ShootingTests : Subsystem("ShootingTests") {
 
     var rpm: Double
         get() = shootingMotor.velocity
-        set(value) = shootingMotor.setVelocitySetpoint(value)
+        set(value) {
+            println("rpm set to $value")
+            shootingMotor.setVelocitySetpoint(value, 1.0 / 6000)
+        }
     var rpmSetpoint: Double = 0.0
         get() {
             return rpmSetpointEntry.getDouble(1600.0)
