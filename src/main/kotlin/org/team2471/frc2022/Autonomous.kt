@@ -5,6 +5,7 @@ import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion_profiling.Autonomi
@@ -56,15 +57,7 @@ object AutoChooser {
 
     private val autonomousChooser = SendableChooser<String?>().apply {
         setDefaultOption("Tests", "testAuto")
-        addOption("5 Ball Trench Run", "trenchRun5")
-        addOption("10 Ball Shield Generator", "shieldGenerator10")
-        addOption("8 Ball Shield Generator", "shieldGenerator8")
-        addOption("8 Ball Trench Run", "trenchRun8")
-        addOption("Carpet Bias Test", "carpetBiasTest")
-        addOption("Helper Paths", "helperPaths")
-        addOption("Slalom Auto", "slalomAuto")
-        addOption("Barrel Racing Auto", "barrelRacingAuto")
-
+        addOption("Right Side 5 Auto", "right5")
     }
 
     init {
@@ -119,7 +112,7 @@ object AutoChooser {
         when (selAuto) {
             "Tests" -> testAuto()
             "Carpet Bias Test" -> carpetBiasTest()
-            "Helper Paths" -> feederToYeeter()
+            "Right Side 5" -> right5()
             else -> println("No function found for ---->$selAuto<-----")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -176,23 +169,25 @@ object AutoChooser {
         }
     }
 
-    suspend fun feederToYeeter() = use(Drive) {
-        val auto = autonomi["Helper Paths"]
+    suspend fun right5() = use(Drive, Shooter, Intake) {
+        val auto = autonomi["Right Side 5 Auto"]
         if (auto != null) {
-            val path = auto["Feeder to Yeeter"]
-            Drive.driveAlongPath(path, true, 0.0, false) {
-                OI.driveTranslation.length > 0.0
-            }
-        }
-    }
-
-    suspend fun yeeterToFeeder() = use(Drive) {
-        val auto = autonomi["Helper Paths"]
-        if (auto != null) {
-            val path = auto["Yeeter to Feeder"]
-            Drive.driveAlongPath(path, true, 0.0, false) {
-                OI.driveTranslation.length > 0.0
-            }
+            shoot()
+            parallel({
+                Intake.extendIntake(true)
+                Intake.setIntakePower(Intake.INTAKE_POWER)
+            }, {
+                Drive.driveAlongPath(auto["1- Field Cargo"], true)
+            })
+            shoot()
+            Drive.driveAlongPath(auto["2- Feeder Cargo"], false)
+            parallel({
+                Intake.extendIntake(false)
+                Intake.setIntakePower(0.0)
+            }, {
+                Drive.driveAlongPath(auto["3- Shoot"], false)
+            })
+            shoot()
         }
     }
 }
