@@ -190,4 +190,25 @@ object AutoChooser {
             shoot()
         }
     }
+
+    suspend fun middle4() = use(Drive, Shooter, Intake) {
+        val auto = autonomi["Middle 4 Ball"]
+        if (auto != null) {
+            parallel({
+                Intake.extendIntake(true)
+                Intake.setIntakePower(Intake.INTAKE_POWER)
+            }, {
+                Drive.driveAlongPath(auto["[01- Get Ball]"], true)
+            })
+            shoot()
+            parallel({
+                Intake.extendIntake(false)
+                Intake.setIntakePower(0.0)
+            }, {
+                Drive.driveAlongPath(auto["[02- Grab Ball]"], false)
+            })
+            Drive.driveAlongPath(auto["[03- Shoot]"], false)
+            shoot()
+        }
+    }
 }
