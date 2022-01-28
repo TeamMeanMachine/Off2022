@@ -31,7 +31,7 @@ private var startingSide = Side.RIGHT
 object AutoChooser {
     private val isRedAllianceEntry = NetworkTableInstance.getDefault().getTable("FMSInfo").getEntry("isRedAlliance")
 
-    var cacheFile : File? = null
+    var cacheFile: File? = null
     var redSide: Boolean = true
         get() = isRedAllianceEntry.getBoolean(true)
         set(value) {
@@ -53,11 +53,20 @@ object AutoChooser {
         addOption("8 Foot Circle", "8 Foot Circle")
         addOption("Hook Path", "Hook Path")
         setDefaultOption("90 Degree Turn", "90 Degree Turn")
+
+
+
     }
 
     private val autonomousChooser = SendableChooser<String?>().apply {
         setDefaultOption("Tests", "testAuto")
         addOption("Right Side 5 Auto", "right5")
+        addOption("Middle 4 Ball", "middle4")
+        addOption("Left Side 2 Auto", "leftSideAuto")
+
+
+
+
     }
 
     init {
@@ -69,7 +78,7 @@ object AutoChooser {
         try {
 
             cacheFile = File("/home/lvuser/autonomi.json")
-            if (cacheFile  != null) {
+            if (cacheFile != null) {
                 autonomi = Autonomi.fromJsonString(cacheFile?.readText())!!
                 println("Autonomi cache loaded.")
             } else {
@@ -130,7 +139,6 @@ object AutoChooser {
     }
 
 
-
     suspend fun carpetBiasTest() = use(Drive) {
         val auto = autonomi["Carpet Bias Test"]
         if (auto != null) {
@@ -165,7 +173,7 @@ object AutoChooser {
     suspend fun test90DegreeTurn() = use(Drive) {
         val auto = autonomi["Tests"]
         if (auto != null) {
-            Drive.driveAlongPath( auto["90 Degree Turn"], true, 2.0)
+            Drive.driveAlongPath(auto["90 Degree Turn"], true, 2.0)
         }
     }
 
@@ -191,24 +199,51 @@ object AutoChooser {
         }
     }
 
-    suspend fun middle4() = use(Drive, Shooter, Intake) {
-        val auto = autonomi["Middle 4 Ball"]
+    suspend fun leftSideAuto() = use(Drive, Shooter, Intake) {
+        val auto = autonomi["Left Side 2 Auto"]
         if (auto != null) {
             parallel({
                 Intake.extendIntake(true)
                 Intake.setIntakePower(Intake.INTAKE_POWER)
             }, {
-                Drive.driveAlongPath(auto["[01- Get Ball]"], true)
+                Drive.driveAlongPath(auto["1- Get Cargo"], true)
             })
             shoot()
             parallel({
                 Intake.extendIntake(false)
                 Intake.setIntakePower(0.0)
             }, {
-                Drive.driveAlongPath(auto["[02- Grab Ball]"], false)
+                parallel({
+                    Intake.extendIntake(true)
+                    Intake.setIntakePower(Intake.INTAKE_POWER)
+                }, {
+                    Drive.driveAlongPath(auto["2- Pick up ball"], false)
+                })
+                Drive.driveAlongPath(auto["3- Pick up ball2"], false)
             })
-            Drive.driveAlongPath(auto["[03- Shoot]"], false)
-            shoot()
+            Drive.driveAlongPath(auto["4- Dump balls"], false)
+            spit()
+        }
+
+        suspend fun middle4() = use(Drive, Shooter, Intake) {
+            val auto = autonomi["Middle 4 Ball"]
+            if (auto != null) {
+                parallel({
+                    Intake.extendIntake(true)
+                    Intake.setIntakePower(Intake.INTAKE_POWER)
+                }, {
+                    Drive.driveAlongPath(auto["[01- Get Ball]"], true)
+                })
+                shoot()
+                parallel({
+                    Intake.extendIntake(false)
+                    Intake.setIntakePower(0.0)
+                }, {
+                    Drive.driveAlongPath(auto["[02- Grab Ball]"], false)
+                })
+                Drive.driveAlongPath(auto["[03- Shoot]"], false)
+                shoot()
+            }
         }
     }
 }

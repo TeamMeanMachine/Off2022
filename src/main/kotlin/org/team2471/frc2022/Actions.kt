@@ -14,3 +14,7 @@ suspend fun intake() = use(Intake) {
 suspend fun shoot() = use(Shooter/*, Feeder*/) {
 
 }
+
+suspend fun spit() = use(Shooter) {
+
+}
