@@ -11,3 +11,10 @@ suspend fun intake() = use(Intake) {
     Intake.extendIntake(false)
 }
 
+suspend fun shoot() = use(Shooter/*, Feeder*/) {
+
+}
+
+suspend fun spit() = use(Shooter) {
+
+}

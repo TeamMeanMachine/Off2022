@@ -5,6 +5,7 @@ import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion_profiling.Autonomi
@@ -30,7 +31,7 @@ private var startingSide = Side.RIGHT
 object AutoChooser {
     private val isRedAllianceEntry = NetworkTableInstance.getDefault().getTable("FMSInfo").getEntry("isRedAlliance")
 
-    var cacheFile : File? = null
+    var cacheFile: File? = null
     var redSide: Boolean = true
         get() = isRedAllianceEntry.getBoolean(true)
         set(value) {
@@ -52,18 +53,19 @@ object AutoChooser {
         addOption("8 Foot Circle", "8 Foot Circle")
         addOption("Hook Path", "Hook Path")
         setDefaultOption("90 Degree Turn", "90 Degree Turn")
+
+
+
     }
 
     private val autonomousChooser = SendableChooser<String?>().apply {
         setDefaultOption("Tests", "testAuto")
-        addOption("5 Ball Trench Run", "trenchRun5")
-        addOption("10 Ball Shield Generator", "shieldGenerator10")
-        addOption("8 Ball Shield Generator", "shieldGenerator8")
-        addOption("8 Ball Trench Run", "trenchRun8")
-        addOption("Carpet Bias Test", "carpetBiasTest")
-        addOption("Helper Paths", "helperPaths")
-        addOption("Slalom Auto", "slalomAuto")
-        addOption("Barrel Racing Auto", "barrelRacingAuto")
+        addOption("Right Side 5 Auto", "right5")
+        addOption("Middle 4 Ball", "middle4")
+        addOption("Left Side 2 Auto", "leftSideAuto")
+
+
+
 
     }
 
@@ -76,7 +78,7 @@ object AutoChooser {
         try {
 
             cacheFile = File("/home/lvuser/autonomi.json")
-            if (cacheFile  != null) {
+            if (cacheFile != null) {
                 autonomi = Autonomi.fromJsonString(cacheFile?.readText())!!
                 println("Autonomi cache loaded.")
             } else {
@@ -119,7 +121,7 @@ object AutoChooser {
         when (selAuto) {
             "Tests" -> testAuto()
             "Carpet Bias Test" -> carpetBiasTest()
-            "Helper Paths" -> feederToYeeter()
+            "Right Side 5" -> right5()
             else -> println("No function found for ---->$selAuto<-----")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -136,7 +138,6 @@ object AutoChooser {
             }
         }
     }
-
 
 
     suspend fun carpetBiasTest() = use(Drive) {
@@ -173,26 +174,76 @@ object AutoChooser {
     suspend fun test90DegreeTurn() = use(Drive) {
         val auto = autonomi["Tests"]
         if (auto != null) {
-            Drive.driveAlongPath( auto["90 Degree Turn"], true, 2.0)
+            Drive.driveAlongPath(auto["90 Degree Turn"], true, 2.0)
         }
     }
 
-    suspend fun feederToYeeter() = use(Drive) {
-        val auto = autonomi["Helper Paths"]
+    suspend fun right5() = use(Drive, Shooter, Intake) {
+        val auto = autonomi["Right Side 5 Auto"]
         if (auto != null) {
-            val path = auto["Feeder to Yeeter"]
-            Drive.driveAlongPath(path, true, 0.0, false) {
-                OI.driveTranslation.length > 0.0
-            }
+            shoot()
+            parallel({
+                Intake.extendIntake(true)
+                Intake.setIntakePower(Intake.INTAKE_POWER)
+            }, {
+                Drive.driveAlongPath(auto["1- Field Cargo"], true)
+            })
+            shoot()
+            Drive.driveAlongPath(auto["2- Feeder Cargo"], false)
+            parallel({
+                Intake.extendIntake(false)
+                Intake.setIntakePower(0.0)
+            }, {
+                Drive.driveAlongPath(auto["3- Shoot"], false)
+            })
+            shoot()
         }
     }
 
-    suspend fun yeeterToFeeder() = use(Drive) {
-        val auto = autonomi["Helper Paths"]
+    suspend fun leftSideAuto() = use(Drive, Shooter, Intake) {
+        val auto = autonomi["Left Side 2 Auto"]
         if (auto != null) {
-            val path = auto["Yeeter to Feeder"]
-            Drive.driveAlongPath(path, true, 0.0, false) {
-                OI.driveTranslation.length > 0.0
+            parallel({
+                Intake.extendIntake(true)
+                Intake.setIntakePower(Intake.INTAKE_POWER)
+            }, {
+                Drive.driveAlongPath(auto["1- Get Cargo"], true)
+            })
+            shoot()
+            parallel({
+                Intake.extendIntake(false)
+                Intake.setIntakePower(0.0)
+            }, {
+                parallel({
+                    Intake.extendIntake(true)
+                    Intake.setIntakePower(Intake.INTAKE_POWER)
+                }, {
+                    Drive.driveAlongPath(auto["2- Pick up ball"], false)
+                })
+                Drive.driveAlongPath(auto["3- Pick up ball2"], false)
+            })
+            Drive.driveAlongPath(auto["4- Dump balls"], false)
+            spit()
+        }
+
+        suspend fun middle4() = use(Drive, Shooter, Intake) {
+            val auto = autonomi["Middle 4 Ball"]
+            if (auto != null) {
+                parallel({
+                    Intake.extendIntake(true)
+                    Intake.setIntakePower(Intake.INTAKE_POWER)
+                }, {
+                    Drive.driveAlongPath(auto["[01- Get Ball]"], true)
+                })
+                shoot()
+                parallel({
+                    Intake.extendIntake(false)
+                    Intake.setIntakePower(0.0)
+                }, {
+                    Drive.driveAlongPath(auto["[02- Grab Ball]"], false)
+                })
+                Drive.driveAlongPath(auto["[03- Shoot]"], false)
+                shoot()
             }
         }
     }
