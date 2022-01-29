@@ -123,6 +123,7 @@ object AutoChooser {
             else -> println("No function found for ---->$selAuto<-----")
         }
         SmartDashboard.putString("autoStatus", "complete")
+        println("finished autonomous")
     }
 
     private suspend fun testAuto() {

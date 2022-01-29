@@ -37,18 +37,22 @@ object Robot : MeanlibRobot() {
         Drive.zeroGyro()
         Drive.heading = 0.0.degrees
         AutoChooser
-        FrontLimelight.startUp()
-        FrontLimelight.ledEnabled = true
+        //FrontLimelight.startUp()
+        //FrontLimelight.ledEnabled = true
         ShootingTests
+        Intake
     }
 
     override suspend fun enable() {
         println("starting enable")
         Drive.enable()
-        FrontLimelight.enable()
+        //FrontLimelight.enable()
         Drive.initializeSteeringMotors()
         ShootingTests.enable()
         println("ending enable")
+
+
+
     }
 
     override suspend fun autonomous() {
@@ -71,11 +75,11 @@ object Robot : MeanlibRobot() {
 
     override suspend fun disable() {
         Drive.disable()
-        FrontLimelight.disable()
+        //FrontLimelight.disable()
 
-        FrontLimelight.ledEnabled = false
+        //FrontLimelight.ledEnabled = false
 
-        FrontLimelight.parallaxThresholdEntry.setPersistent()
+        //FrontLimelight.parallaxThresholdEntry.setPersistent()
 
         val table = NetworkTableInstance.getDefault().getTable(Drive.name)
         val angle1Entry = table.getEntry("Angle 1")

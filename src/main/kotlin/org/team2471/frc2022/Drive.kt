@@ -37,7 +37,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             (-315.0).degrees,
             AnalogSensors.SWERVE_FRONT_LEFT
         ),
-        Module(
+        /*Module(
             MotorController(FalconID(Falcons.DRIVE_FRONTRIGHT)),
             MotorController(FalconID(Falcons.STEER_FRONTRIGHT)),
             Vector2(11.5, 14.0),
@@ -57,18 +57,18 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             Vector2(-11.5, -14.0),
             (-45.0).degrees,
             AnalogSensors.SWERVE_BACK_LEFT
-        )
+        )*/
     )
 
     override var modules = origModules
 
     //    val gyro: Gyro? = null
-//    private var navX: NavxWrapper? = NavxWrapper()
+    private var navX: NavxWrapper = NavxWrapper()
 //    private var analogDevices: ADXRS450_Gyro? = ADXRS450_Gyro()
 //    private var meanGyro : TheBestGyroEver? = TheBestGyroEver()
 //    val gyro: NavxWrapper? = NavxWrapper()
-    val gyro =  ADXRS450_Gyro()
-
+    //val gyro =  ADXRS450_Gyro()
+   val gyro = navX
 //    val gyro = navX /*if (navXGyroEntry.getBoolean(true) && navX != null) navX else if (analogDevices != null) analogDevices else meanGyro*/
 
     private var gyroOffset = 0.0.degrees
@@ -211,7 +211,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun initializeSteeringMotors() {
-        for (moduleCount in 0..3) {
+        for (moduleCount in 0..0) {
             val module = (modules[moduleCount] as Module)
             module.turnMotor.setRawOffset(module.analogAngle)
             println("Module: $moduleCount analogAngle: ${module.analogAngle}")
@@ -235,10 +235,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun brakeMode() {
-        for (moduleCount in 0..3) {
-            val module = (modules[moduleCount] as Module)
-            module.driveMotor.brakeMode()
-        }
+//        for (moduleCount in 0..3) {
+//            val module = (modules[moduleCount] as Module)
+//            module.driveMotor.brakeMode()
+//        }
     }
 
     fun coastMode() {
@@ -266,10 +266,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         override val angle: Angle
             get() = turnMotor.position.degrees
 
-        private val analogAngleInput = AnalogInput(analogAnglePort)
+        private val analogAngleInput : AnalogInput = AnalogInput(analogAnglePort)
 
         val analogAngle: Angle
-            get() = (((analogAngleInput.value - 170.0) / (3888.0 - 170.0) * 360.0).degrees + angleOffset).wrap()
+            get() =  ((((analogAngleInput.voltage - 0.0) / 5.0) * 360.0).degrees + angleOffset).wrap()
 
         val driveCurrent: Double
             get() = driveMotor.current
@@ -278,6 +278,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         override val speed: Double
             get() = driveMotor.velocity
+
+        val power: Double
+            get() {
+                return driveMotor.output
+            }
 
         override val currDistance: Double
             get() = driveMotor.position
@@ -301,22 +306,22 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         init {
             turnMotor.config(20) {
                 // this was from lil bois bench test of swerve
-                feedbackCoefficient = 360.0 / 823.2
+                feedbackCoefficient = 360.0 / 2048.0 / 19.6  // ~111 ticks per degree // spark max-neo 360.0 / 42.0 / 19.6 // degrees per tick
                 setRawOffsetConfig(analogAngle)
                 inverted(true)
                 setSensorPhase(false)
                 pid {
-                    p(0.000075)
-                    d(0.00025)
+                    p(0.000002)
+//                    d(0.0000025)
                 }
 //                burnSettings()
             }
 
             driveMotor.config {
                 brakeMode()
-                feedbackCoefficient = 1.0 / 246.0
-                currentLimit(30, 0, 0)
-                openLoopRamp(0.15)
+                feedbackCoefficient = 1.0 / 2048.0 / 5.857 / 1.067 // spark max-neo 1.0 / 42.0/ 5.857 / fudge factor
+                currentLimit(33, 0, 0)
+                openLoopRamp(0.50)
 //                burnSettings()
             }
 
@@ -330,6 +335,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     setPersistent()
                     setDefaultDouble(0.00075)
                 }
+
             }
 
         }

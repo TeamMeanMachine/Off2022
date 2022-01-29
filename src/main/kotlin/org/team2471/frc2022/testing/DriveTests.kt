@@ -11,7 +11,7 @@ import org.team2471.frc.lib.units.degrees
 
 suspend fun Drive.steeringTests() = use(this) {
     println("Got into steeringTests. Hi")
-    for (module in 0..3) {
+    for (module in 0..0) {
         println("Got into first for. Hi.")
         for (quadrant in 0..8) {
             Drive.modules[module].angleSetpoint = (quadrant * 45.0).degrees
@@ -24,7 +24,7 @@ suspend fun Drive.steeringTests() = use(this) {
 
 suspend fun Drive.driveTests() = use(this) {
 
-    for (i in 0..3) {
+    for (i in 0..0) {
             Drive.modules[i].setDrivePower(0.5)
             delay(1.0)
             Drive.modules[i].setDrivePower(0.0)
