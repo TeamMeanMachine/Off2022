@@ -41,6 +41,7 @@ object Robot : MeanlibRobot() {
         //FrontLimelight.ledEnabled = true
         ShootingTests
         Intake
+        Shooter
     }
 
     override suspend fun enable() {
@@ -48,7 +49,8 @@ object Robot : MeanlibRobot() {
         Drive.enable()
         //FrontLimelight.enable()
         Drive.initializeSteeringMotors()
-        ShootingTests.enable()
+//        ShootingTests.enable()
+        Shooter.enable()
         println("ending enable")
 
 

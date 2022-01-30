@@ -1,11 +1,13 @@
 package org.team2471.frc2022
 
+import com.revrobotics.ColorSensorV3
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.wpilibj.I2C
+import edu.wpi.first.wpilibj.util.Color
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
-import org.team2471.frc.lib.actuators.SparkMaxID
 import org.team2471.frc.lib.actuators.TalonID
 import org.team2471.frc.lib.control.PDController
 import org.team2471.frc.lib.coroutines.MeanlibDispatcher
@@ -14,14 +16,17 @@ import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller
 import org.team2471.frc.lib.motion_profiling.MotionCurve
-import org.team2471.frc.lib.units.Length
-import org.team2471.frc.lib.units.asFeet
 import kotlin.math.absoluteValue
+
 
 object Shooter : Subsystem("Shooter") {
     private val shootingMotor = MotorController(FalconID(Falcons.SHOOTER), FalconID(Falcons.SHOOTER_TWO))
     private val hoodMotor = MotorController(TalonID(Talons.HOOD))
     private val table = NetworkTableInstance.getDefault().getTable(name)
+    private val i2cPort: I2C.Port = I2C.Port.kOnboard
+    private val m_colorSensor = ColorSensorV3(i2cPort)
+
+
     val rpmEntry = table.getEntry("RPM")
     val rpmSetpointEntry = table.getEntry("RPM Setpoint")
     val rpmErrorEntry = table.getEntry("RPM Error")
@@ -57,6 +62,9 @@ object Shooter : Subsystem("Shooter") {
                 rpmErrorEntry.setDouble(rpmSetpoint - rpm)
 
                  hoodEntry.setDouble(hoodEncoderPosition)
+                val detectedColor: Color = m_colorSensor.configureColorSensor()
+
+                println("Color = ${detectedColor.red} ${detectedColor.green} ${detectedColor.blue}")
 
                 if (OI.operatorController.dPad == Controller.Direction.UP) {
                     upPressed = true
