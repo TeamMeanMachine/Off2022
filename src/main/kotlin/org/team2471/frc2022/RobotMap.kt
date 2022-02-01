@@ -38,6 +38,8 @@ object Falcons {
     const val STEER_FRONTRIGHT = 48
     const val DRIVE_BACKRIGHT = 49
     const val STEER_BACKRIGHT = 50
-    const val DRIVE_BACKLEFT  = 51
+    const val DRIVE_BACKLEFT = 51
     const val STEER_BACKLEFT = 52
+    const val DRIVE_SPARE1  = 53
+    const val STEER_SPARE1 = 54
 }
