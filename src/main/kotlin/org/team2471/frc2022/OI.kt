@@ -51,5 +51,9 @@ object OI {
         get() = operatorController.rightThumbstickY.deadband(0.25)
 
     init {
+        driverController::back.whenTrue { Drive.zeroGyro() }
+        driverController::rightBumper.whenTrue { intake(true) }
+        driverController::leftBumper.whenTrue { intake(false) }
+//        driverController::a.whenTrue { Shooter.rpm = Shooter.rpmSetpoint }
     }
 }

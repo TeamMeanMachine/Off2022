@@ -25,23 +25,22 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     val navXGyroEntry = NetworkTableInstance.getDefault().getTable(name).getEntry("NavX Gyro")
 
-
     /**
      * Coordinates of modules
      * **/
-    val origModules: Array<SwerveDrive.Module> = arrayOf(
+    override val modules: Array<SwerveDrive.Module> = arrayOf(
         Module(
             MotorController(FalconID(Falcons.DRIVE_FRONTLEFT)),
             MotorController(FalconID(Falcons.STEER_FRONTLEFT)),
             Vector2(-11.5, 14.0),
-            (-315.0).degrees,
+            (45.0).degrees,
             AnalogSensors.SWERVE_FRONT_LEFT
         ),
-        /*Module(
+        Module(
             MotorController(FalconID(Falcons.DRIVE_FRONTRIGHT)),
             MotorController(FalconID(Falcons.STEER_FRONTRIGHT)),
             Vector2(11.5, 14.0),
-            (-225.0).degrees,
+            (135.0).degrees,
             AnalogSensors.SWERVE_FRONT_RIGHT
         ),
         Module(
@@ -57,18 +56,15 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             Vector2(-11.5, -14.0),
             (-45.0).degrees,
             AnalogSensors.SWERVE_BACK_LEFT
-        )*/
-    )
+        )
 
-    override var modules = origModules
+    )
 
     //    val gyro: Gyro? = null
     private var navX: NavxWrapper = NavxWrapper()
-//    private var analogDevices: ADXRS450_Gyro? = ADXRS450_Gyro()
-//    private var meanGyro : TheBestGyroEver? = TheBestGyroEver()
-//    val gyro: NavxWrapper? = NavxWrapper()
-    //val gyro =  ADXRS450_Gyro()
-   val gyro = navX
+//    private var analogDevices: ADXRS450_Gyro = ADXRS450_Gyro()
+
+    val gyro = navX
 //    val gyro = navX /*if (navXGyroEntry.getBoolean(true) && navX != null) navX else if (analogDevices != null) analogDevices else meanGyro*/
 
     private var gyroOffset = 0.0.degrees
@@ -76,7 +72,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override var heading: Angle
         get() = gyroOffset - (gyro.angle.degrees.wrap())
         set(value) {
-            gyroOffset = value
+            gyroOffset = value // -gyro.angle.degrees + value
             gyro.reset()
         }
 
@@ -106,31 +102,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     init {
         println("drive init")
-        //SmartDashboard.putData("Gyro", gyro!!.getNavX())
-
-/*
-        try {
-            navX = NavxWrapper()
-        } catch(ex : Exception) {
-            navX = null
-            navXGyroEntry.setBoolean(false)
-            println("NavX is having troubles. $ex")
-        }
-
-        try {
-            analogDevices = ADXRS450_Gyro()
-        } catch(ex: Exception) {
-            analogDevices = null
-            println("Analog Devices is having troubles. $ex")
-        }
-
-        try {
-            meanGyro =  TheBestGyroEver()
-        } catch(ex: Exception) {
-            meanGyro = null
-            println("Mean Gyro is having troubles. $ex")
-        }
-*/
+        initializeSteeringMotors()
 
         GlobalScope.launch(MeanlibDispatcher) {
             println("in drive global scope")
@@ -153,6 +125,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             useGyroEntry.setBoolean(true)
             navXGyroEntry.setBoolean(false)
 
+            val angleZeroEntry = table.getEntry("Swerve Angle 0")
+            val angleOneEntry = table.getEntry("Swerve Angle 1")
+            val angleTwoEntry = table.getEntry("Swerve Angle 2")
+            val angleThreeEntry = table.getEntry("Swerve Angle 3")
 
 //            aimPEntry.setDouble(0.015)
 //            aimDEntry.setDouble(0.005)
@@ -162,16 +138,25 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 yEntry.setDouble(y)
                 headingEntry.setDouble(heading.asDegrees)
                 aimErrorEntry.setDouble(FrontLimelight.aimError)
+                angleZeroEntry.setDouble((modules[0] as Module).analogAngle.asDegrees)
+                angleOneEntry.setDouble((modules[1] as Module).analogAngle.asDegrees)
+                angleTwoEntry.setDouble((modules[2] as Module).analogAngle.asDegrees)
+                angleThreeEntry.setDouble((modules[3] as Module).analogAngle.asDegrees)
+//                for (moduleCount in 0..3) {
+//                    val module = (modules[moduleCount] as Module)
+//                    print("Module: $moduleCount analogAngle: ${round(module.analogAngle.asDegrees, 2)}  ")
+//                }
+//                println()
 //                aimPDController.p = aimPEntry.getDouble(0.015)
 //                aimPDController.d = aimDEntry.getDouble(0.005)
-
             }
         }
     }
 
-    fun zeroGyro() = gyro.reset()
-
-    
+    fun zeroGyro() {
+        heading = 0.0.degrees
+        //gyro.reset()
+    }
 
     override suspend fun default() {
 //        val limelightTable = NetworkTableInstance.getDefault().getTable("limelight-front")
@@ -188,18 +173,13 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             }
 //            printEncoderValues()
 
-            val direction = OI.driverController.povDirection
-            if (direction==270.0.degrees)
-                headingSetpoint = -112.0.degrees
-            else if (direction == 0.0.degrees)
-                headingSetpoint = direction
+            headingSetpoint = OI.driverController.povDirection
 
             drive(
                 OI.driveTranslation,
                 turn,
-                //true,
                 SmartDashboard.getBoolean("Use Gyro", true) && !DriverStation.isAutonomous(),
-                true
+                false
             )
         }
     }
@@ -211,7 +191,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     fun initializeSteeringMotors() {
-        for (moduleCount in 0..0) {
+        for (moduleCount in 0..3) {
             val module = (modules[moduleCount] as Module)
             module.turnMotor.setRawOffset(module.analogAngle)
             println("Module: $moduleCount analogAngle: ${module.analogAngle}")
@@ -269,7 +249,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         private val analogAngleInput : AnalogInput = AnalogInput(analogAnglePort)
 
         val analogAngle: Angle
-            get() =  ((((analogAngleInput.voltage - 0.0) / 5.0) * 360.0).degrees + angleOffset).wrap()
+            get() {
+                return ((((analogAngleInput.voltage - 0.0) / 5.0) * 360.0).degrees + angleOffset).wrap()
+            }
 
         val driveCurrent: Double
             get() = driveMotor.current
@@ -306,7 +288,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         init {
             turnMotor.config(20) {
                 // this was from lil bois bench test of swerve
-                feedbackCoefficient = 360.0 / 2048.0 / 19.6  // ~111 ticks per degree // spark max-neo 360.0 / 42.0 / 19.6 // degrees per tick
+                feedbackCoefficient = 360.0 / 2048.0 / 21.65  // ~111 ticks per degree // spark max-neo 360.0 / 42.0 / 19.6 // degrees per tick
                 setRawOffsetConfig(analogAngle)
                 inverted(true)
                 setSensorPhase(false)

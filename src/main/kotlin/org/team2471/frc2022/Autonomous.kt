@@ -70,7 +70,9 @@ object AutoChooser {
     }
 
     init {
-//        println("Got into Autonomous' init. Hi. 222222222222222222222")
+        DriverStation.reportWarning("Starting auto init warning", false)
+        DriverStation.reportError("Starting auto init error", false)         //            trying to get individual message in event log to get timestamp -- untested
+
         SmartDashboard.putData("Best Song Lyrics", lyricsChooser)
         SmartDashboard.putData("Tests", testAutoChooser)
         SmartDashboard.putData("Autos", autonomousChooser)
@@ -114,18 +116,18 @@ object AutoChooser {
     }
 
     suspend fun autonomous() = use(Drive, name = "Autonomous") {
-        println("Got into Auto fun autonomous. Hi. 888888888888888")
+        println("Got into Auto fun autonomous. Hi. 888888888888888 ${Robot.recentTimeTaken()}")
         val selAuto = SmartDashboard.getString("Autos/selected", "no auto selected")
         SmartDashboard.putString("autoStatus", "init")
-        println("Selected Auto = *****************   $selAuto ****************************")
+        println("Selected Auto = *****************   $selAuto ****************************  ${Robot.recentTimeTaken()}")
         when (selAuto) {
             "Tests" -> testAuto()
             "Carpet Bias Test" -> carpetBiasTest()
-            "Right Side 5" -> right5()
-            else -> println("No function found for ---->$selAuto<-----")
+            //"Right Side 5" -> right5()
+            else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
-        println("finished autonomous")
+        println("finished autonomous  ${Robot.recentTimeTaken()}")
     }
 
     private suspend fun testAuto() {
@@ -178,73 +180,73 @@ object AutoChooser {
         }
     }
 
-    suspend fun right5() = use(Drive, Shooter, Intake) {
-        val auto = autonomi["Right Side 5 Auto"]
-        if (auto != null) {
-            shoot()
-            parallel({
-                Intake.extendIntake(true)
-                Intake.setIntakePower(Intake.INTAKE_POWER)
-            }, {
-                Drive.driveAlongPath(auto["1- Field Cargo"], true)
-            })
-            shoot()
-            Drive.driveAlongPath(auto["2- Feeder Cargo"], false)
-            parallel({
-                Intake.extendIntake(false)
-                Intake.setIntakePower(0.0)
-            }, {
-                Drive.driveAlongPath(auto["3- Shoot"], false)
-            })
-            shoot()
-        }
-    }
-
-    suspend fun leftSideAuto() = use(Drive, Shooter, Intake) {
-        val auto = autonomi["Left Side 2 Auto"]
-        if (auto != null) {
-            parallel({
-                Intake.extendIntake(true)
-                Intake.setIntakePower(Intake.INTAKE_POWER)
-            }, {
-                Drive.driveAlongPath(auto["1- Get Cargo"], true)
-            })
-            shoot()
-            parallel({
-                Intake.extendIntake(false)
-                Intake.setIntakePower(0.0)
-            }, {
-                parallel({
-                    Intake.extendIntake(true)
-                    Intake.setIntakePower(Intake.INTAKE_POWER)
-                }, {
-                    Drive.driveAlongPath(auto["2- Pick up ball"], false)
-                })
-                Drive.driveAlongPath(auto["3- Pick up ball2"], false)
-            })
-            Drive.driveAlongPath(auto["4- Dump balls"], false)
-            spit()
-        }
-
-        suspend fun middle4() = use(Drive, Shooter, Intake) {
-            val auto = autonomi["Middle 4 Ball"]
-            if (auto != null) {
-                parallel({
-                    Intake.extendIntake(true)
-                    Intake.setIntakePower(Intake.INTAKE_POWER)
-                }, {
-                    Drive.driveAlongPath(auto["[01- Get Ball]"], true)
-                })
-                shoot()
-                parallel({
-                    Intake.extendIntake(false)
-                    Intake.setIntakePower(0.0)
-                }, {
-                    Drive.driveAlongPath(auto["[02- Grab Ball]"], false)
-                })
-                Drive.driveAlongPath(auto["[03- Shoot]"], false)
-                shoot()
-            }
-        }
-    }
+//    suspend fun right5() = use(Drive, Shooter, Intake) {
+//        val auto = autonomi["Right Side 5 Auto"]
+//        if (auto != null) {
+//            shoot()
+//            parallel({
+//                Intake.setExtend(true)
+//                Intake.setIntakePower(Intake.INTAKE_POWER)
+//            }, {
+//                Drive.driveAlongPath(auto["1- Field Cargo"], true)
+//            })
+//            shoot()
+//            Drive.driveAlongPath(auto["2- Feeder Cargo"], false)
+//            parallel({
+//                Intake.setExtend(false)
+//                Intake.setIntakePower(0.0)
+//            }, {
+//                Drive.driveAlongPath(auto["3- Shoot"], false)
+//            })
+//            shoot()
+//        }
+//    }
+//
+//    suspend fun leftSideAuto() = use(Drive, Shooter, Intake) {
+//        val auto = autonomi["Left Side 2 Auto"]
+//        if (auto != null) {
+//            parallel({
+//                Intake.setExtend(true)
+//                Intake.setIntakePower(Intake.INTAKE_POWER)
+//            }, {
+//                Drive.driveAlongPath(auto["1- Get Cargo"], true)
+//            })
+//            shoot()
+//            parallel({
+//                Intake.setExtend(false)
+//                Intake.setIntakePower(0.0)
+//            }, {
+//                parallel({
+//                    Intake.setExtend(true)
+//                    Intake.setIntakePower(Intake.INTAKE_POWER)
+//                }, {
+//                    Drive.driveAlongPath(auto["2- Pick up ball"], false)
+//                })
+//                Drive.driveAlongPath(auto["3- Pick up ball2"], false)
+//            })
+//            Drive.driveAlongPath(auto["4- Dump balls"], false)
+//            spit()
+//        }
+//
+//        suspend fun middle4() = use(Drive, Shooter, Intake) {
+//            val auto = autonomi["Middle 4 Ball"]
+//            if (auto != null) {
+//                parallel({
+//                    Intake.setExtend(true)
+//                    Intake.setIntakePower(Intake.INTAKE_POWER)
+//                }, {
+//                    Drive.driveAlongPath(auto["[01- Get Ball]"], true)
+//                })
+//                shoot()
+//                parallel({
+//                    Intake.setExtend(false)
+//                    Intake.setIntakePower(0.0)
+//                }, {
+//                    Drive.driveAlongPath(auto["[02- Grab Ball]"], false)
+//                })
+//                Drive.driveAlongPath(auto["[03- Shoot]"], false)
+//                shoot()
+//            }
+//        }
+    //}
 }

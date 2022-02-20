@@ -3,16 +3,18 @@
 package org.team2471.frc2022
 
 import FRC____.BuildConfig
-import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.RobotBase
-import org.team2471.frc.lib.coroutines.periodic
+import kotlinx.coroutines.DelicateCoroutinesApi
 import org.team2471.frc.lib.framework.MeanlibRobot
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2022.testing.*
 import java.net.NetworkInterface
 
+@DelicateCoroutinesApi
 object Robot : MeanlibRobot() {
 
+    var startMeasureTime = System.nanoTime()
+    var lastMeasureTime = startMeasureTime
     init {
         val networkInterfaces =  NetworkInterface.getNetworkInterfaces()
         for (iFace in networkInterfaces) {
@@ -36,73 +38,99 @@ object Robot : MeanlibRobot() {
         println(BuildConfig.BUILD_TIME)
         Drive.zeroGyro()
         Drive.heading = 0.0.degrees
-        AutoChooser
+       // AutoChooser
         //FrontLimelight.startUp()
         //FrontLimelight.ledEnabled = true
-        ShootingTests
+//        ShootingTests
         Intake
         Shooter
+        Feeder
     }
 
     override suspend fun enable() {
         println("starting enable")
         Drive.enable()
+        Intake.enable()
+        Feeder.enable()
         //FrontLimelight.enable()
-        Drive.initializeSteeringMotors()
+//        Drive.initializeSteeringMotors()
 //        ShootingTests.enable()
         Shooter.enable()
+        Climb.enable()
         println("ending enable")
-
-
-
     }
 
     override suspend fun autonomous() {
+       initTimeMeasurement()
+        println("autonomous starting")
 //        Drive.zeroGyro()
         Drive.brakeMode()
-        AutoChooser.autonomous()
+        println("autonomous Drive brakeMode ${totalTimeTaken()}")
+        //AutoChooser.autonomous()
+        println("autonomous ending ${totalTimeTaken()}")
     }
 
     override suspend fun teleop() {
         println("telop begin")
+        intake(true)
         Drive.headingSetpoint = Drive.heading
     }
 
     override suspend fun test()  {
-
-        Drive.steeringTests()
-        Drive.driveTests()
+        println("test mode begin. Hi.")
+//        Intake.setIntakePower(0.8)
+//        shootTest2()
+        Climb.motorTest()
     }
 
 
     override suspend fun disable() {
         Drive.disable()
+        Intake.disable()
+        Shooter.disable()
+        Feeder.disable()
+        Climb.disable()
         //FrontLimelight.disable()
 
         //FrontLimelight.ledEnabled = false
 
         //FrontLimelight.parallaxThresholdEntry.setPersistent()
 
-        val table = NetworkTableInstance.getDefault().getTable(Drive.name)
-        val angle1Entry = table.getEntry("Angle 1")
-        val angle2Entry = table.getEntry("Angle 2")
-        val angle3Entry = table.getEntry("Angle 3")
-        val angle4Entry = table.getEntry("Angle 4")
-
-        val module0 = (Drive.modules[0] as Drive.Module)
-        val module1 = (Drive.modules[1] as Drive.Module)
-        val module2 = (Drive.modules[2] as Drive.Module)
-        val module3 = (Drive.modules[3] as Drive.Module)
-
-        periodic {
-//            Drive.recordOdometry()
-
-            //println(module0.analogAngle)
-            angle1Entry.setValue(module0.analogAngle.asDegrees)
-            angle2Entry.setValue(module1.analogAngle.asDegrees)
-            angle3Entry.setValue(module2.analogAngle.asDegrees)
-            angle4Entry.setValue(module3.analogAngle.asDegrees)
-        }
+//        val table = NetworkTableInstance.getDefault().getTable(Drive.name)
+//        val angle1Entry = table.getEntry("Angle 1")
+//        val angle2Entry = table.getEntry("Angle 2")
+//        val angle3Entry = table.getEntry("Angle 3")
+//        val angle4Entry = table.getEntry("Angle 4")
+//
+//        val module0 = (Drive.modules[0] as Drive.Module)
+//        val module1 = (Drive.modules[1] as Drive.Module)
+//        val module2 = (Drive.modules[2] as Drive.Module)
+//        val module3 = (Drive.modules[3] as Drive.Module)
+//
+//        periodic {
+////            Drive.recordOdometry()
+//
+//            //println(module0.analogAngle)
+//            angle1Entry.setValue(module0.analogAngle.asDegrees)
+//            angle2Entry.setValue(module1.analogAngle.asDegrees)
+//            angle3Entry.setValue(module2.analogAngle.asDegrees)
+//            angle4Entry.setValue(module3.analogAngle.asDegrees)
+//        }
+    }
+    private fun initTimeMeasurement(){
+        startMeasureTime = System.nanoTime()
+        lastMeasureTime = startMeasureTime
+    }
+    private fun updateNanosTaken(){
+        lastMeasureTime = System.nanoTime()
+    }
+    fun totalTimeTaken(): Long {
+        return System.nanoTime() - startMeasureTime
+    }
+    fun recentTimeTaken(): Long {
+        val timeTaken = System.nanoTime() - lastMeasureTime
+        updateNanosTaken()
+        return timeTaken
     }
 }
 

@@ -12,7 +12,7 @@ import org.team2471.frc.lib.framework.Subsystem
 object ShootingTests : Subsystem("ShootingTests") {
     private val bottomShootingMotor = MotorController(FalconID(Falcons.SHOOTER))
     private val topShootingMotor = MotorController(FalconID(Falcons.SHOOTER_TWO))
-    private val TalonTestMotor1 = MotorController(TalonID(Talons.TALON_TEST_ONE))
+//    private val TalonTestMotor1 = MotorController(TalonID(Talons.TALON_TEST_ONE))
     private val TalonTestMotor2 = MotorController(TalonID(Talons.TALON_TEST_TWO))
     private val table = NetworkTableInstance.getDefault().getTable(name)
     val rpmEntry = table.getEntry("RPM")

@@ -2,6 +2,8 @@ package org.team2471.frc2022
 
 import com.revrobotics.ColorSensorV3
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.wpilibj.DutyCycle
+import edu.wpi.first.wpilibj.DutyCycleEncoder
 import edu.wpi.first.wpilibj.I2C
 import edu.wpi.first.wpilibj.util.Color
 import kotlinx.coroutines.GlobalScope
@@ -15,40 +17,63 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller
+import org.team2471.frc.lib.input.whenTrue
 import org.team2471.frc.lib.motion_profiling.MotionCurve
+import org.team2471.frc.lib.units.Angle
+import org.team2471.frc.lib.units.degrees
 import kotlin.math.absoluteValue
 
 
 object Shooter : Subsystem("Shooter") {
-    private val shootingMotor = MotorController(FalconID(Falcons.SHOOTER), FalconID(Falcons.SHOOTER_TWO))
-    private val hoodMotor = MotorController(TalonID(Talons.HOOD))
+    val shootingMotor = MotorController(FalconID(Falcons.SHOOTER), FalconID(Falcons.SHOOTER_TWO)) //private
+    private val pitchMotor = MotorController(TalonID(Talons.PITCH))
     private val table = NetworkTableInstance.getDefault().getTable(name)
-    private val i2cPort: I2C.Port = I2C.Port.kOnboard
-    private val m_colorSensor = ColorSensorV3(i2cPort)
-
+    val pitchEncoder = DutyCycleEncoder(DigitalSensors.SHOOTER_PITCH)
+    //private val i2cPort: I2C.Port = I2C.Port.kOnboard
+   // private val m_colorSensor = ColorSensorV3(i2cPort)
 
     val rpmEntry = table.getEntry("RPM")
     val rpmSetpointEntry = table.getEntry("RPM Setpoint")
     val rpmErrorEntry = table.getEntry("RPM Error")
     val rpmOffsetEntry = table.getEntry("RPM Offset")
-    val hoodEntry = table.getEntry("Hood")
-    val hoodSetpointEntry = table.getEntry("Hood Setpoint")
+    val pitchEntry = table.getEntry("pitch")
+    val pitchSetpointEntry = table.getEntry("pitch Setpoint")
 
-    var hoodCurve: MotionCurve
+    val pitchAngle: Angle
+        get() = ((pitchEncoder.get() - 0.218) * 33.0 / 0.182).degrees
+
+
+    var pitchCurve: MotionCurve
+    var rpmCurve: MotionCurve
 
     init {
-//        hoodMotor.setBounds(2.50, 1.55, 1.50, 1.45, 0.50)
-        hoodCurve = MotionCurve()
-        hoodCurve.setMarkBeginOrEndKeysToZeroSlope(false)
-        hoodCurve.storeValue(18.3, 48.0) //rpm 7000
-        hoodCurve.storeValue(13.5, 45.7)
-        hoodCurve.storeValue(9.0, 37.0)
+//        pitchMotor.setBounds(2.50, 1.55, 1.50, 1.45, 0.50)
+        pitchCurve = MotionCurve()
+        pitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+        pitchCurve.storeValue(18.3, 30.0) //rpm 7000
+        pitchCurve.storeValue(13.5, 20.7)
+        pitchCurve.storeValue(9.0, 5.0)
+
+        rpmCurve = MotionCurve()
+        rpmCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+        rpmCurve.storeValue(18.3, 4000.0) //rpm 7000
+        rpmCurve.storeValue(13.5, 3000.0)
+        rpmCurve.storeValue(9.0, 2000.0)
 
         shootingMotor.config {
+            followersInverted(true)
+            coastMode()
+            feedbackCoefficient = 60.0 / (2048 * 0.33)
+            pid {
+                p(0.8e-5)
+                i(0.0)//i(0.0)
+                d(0.0)//d(1.5e-3) //1.5e-3  -- we tried 1.5e9 and 1.5e-9, no notable difference  // we printed values at the MotorController and the wrapper
+                f(0.06)
+            }
         }
 
-        rpmSetpointEntry.setDouble(7000.0)
-        hoodSetpointEntry.setDouble(50.0)
+        rpmSetpointEntry.setDouble(4000.0)
+        pitchSetpointEntry.setDouble(10.0)
 
         GlobalScope.launch(MeanlibDispatcher) {
             var upPressed = false
@@ -56,71 +81,82 @@ object Shooter : Subsystem("Shooter") {
             rpmOffset = rpmOffsetEntry.getDouble(1600.0)
 
             periodic {
-//                println(hoodMotor.analogAngle)
-//                hoodMotor.setPercentOutput( 0.25 * (OI.operatorController.leftTrigger - OI.operatorController.rightTrigger))
                 rpmEntry.setDouble(rpm)
                 rpmErrorEntry.setDouble(rpmSetpoint - rpm)
 
-                 hoodEntry.setDouble(hoodEncoderPosition)
-                val detectedColor: Color = m_colorSensor.configureColorSensor()
+                 pitchEntry.setDouble(pitchEncoderPosition)
+                //val detectedColor: Color = m_colorSensor.color
 
-                println("Color = ${detectedColor.red} ${detectedColor.green} ${detectedColor.blue}")
+//                println("Color = ${detectedColor.red} ${detectedColor.green} ${detectedColor.blue}")
 
                 if (OI.operatorController.dPad == Controller.Direction.UP) {
                     upPressed = true
                 } else if (OI.operatorController.dPad == Controller.Direction.DOWN) {
                     downPressed = true
                 }
-                if(OI.operatorController.dPad != Controller.Direction.UP && upPressed) {
+                if (OI.operatorController.dPad != Controller.Direction.UP && upPressed) {
                     upPressed = false
-                    incrementRpmOffset()
+                    pitchSetpoint += 2
+                    //incrementRpmOffset()
                 }
-                if(OI.operatorController.dPad != Controller.Direction.DOWN && downPressed) {
+                if (OI.operatorController.dPad != Controller.Direction.DOWN && downPressed) {
                     downPressed = false
-                    decrementRpmOffset()
+                    pitchSetpoint -= 2
+                    //decrementRpmOffset()
                 }
-                if (hoodPDEnable) {
-                    val power = hoodPDController.update(hoodSetpoint - hoodEncoderPosition)
-                    hoodSetPower(power)
-//                    println("hoodSetPoint=$hoodSetpoint  encoderPosition = $hoodEncoderPosition  power = $power")
+                if (pitchPDEnable) {
+                    val power = pitchPDController.update(pitchSetpoint - pitchEncoderPosition)
+                    pitchSetPower(power)
+//                    println("pitchSetPoint=$pitchSetpoint  encoderPosition = $pitchEncoderPosition  power = $power")
                 }
+               pitchEntry.setDouble(pitchAngle.asDegrees)
+//                println("angle = ${pitchAngle.asDegrees}")
+
             }
         }
-    }
-
-    fun hoodSetPower(power: Double) {
-        hoodMotor.setPercentOutput(power)
     }
 
     var rpm: Double
         get() = shootingMotor.velocity
         set(value) = shootingMotor.setVelocitySetpoint(value)
 
-    var hoodSetpoint = 45.0
-        get() = hoodSetpointEntry.getDouble(45.0)
-
-    var hoodEncoderPosition: Double
-        get() = Intake.intakeMotor.position
-        set(value) {
-            hoodSetpoint = value.coerceIn(21.0, 66.0)
-        }
-
-    val hoodPDController = PDController(0.5, 0.0)
-
     var rpmSetpoint: Double = 0.0
         get() {
 //            if (FrontLimelight.hasValidTarget) {
-//                val rpm2 = rpmFromDistance(FrontLimelight.distance) + rpmOffset
+//                val rpm2 = rpmCurve.getValue(FrontLimelight.distance) + rpmOffset
 //                rpmSetpointEntry.setDouble(rpm2)
 //                return rpm2
-//            } else {
-//                field = rpmCurve.getValue(20.0) + rpmOffset
-//                rpmSetpointEntry.setDouble(field)
-//                return field
 //            }
 
             return rpmSetpointEntry.getDouble(7000.0)
         }
+
+    fun pitchSetPower(power: Double) {
+        pitchMotor.setPercentOutput(power)
+    }
+
+    var pitchSetpoint = 10.0
+        get() = pitchSetpointEntry.getDouble(10.0)
+//             if (FrontLimelight.hasValidTarget) {
+//                val pitch = pitchCurve.getValue(FrontLimelight.distance)
+//                pitchSetpointEntry.setDouble(pitch)
+//                return pitch
+//            }
+
+        set(value) {
+            field = value.coerceIn(-31.0, 33.0)
+            pitchSetpointEntry.setDouble(field)
+        }
+
+    var pitchEncoderPosition: Double
+        get() =  pitchAngle.asDegrees
+        set(value) {
+            pitchSetpoint = value
+        }
+
+    val pitchPDController = PDController(0.5/30.0, 0.0)
+
+
 
     var rpmOffset: Double = 0.0 //400.0
         set(value) {
@@ -128,7 +164,7 @@ object Shooter : Subsystem("Shooter") {
             rpmOffsetEntry.setDouble(value)
         }
 
-    var hoodPDEnable = false
+    var pitchPDEnable = true
 
     fun incrementRpmOffset() {
         rpmOffset += 20.0
@@ -138,34 +174,36 @@ object Shooter : Subsystem("Shooter") {
         rpmOffset -= 20.0
     }
 
-    suspend fun resetHoodEncoder() = use(this) {
-        if (!hoodPDEnable) {
-            hoodSetPower(1.0)
-            var lastEncoderPosition = Intake.intakeMotor.position
-            var samePositionCounter = 0
-            periodic {
-                if ((lastEncoderPosition - Intake.intakeMotor.position).absoluteValue < 0.01) {
-                    samePositionCounter++
-                } else {
-                    samePositionCounter = 0
-                }
-                if (samePositionCounter > 10) {
-                    this.stop()
-                }
-                lastEncoderPosition = Intake.intakeMotor.position
-            }
-            hoodSetPower(0.0)
-            Intake.intakeMotor.position = 66.6
-            hoodPDEnable = true
-        }
+    suspend fun resetPitchEncoder() = use(this) {
+//        if (!pitchPDEnable) {
+//            pitchSetPower(1.0)
+//            var lastEncoderPosition = Intake.intakeMotor.position
+//            var samePositionCounter = 0
+//            periodic {
+//                if ((lastEncoderPosition - Intake.intakeMotor.position).absoluteValue < 0.01) {
+//                    samePositionCounter++
+//                } else {
+//                    samePositionCounter = 0
+//                }
+//                if (samePositionCounter > 10) {
+//                    this.stop()
+//                }
+//                lastEncoderPosition = Intake.intakeMotor.position
+//            }
+//            pitchSetPower(0.0)
+//            Intake.intakeMotor.position = 66.6
+//            pitchPDEnable = true
+//        }
     }
 
     var current = shootingMotor.current
 
     override suspend fun default() {
         periodic {
-            shootingMotor.stop()
-            //  hoodMotor.stop()
+//            shootingMotor.stop()
+            pitchEntry.setDouble(pitchAngle.asDegrees)
+//            rpm = rpmSetpoint
+//            println("rpm: $rpm    setpoint: $rpmSetpoint")
         }
     }
 }
