@@ -45,6 +45,7 @@ object Robot : MeanlibRobot() {
         Intake
         Shooter
         Feeder
+        //Climb
     }
 
     override suspend fun enable() {
@@ -57,6 +58,8 @@ object Robot : MeanlibRobot() {
 //        ShootingTests.enable()
         Shooter.enable()
         Climb.enable()
+        zeroIntakePivot()
+        Intake.pivotPDEnable = true
         println("ending enable")
     }
 
@@ -78,9 +81,8 @@ object Robot : MeanlibRobot() {
 
     override suspend fun test()  {
         println("test mode begin. Hi.")
-//        Intake.setIntakePower(0.8)
-//        shootTest2()
-        Climb.motorTest()
+//        intakePivotTest()
+        shootTest2()
     }
 
 

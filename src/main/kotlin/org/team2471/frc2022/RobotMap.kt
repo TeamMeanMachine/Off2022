@@ -23,10 +23,10 @@ object AnalogSensors {
     const val SWERVE_BACK_LEFT = 3
 }
 object DigitalSensors {
-    const val INTAKE_PIVOT = 0
-    const val SHOOTER_PITCH = 1
+    const val INTAKE_PIVOT = 3
+    const val SHOOTER_PITCH = 1 //change back when does with feeder distance test!
     const val CLIMB_ANGLE = 2
-    const val FEEDER_DISTANCE = 3
+    const val FEEDER_DISTANCE = 0
 }
 
 object Falcons {

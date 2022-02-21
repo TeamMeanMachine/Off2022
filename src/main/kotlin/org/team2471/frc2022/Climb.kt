@@ -24,7 +24,7 @@ object Climb : Subsystem("Climb") {
     val angleEntry = table.getEntry("Angle")
     val angleSetpointEntry = table.getEntry("Angle Setpoint")
 
-    val climbMode = true
+    val climbMode = false
     var heightSetpoint = 0.0
         get() = heightSetpointEntry.getDouble(0.0)
         set(value) {

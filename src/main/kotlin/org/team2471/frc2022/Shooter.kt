@@ -29,8 +29,10 @@ object Shooter : Subsystem("Shooter") {
     private val pitchMotor = MotorController(TalonID(Talons.PITCH))
     private val table = NetworkTableInstance.getDefault().getTable(name)
     val pitchEncoder = DutyCycleEncoder(DigitalSensors.SHOOTER_PITCH)
-    //private val i2cPort: I2C.Port = I2C.Port.kOnboard
-   // private val m_colorSensor = ColorSensorV3(i2cPort)
+
+    private val i2cPort: I2C.Port = I2C.Port.kOnboard
+    private val colorSensor = ColorSensorV3(i2cPort)
+    val colorEntry = table.getEntry("Color")
 
     val rpmEntry = table.getEntry("RPM")
     val rpmSetpointEntry = table.getEntry("RPM Setpoint")
@@ -41,10 +43,12 @@ object Shooter : Subsystem("Shooter") {
 
     val pitchAngle: Angle
         get() = ((pitchEncoder.get() - 0.218) * 33.0 / 0.182).degrees
-
-
+    val pitchPDController = PDController(0.5/30.0, 0.0)
     var pitchCurve: MotionCurve
     var rpmCurve: MotionCurve
+
+    var color = "blue"
+
 
     init {
 //        pitchMotor.setBounds(2.50, 1.55, 1.50, 1.45, 0.50)
@@ -109,7 +113,14 @@ object Shooter : Subsystem("Shooter") {
                     pitchSetPower(power)
 //                    println("pitchSetPoint=$pitchSetpoint  encoderPosition = $pitchEncoderPosition  power = $power")
                 }
-               pitchEntry.setDouble(pitchAngle.asDegrees)
+                pitchEntry.setDouble(pitchAngle.asDegrees)
+                if (colorSensor.color.red >= colorSensor.color.blue) {
+                    color = "red"
+                } else {
+                    color = "blue"
+                }
+                colorEntry.setString(color)
+//                println("red: ${colorSensor.configureColorSensor()}          blue: ${colorSensor.blue}")
 //                println("angle = ${pitchAngle.asDegrees}")
 
             }
@@ -153,9 +164,6 @@ object Shooter : Subsystem("Shooter") {
         set(value) {
             pitchSetpoint = value
         }
-
-    val pitchPDController = PDController(0.5/30.0, 0.0)
-
 
 
     var rpmOffset: Double = 0.0 //400.0
