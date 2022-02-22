@@ -30,7 +30,7 @@ object Shooter : Subsystem("Shooter") {
     private val table = NetworkTableInstance.getDefault().getTable(name)
     val pitchEncoder = DutyCycleEncoder(DigitalSensors.SHOOTER_PITCH)
 
-    private val i2cPort: I2C.Port = I2C.Port.kOnboard
+    private val i2cPort: I2C.Port = I2C.Port.kMXP
     private val colorSensor = ColorSensorV3(i2cPort)
     val colorEntry = table.getEntry("Color")
 
@@ -43,9 +43,12 @@ object Shooter : Subsystem("Shooter") {
 
     val pitchAngle: Angle
         get() = ((pitchEncoder.get() - 0.218) * 33.0 / 0.182).degrees
+    var pitchPDEnable = true
     val pitchPDController = PDController(0.5/30.0, 0.0)
     var pitchCurve: MotionCurve
     var rpmCurve: MotionCurve
+
+    var shootMode = false
 
     var color = "blue"
 
@@ -67,7 +70,7 @@ object Shooter : Subsystem("Shooter") {
         shootingMotor.config {
             followersInverted(true)
             coastMode()
-            feedbackCoefficient = 60.0 / (2048 * 0.33)
+            feedbackCoefficient = 1.0 / 2048.0
             pid {
                 p(0.8e-5)
                 i(0.0)//i(0.0)
@@ -76,8 +79,8 @@ object Shooter : Subsystem("Shooter") {
             }
         }
 
-        rpmSetpointEntry.setDouble(4000.0)
-        pitchSetpointEntry.setDouble(10.0)
+        //rpmSetpointEntry.setDouble(4000.0)
+//        pitchSetpointEntry.setDouble(10.0)
 
         GlobalScope.launch(MeanlibDispatcher) {
             var upPressed = false
@@ -102,22 +105,27 @@ object Shooter : Subsystem("Shooter") {
                     upPressed = false
                     pitchSetpoint += 2
                     //incrementRpmOffset()
+                    println("up. hi.")
                 }
                 if (OI.operatorController.dPad != Controller.Direction.DOWN && downPressed) {
                     downPressed = false
                     pitchSetpoint -= 2
                     //decrementRpmOffset()
+                    println("down. hi.")
                 }
                 if (pitchPDEnable) {
                     val power = pitchPDController.update(pitchSetpoint - pitchEncoderPosition)
                     pitchSetPower(power)
-//                    println("pitchSetPoint=$pitchSetpoint  encoderPosition = $pitchEncoderPosition  power = $power")
                 }
                 pitchEntry.setDouble(pitchAngle.asDegrees)
-                if (colorSensor.color.red >= colorSensor.color.blue) {
-                    color = "red"
+                if (colorSensor.proximity < 200) {
+                    color = "none " +  colorSensor.proximity
                 } else {
-                    color = "blue"
+                    if (colorSensor.color.red >= colorSensor.color.blue) {
+                        color = "red" + colorSensor.proximity
+                    } else {
+                        color = "blue" + colorSensor.proximity
+                    }
                 }
                 colorEntry.setString(color)
 //                println("red: ${colorSensor.configureColorSensor()}          blue: ${colorSensor.blue}")
@@ -127,6 +135,8 @@ object Shooter : Subsystem("Shooter") {
         }
     }
 
+    val cargoIsStaged : Boolean
+        get() = colorSensor.proximity > 300
     var rpm: Double
         get() = shootingMotor.velocity
         set(value) = shootingMotor.setVelocitySetpoint(value)
@@ -172,8 +182,6 @@ object Shooter : Subsystem("Shooter") {
             rpmOffsetEntry.setDouble(value)
         }
 
-    var pitchPDEnable = true
-
     fun incrementRpmOffset() {
         rpmOffset += 20.0
     }
@@ -211,7 +219,6 @@ object Shooter : Subsystem("Shooter") {
 //            shootingMotor.stop()
             pitchEntry.setDouble(pitchAngle.asDegrees)
 //            rpm = rpmSetpoint
-//            println("rpm: $rpm    setpoint: $rpmSetpoint")
         }
     }
 }

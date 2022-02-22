@@ -28,7 +28,7 @@ object Intake : Subsystem("Intake") {
     val pivotEntry = table.getEntry("Pivot")
     val pivotSetpointEntry = table.getEntry("Pivot Setpoint")
 
-    var pivotOffset = 0.0
+    var pivotOffset = 131.0
     val pivotEncoder = DutyCycleEncoder(DigitalSensors.INTAKE_PIVOT)
     var pivotAngle : Double
         get() = (((pivotEncoder.get() - 0.587) / 0.256) * 90.0) + pivotOffset
@@ -36,52 +36,55 @@ object Intake : Subsystem("Intake") {
             pivotOffset = 0.0
             pivotOffset = value - pivotAngle
         }
-    val pivotPDController = PDController(0.067/*0.30*/, 0.0)
-    var pivotPDEnable = false
-    var pivotSetpoint = 94.0
+    val pivotPDController = PDController(0.05, 0.0)
+    var pivotPDEnable = true
+    var pivotSetpoint = pivotAngle
         get() = pivotSetpointEntry.getDouble(94.0)
         set(value) {
-            field = value.coerceIn(-3.0, 94.0)
+            field = value.coerceIn(PIVOT_BOTTOM, PIVOT_TOP)
             pivotSetpointEntry.setDouble(field)
         }
 
-
     val INTAKE_POWER = 0.8
+
+    val PIVOT_BOTTOM = -3.0
+    val PIVOT_CATCH = 0.0
+    val PIVOT_INTAKE = 17.0
+    val PIVOT_TOP = 94.0
+
 
 //    val button = DigitalInput(9)
     var blue = 0
 
     init {
         intakePivotMotor.config(20) {
-//            feedbackCoefficient = 360.0 / 2048.0 / 44.0  // degrees in a rotation, ticks per rotation, gear reduction (44:1 reduction)
+            feedbackCoefficient = 360.0 / 2048.0 / 44.0  // degrees in a rotation, ticks per rotation, gear reduction (44:1 reduction)
             brakeMode()
-//            setRawOffsetConfig(analogAngle)
-//            inverted(true)
-//            setSensorPhase(false)
-//            pid {
-//                p(0.000002)
-////                f(0.02)
-////                    d(0.0000025)
-//            }
+            pid {
+                p(0.000002)
+            }
         }
         intakeMotor.config {
             coastMode()
-//            inverted(true)
         }
 
-        //intakePivotMotor.position = pivotAngle.asDegrees
-
+        intakePivotMotor.position = pivotAngle
 
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
                 currentEntry.setDouble(intakePivotMotor.current)  // intakeMotor.current)
                 pivotEntry.setDouble(pivotAngle) // intakePivotMotor.position)
                 if (pivotPDEnable) {
-                    val power = pivotPDController.update(pivotSetpoint - pivotAngle)
-                    setIntakePivotPower(power)
+//                    val power = pivotPDController.update(pivotSetpoint - pivotAngle)
+//                    setIntakePivotPower(power)
+                    intakePivotMotor.setPositionSetpoint(pivotSetpoint)
                 }
             }
         }
+    }
+
+    override fun preEnable() {
+        pivotSetpoint = pivotAngle.coerceIn(0.0, 95.0)
     }
 
 //    val ballIsStaged: Boolean
@@ -93,21 +96,6 @@ object Intake : Subsystem("Intake") {
 
     fun setIntakePivotPower(power: Double) {
         intakePivotMotor.setPercentOutput(power)
-    }
-
-    suspend fun toggleExtend() {
-        setExtend((intakePivotMotor.position-20).absoluteValue>2.0 )
-    }
-
-    suspend fun setExtend(state: Boolean) {
-        println("setExtend")
-        if (state) {
-            setIntakePower(0.0)
-            changeAngle(92.0)
-        } else {
-            setIntakePower(INTAKE_POWER)
-            changeAngle(14.0)
-        }
     }
 
     suspend fun changeAngle(angle: Double) {
@@ -127,8 +115,7 @@ object Intake : Subsystem("Intake") {
 
     override suspend fun default() {
         periodic {
-//            currentEntry.setDouble(intakePivotMotor.closedLoopError)
-            println(".")
+            currentEntry.setDouble(Shooter.shootingMotor.current)
         }
     //    print(":)")
 //        if (ballIsStaged) {
@@ -137,4 +124,6 @@ object Intake : Subsystem("Intake") {
 //            setIntakePower(0.5 * INTAKE_POWER)
 //        }
     }
+
+
 }

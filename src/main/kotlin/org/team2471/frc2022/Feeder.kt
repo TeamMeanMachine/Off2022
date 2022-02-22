@@ -2,6 +2,7 @@ package org.team2471.frc2022
 
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DigitalInput
+import edu.wpi.first.wpilibj.SensorUtil
 import edu.wpi.first.wpilibj.Timer
 
 import kotlinx.coroutines.GlobalScope
@@ -22,13 +23,15 @@ object Feeder : Subsystem("Feeder") {
 
     val feedMotor = MotorController(TalonID(Talons.FEED))
 
-    private val table = NetworkTableInstance.getDefault().getTable(Intake.name)
+    val button = DigitalInput(4)
+
+    private val table = NetworkTableInstance.getDefault().getTable(Feeder.name)
     val currentEntry = table.getEntry("Current")
     val angleEntry = table.getEntry("Angle")
+    val feedEntry = table.getEntry("Staged")
 
     val INTAKE_POWER = 0.7
 
-//    val button = DigitalInput(9)
     var blue = 0
 
 
@@ -38,12 +41,17 @@ object Feeder : Subsystem("Feeder") {
             brakeMode()
             inverted(true)
         }
+        GlobalScope.launch(MeanlibDispatcher) {
+            periodic {
+                feedEntry.setBoolean(ballIsStaged)
+            }
+        }
 
     }
 
 //
-//    val ballIsStaged: Boolean
-//        get() = !button.get()
+    val ballIsStaged: Boolean
+        get() = !button.get()
 
 
     fun setPower(power: Double) {

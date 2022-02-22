@@ -58,8 +58,7 @@ object Robot : MeanlibRobot() {
 //        ShootingTests.enable()
         Shooter.enable()
         Climb.enable()
-        zeroIntakePivot()
-        Intake.pivotPDEnable = true
+//        zeroIntakePivot()
         println("ending enable")
     }
 
@@ -75,14 +74,14 @@ object Robot : MeanlibRobot() {
 
     override suspend fun teleop() {
         println("telop begin")
-        intake(true)
         Drive.headingSetpoint = Drive.heading
     }
 
     override suspend fun test()  {
         println("test mode begin. Hi.")
 //        intakePivotTest()
-        shootTest2()
+//        shootTest2()
+        feedUntilCargo()
     }
 
 

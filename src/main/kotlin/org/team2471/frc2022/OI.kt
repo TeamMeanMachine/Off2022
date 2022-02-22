@@ -52,8 +52,10 @@ object OI {
 
     init {
         driverController::back.whenTrue { Drive.zeroGyro() }
-        driverController::rightBumper.whenTrue { intake(true) }
-        driverController::leftBumper.whenTrue { intake(false) }
-//        driverController::a.whenTrue { Shooter.rpm = Shooter.rpmSetpoint }
+        driverController::leftBumper.whenTrue { shootMode() }
+        operatorController::x.whenTrue { armDown() }
+        operatorController::b.whenTrue { intake() }
+        operatorController::a.whenTrue { catch() }
+        operatorController::y.whenTrue { armUp() }
     }
 }
