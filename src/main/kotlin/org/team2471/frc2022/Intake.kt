@@ -28,7 +28,7 @@ object Intake : Subsystem("Intake") {
     val pivotEntry = table.getEntry("Pivot")
     val pivotSetpointEntry = table.getEntry("Pivot Setpoint")
 
-    var pivotOffset = 131.0
+    var pivotOffset = 140.0
     val pivotEncoder = DutyCycleEncoder(DigitalSensors.INTAKE_PIVOT)
     var pivotAngle : Double
         get() = (((pivotEncoder.get() - 0.587) / 0.256) * 90.0) + pivotOffset
@@ -69,10 +69,11 @@ object Intake : Subsystem("Intake") {
         }
 
         intakePivotMotor.position = pivotAngle
+        pivotSetpoint = pivotAngle
 
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
-                currentEntry.setDouble(intakePivotMotor.current)  // intakeMotor.current)
+                currentEntry.setDouble(Feeder.feedMotor.current)  // intakeMotor.current)
                 pivotEntry.setDouble(pivotAngle) // intakePivotMotor.position)
                 if (pivotPDEnable) {
 //                    val power = pivotPDController.update(pivotSetpoint - pivotAngle)
@@ -101,7 +102,7 @@ object Intake : Subsystem("Intake") {
     suspend fun changeAngle(angle: Double) {
         val angleCurve = MotionCurve()
         angleCurve.storeValue(0.0, pivotAngle)
-        angleCurve.storeValue(1.0, angle)
+        angleCurve.storeValue((pivotAngle - angle).absoluteValue / 90.0, angle)
         val timer = Timer()
         timer.start()
         periodic {

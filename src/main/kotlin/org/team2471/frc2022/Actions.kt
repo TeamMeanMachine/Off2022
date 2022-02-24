@@ -1,9 +1,8 @@
 package org.team2471.frc2022
 
-import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.use
-import org.team2471.frc.lib.util.Timer
+import org.team2471.frc.lib.units.degrees
 
 //Intake
 
@@ -55,11 +54,15 @@ suspend fun feedUntilCargo() = use(Intake, Feeder) {
 suspend fun shootMode() = use(Shooter, Feeder) {
     Shooter.shootMode = !Shooter.shootMode
     if (Shooter.shootMode) {
+        FrontLimelight.ledEnabled = true
         periodic {
             Shooter.rpm = Shooter.rpmSetpoint
+            Shooter.pitch = Shooter.pitchSetpoint
+//            Shooter.changeAngle(Shooter.pitchSetpoint)
             Feeder.setPower(OI.driveRightTrigger)
         }
     } else {
+        FrontLimelight.ledEnabled = false
         Shooter.rpm = 0.0
         Feeder.setPower(0.0)
     }

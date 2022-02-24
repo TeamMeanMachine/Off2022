@@ -2,10 +2,9 @@ package org.team2471.frc2022
 
 import com.revrobotics.ColorSensorV3
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.wpilibj.DutyCycle
 import edu.wpi.first.wpilibj.DutyCycleEncoder
 import edu.wpi.first.wpilibj.I2C
-import edu.wpi.first.wpilibj.util.Color
+import edu.wpi.first.wpilibj.Timer
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.actuators.FalconID
@@ -17,9 +16,9 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller
-import org.team2471.frc.lib.input.whenTrue
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.Angle
+import org.team2471.frc.lib.units.asFeet
 import org.team2471.frc.lib.units.degrees
 import kotlin.math.absoluteValue
 
@@ -41,12 +40,52 @@ object Shooter : Subsystem("Shooter") {
     val pitchEntry = table.getEntry("pitch")
     val pitchSetpointEntry = table.getEntry("pitch Setpoint")
 
-    val pitchAngle: Angle
-        get() = ((pitchEncoder.get() - 0.218) * 33.0 / 0.182).degrees
+    var pitch: Double = 0.0
+        get() = (pitchEncoder.get() - 0.218) * 33.0 / 0.182
+        set(value) {
+            pitchSetpoint = value
+            field = value
+        }
+    var pitchSetpoint = pitch
+        get() {
+            if (FrontLimelight.hasValidTarget) {
+                val pitch = pitchCurve.getValue(FrontLimelight.distance.asFeet)
+                pitchSetpointEntry.setDouble(pitch)
+                return pitch
+            } else {
+                return pitchSetpointEntry.getDouble(10.0)
+            }
+        }
+        set(value) {
+            field = value.coerceIn(-31.0, 33.0)
+            pitchSetpointEntry.setDouble(field)
+        }
+    var pitchEncoderPosition: Double
+        get() =  pitch
+        set(value) {
+            pitchSetpoint = value
+        }
+
     var pitchPDEnable = true
-    val pitchPDController = PDController(0.5/30.0, 0.0)
-    var pitchCurve: MotionCurve
-    var rpmCurve: MotionCurve
+    val pitchPDController = PDController(0.06, 0.0) // d 0.1
+    val pitchCurve: MotionCurve = MotionCurve()
+    val rpmCurve: MotionCurve = MotionCurve()
+
+    var rpmSetpoint: Double = 0.0
+        get() {
+            if (FrontLimelight.hasValidTarget) {
+                field = rpmCurve.getValue(FrontLimelight.distance.asFeet) + rpmOffset
+                rpmSetpointEntry.setDouble(rpm)
+            } else {
+                field = rpmSetpointEntry.getDouble(7000.0)
+            }
+            return field
+        }
+    var rpm: Double
+        get() = shootingMotor.velocity
+        set(value) {
+            shootingMotor.setVelocitySetpoint(value)
+        }
 
     var shootMode = false
 
@@ -55,14 +94,14 @@ object Shooter : Subsystem("Shooter") {
 
     init {
 //        pitchMotor.setBounds(2.50, 1.55, 1.50, 1.45, 0.50)
-        pitchCurve = MotionCurve()
         pitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+        //right up against: 12.5
         pitchCurve.storeValue(18.3, 30.0) //rpm 7000
         pitchCurve.storeValue(13.5, 20.7)
         pitchCurve.storeValue(9.0, 5.0)
 
-        rpmCurve = MotionCurve()
         rpmCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+        //right up against: 4000
         rpmCurve.storeValue(18.3, 4000.0) //rpm 7000
         rpmCurve.storeValue(13.5, 3000.0)
         rpmCurve.storeValue(9.0, 2000.0)
@@ -70,16 +109,16 @@ object Shooter : Subsystem("Shooter") {
         shootingMotor.config {
             followersInverted(true)
             coastMode()
-            feedbackCoefficient = 1.0 / 2048.0
+            feedbackCoefficient = 1.0 / 2048.0 * 60.0
             pid {
-                p(0.8e-5)
+                p(1.3e-7)
                 i(0.0)//i(0.0)
                 d(0.0)//d(1.5e-3) //1.5e-3  -- we tried 1.5e9 and 1.5e-9, no notable difference  // we printed values at the MotorController and the wrapper
-                f(0.06)
+                f(0.0149)
             }
         }
 
-        //rpmSetpointEntry.setDouble(4000.0)
+        rpmSetpointEntry.setDouble(rpmSetpoint)
 //        pitchSetpointEntry.setDouble(10.0)
 
         GlobalScope.launch(MeanlibDispatcher) {
@@ -117,7 +156,7 @@ object Shooter : Subsystem("Shooter") {
                     val power = pitchPDController.update(pitchSetpoint - pitchEncoderPosition)
                     pitchSetPower(power)
                 }
-                pitchEntry.setDouble(pitchAngle.asDegrees)
+                pitchEntry.setDouble(pitch)
                 if (colorSensor.proximity < 200) {
                     color = "none " +  colorSensor.proximity
                 } else {
@@ -137,44 +176,25 @@ object Shooter : Subsystem("Shooter") {
 
     val cargoIsStaged : Boolean
         get() = colorSensor.proximity > 300
-    var rpm: Double
-        get() = shootingMotor.velocity
-        set(value) = shootingMotor.setVelocitySetpoint(value)
-
-    var rpmSetpoint: Double = 0.0
-        get() {
-//            if (FrontLimelight.hasValidTarget) {
-//                val rpm2 = rpmCurve.getValue(FrontLimelight.distance) + rpmOffset
-//                rpmSetpointEntry.setDouble(rpm2)
-//                return rpm2
-//            }
-
-            return rpmSetpointEntry.getDouble(7000.0)
-        }
 
     fun pitchSetPower(power: Double) {
         pitchMotor.setPercentOutput(power)
     }
 
-    var pitchSetpoint = 10.0
-        get() = pitchSetpointEntry.getDouble(10.0)
-//             if (FrontLimelight.hasValidTarget) {
-//                val pitch = pitchCurve.getValue(FrontLimelight.distance)
-//                pitchSetpointEntry.setDouble(pitch)
-//                return pitch
-//            }
-
-        set(value) {
-            field = value.coerceIn(-31.0, 33.0)
-            pitchSetpointEntry.setDouble(field)
+    suspend fun changeAngle(angle: Double) {
+        val angleCurve = MotionCurve()
+        angleCurve.storeValue(0.0, pitch)
+        angleCurve.storeValue((pitch - angle).absoluteValue / 30.0, angle)
+        val timer = Timer()
+        timer.start()
+        periodic {
+            val t = timer.get()
+            pitch = angleCurve.getValue(t)
+            if (t >= angleCurve.length) {
+                stop()
+            }
         }
-
-    var pitchEncoderPosition: Double
-        get() =  pitchAngle.asDegrees
-        set(value) {
-            pitchSetpoint = value
-        }
-
+    }
 
     var rpmOffset: Double = 0.0 //400.0
         set(value) {
@@ -217,8 +237,8 @@ object Shooter : Subsystem("Shooter") {
     override suspend fun default() {
         periodic {
 //            shootingMotor.stop()
-            pitchEntry.setDouble(pitchAngle.asDegrees)
-//            rpm = rpmSetpoint
+            pitchEntry.setDouble(pitch)
+            rpm = 0.0
         }
     }
 }

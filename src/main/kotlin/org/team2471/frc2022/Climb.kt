@@ -42,7 +42,7 @@ object Climb : Subsystem("Climb") {
         }
     val anglePDController = PDController(0.5/30.0, 0.0)
     var pitchEncoderPosition: Double
-        get() =  Shooter.pitchAngle.asDegrees
+        get() =  Shooter.pitch
         set(value) {
             Shooter.pitchSetpoint = value
         }
