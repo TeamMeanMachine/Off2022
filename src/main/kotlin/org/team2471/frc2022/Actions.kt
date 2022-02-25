@@ -89,7 +89,7 @@ fun zeroIntakePivot() {
 //    finally {
 //        println("finally has been reached")
         Intake.setIntakePivotPower(0.0)
-        Intake.pivotAngle = 95.0
+//        Intake.pivotAngle = 95.0
 //    }
 }
 
