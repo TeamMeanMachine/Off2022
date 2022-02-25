@@ -60,11 +60,6 @@ object Shooter : Subsystem("Shooter") {
             field = value.coerceIn(-31.0, 33.0)
             pitchSetpointEntry.setDouble(field)
         }
-    var pitchEncoderPosition: Double
-        get() =  pitch
-        set(value) {
-            pitchSetpoint = value
-        }
 
     var pitchPDEnable = true
     val pitchPDController = PDController(0.06, 0.0) // d 0.1
@@ -130,8 +125,7 @@ object Shooter : Subsystem("Shooter") {
                 rpmEntry.setDouble(rpm)
                 rpmErrorEntry.setDouble(rpmSetpoint - rpm)
 
-                 pitchEntry.setDouble(pitchEncoderPosition)
-                //val detectedColor: Color = m_colorSensor.color
+                 //val detectedColor: Color = m_colorSensor.color
 
 //                println("Color = ${detectedColor.red} ${detectedColor.green} ${detectedColor.blue}")
 
@@ -152,10 +146,6 @@ object Shooter : Subsystem("Shooter") {
                     //decrementRpmOffset()
                     println("down. hi.")
                 }
-                if (pitchPDEnable) {
-                    val power = pitchPDController.update(pitchSetpoint - pitchEncoderPosition)
-                    pitchSetPower(power)
-                }
                 pitchEntry.setDouble(pitch)
                 if (colorSensor.proximity < 200) {
                     color = "none " +  colorSensor.proximity
@@ -170,6 +160,18 @@ object Shooter : Subsystem("Shooter") {
 //                println("red: ${colorSensor.configureColorSensor()}          blue: ${colorSensor.blue}")
 //                println("angle = ${pitchAngle.asDegrees}")
 
+            }
+        }
+    }
+
+    override fun preEnable() {
+        GlobalScope.launch(MeanlibDispatcher) {
+            pitchSetpoint = pitch
+            periodic {
+                if (pitchPDEnable) {
+                    val power = pitchPDController.update(pitchSetpoint - pitch)
+                    pitchSetPower(power)
+                }
             }
         }
     }
