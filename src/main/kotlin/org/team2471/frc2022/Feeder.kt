@@ -49,6 +49,11 @@ object Feeder : Subsystem("Feeder") {
 
     }
 
+    override fun preEnable() {
+        setPower(0.0)
+    }
+
+//
     val ballIsStaged: Boolean
         get() = !button.get()
 

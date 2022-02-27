@@ -14,6 +14,7 @@ import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.motion_profiling.MotionCurve
+import org.team2471.frc.lib.units.degrees
 import kotlin.math.absoluteValue
 
 
@@ -28,14 +29,14 @@ object Intake : Subsystem("Intake") {
     val pivotEntry = table.getEntry("Pivot")
     val pivotSetpointEntry = table.getEntry("Pivot Setpoint")
 
-    var pivotOffset = if (isCompBotIHateEverything) 0.0 else 140.0
+    var pivotOffset = if (isCompBotIHateEverything) 0.0 else 21.0
     val pivotEncoder = DutyCycleEncoder(DigitalSensors.INTAKE_PIVOT)
-    var pivotAngle : Double
-        get() = (((pivotEncoder.get() - 0.587) / 0.256) * 90.0) + pivotOffset
-        set(value) {
-            pivotOffset = 0.0
-            pivotOffset = value - pivotAngle
-        }
+    var pivotAngle : Double = 0.0
+        get() = (pivotEncoder.get() - 0.1121) / 0.236 * 90.0 + pivotOffset
+//        set(value) {
+//            pivotOffset = 0.0
+            //pivotOffset = value - pivotAngle
+//        }
     val pivotPDController = PDController(0.05, 0.0)
     var pivotPDEnable = true
     var pivotSetpoint = pivotAngle
@@ -47,10 +48,10 @@ object Intake : Subsystem("Intake") {
 
     val INTAKE_POWER = 0.8
 
-    val PIVOT_BOTTOM = -3.0
+    val PIVOT_BOTTOM = 0.0
     val PIVOT_CATCH = 0.0
     val PIVOT_INTAKE = 17.0
-    val PIVOT_TOP = 94.0
+    val PIVOT_TOP = 103.0
 
 
 //    val button = DigitalInput(9)
@@ -58,23 +59,43 @@ object Intake : Subsystem("Intake") {
 
     init {
         intakePivotMotor.config(20) {
-            feedbackCoefficient = 360.0 / 2048.0 / 44.0  // degrees in a rotation, ticks per rotation, gear reduction (44:1 reduction)
+            feedbackCoefficient =
+                360.0 / 2048.0 / 87.1875 * 7.0 / 17.0 // degrees in a rotation, ticks per rotation, gear reduction (44:1 reduction)
             brakeMode()
             pid {
                 p(0.000002)
             }
+            currentLimit(40, 60, 10)
         }
         intakeMotor.config {
             coastMode()
         }
 
-        intakePivotMotor.position = pivotAngle
-        pivotSetpoint = pivotAngle
-
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
                 currentEntry.setDouble(Feeder.feedMotor.current)  // intakeMotor.current)
                 pivotEntry.setDouble(pivotAngle) // intakePivotMotor.position)
+            }
+        }
+    }
+
+    override fun preEnable() {
+        if (pivotEncoder.isConnected && pivotAngle > PIVOT_BOTTOM && pivotAngle < PIVOT_TOP) {
+            intakePivotMotor.setRawOffset(pivotAngle.degrees)
+            pivotSetpoint = pivotAngle
+        } else {
+            intakePivotMotor.setRawOffset(PIVOT_BOTTOM.degrees)
+            pivotSetpoint = PIVOT_BOTTOM
+
+            /*
+            intakePivotMotor.setRawOffset(PIVOT_TOP.degrees)
+            pivotSetpoint = PIVOT_TOP
+            */
+            println("Encoder failure. Using top hard stop.")
+        }
+        println(" Setpoint = $pivotSetpoint pivot angle = $pivotAngle  motor position = ${intakePivotMotor.position}")
+        GlobalScope.launch(MeanlibDispatcher) {
+            periodic {
                 if (pivotPDEnable) {
 //                    val power = pivotPDController.update(pivotSetpoint - pivotAngle)
 //                    setIntakePivotPower(power)
@@ -84,10 +105,6 @@ object Intake : Subsystem("Intake") {
 
             }
         }
-    }
-
-    override fun preEnable() {
-        pivotSetpoint = pivotAngle.coerceIn(0.0, 95.0)
     }
 
 //    val ballIsStaged: Boolean
