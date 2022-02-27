@@ -14,7 +14,7 @@ suspend fun intake() = use(Intake, Feeder) {
 }
 
 suspend fun catch() = use(Intake, Feeder) {
-    Intake.setIntakePower(Intake.INTAKE_POWER)
+    Intake.setIntakePower(0.0)
     Intake.changeAngle(Intake.PIVOT_CATCH)
     feedUntilCargo()
 }
@@ -34,15 +34,15 @@ suspend fun armUp() = use(Intake, Feeder) {
 suspend fun feedUntilCargo() = use(Intake, Feeder) {
     periodic {
         if (Shooter.cargoIsStaged) {
-                Feeder.setPower(0.0)
-                println("Shooter Staged")
-                if (Feeder.ballIsStaged) {
-                    Intake.setIntakePower(0.0)
-                    println("Intake Staged")
-                } else {
-                    Intake.setIntakePower(Intake.INTAKE_POWER)
-                    println("Intake Powering - waiting for 2nd cargo")
-                }
+            Feeder.setPower(0.0)
+            println("Shooter Staged")
+            if (Feeder.ballIsStaged) {
+                Intake.setIntakePower(0.0)
+                println("Intake Staged")
+            } else {
+                Intake.setIntakePower(Intake.INTAKE_POWER)
+                println("Intake Powering - waiting for 2nd cargo")
+            }
         } else {
             Feeder.setPower(0.9)
             Intake.setIntakePower(Intake.INTAKE_POWER)

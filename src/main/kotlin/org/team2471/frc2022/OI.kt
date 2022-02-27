@@ -51,8 +51,9 @@ object OI {
         get() = operatorController.rightThumbstickY.deadband(0.25)
 
     init {
-        driverController::back.whenTrue { Drive.zeroGyro() }
+        driverController::back.whenTrue { Drive.zeroGyro(); Drive.initializeSteeringMotors() }
         driverController::leftBumper.whenTrue { shootMode() }
+
         operatorController::a.whenTrue { armDown() }
         operatorController::b.whenTrue { intake() }
         operatorController::x.whenTrue { catch() }

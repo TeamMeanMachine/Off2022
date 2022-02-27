@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.I2C
 import edu.wpi.first.wpilibj.Timer
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.gradle.utils.`is`
 import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.actuators.TalonID
@@ -40,8 +41,11 @@ object Shooter : Subsystem("Shooter") {
     val pitchEntry = table.getEntry("pitch")
     val pitchSetpointEntry = table.getEntry("pitch Setpoint")
 
+    const val PITCH_LOW = -31.0
+    const val PITCH_HIGH = 33.0
+
     var pitch: Double = 0.0
-        get() = (pitchEncoder.get() - 0.218) * 33.0 / 0.182
+        get() = (pitchEncoder.get() - 0.218) * 33.0 / 0.182 -76.0
         set(value) {
             pitchSetpoint = value
             field = value
@@ -57,14 +61,23 @@ object Shooter : Subsystem("Shooter") {
             }
         }
         set(value) {
-            field = value.coerceIn(-31.0, 33.0)
+            field = value.coerceIn(PITCH_LOW, PITCH_HIGH)
             pitchSetpointEntry.setDouble(field)
         }
 
     var pitchPDEnable = true
     val pitchPDController = PDController(0.06, 0.0) // d 0.1
+    val pitchIsReady : Boolean
+        get() {
+            return pitchPDEnable && pitch > PITCH_LOW && pitch < PITCH_HIGH && pitchEncoder.isConnected
+        }
     val pitchCurve: MotionCurve = MotionCurve()
     val rpmCurve: MotionCurve = MotionCurve()
+
+//    val facingCenter : Boolean
+//        get() {
+//            if (Drive.)
+//        }
 
     var rpmSetpoint: Double = 0.0
         get() {
@@ -111,6 +124,11 @@ object Shooter : Subsystem("Shooter") {
                 d(0.0)//d(1.5e-3) //1.5e-3  -- we tried 1.5e9 and 1.5e-9, no notable difference  // we printed values at the MotorController and the wrapper
                 f(0.0149)
             }
+        }
+
+        pitchMotor.config {
+            currentLimit(10, 15, 10)
+            inverted(true)
         }
 
         rpmSetpointEntry.setDouble(rpmSetpoint)
@@ -168,7 +186,7 @@ object Shooter : Subsystem("Shooter") {
         GlobalScope.launch(MeanlibDispatcher) {
             pitchSetpoint = pitch
             periodic {
-                if (pitchPDEnable) {
+                if (pitchIsReady) {
                     val power = pitchPDController.update(pitchSetpoint - pitch)
                     pitchSetPower(power)
                 }
@@ -177,7 +195,7 @@ object Shooter : Subsystem("Shooter") {
     }
 
     val cargoIsStaged : Boolean
-        get() = colorSensor.proximity > 300
+        get() = colorSensor.proximity > 200
 
     fun pitchSetPower(power: Double) {
         pitchMotor.setPercentOutput(power)

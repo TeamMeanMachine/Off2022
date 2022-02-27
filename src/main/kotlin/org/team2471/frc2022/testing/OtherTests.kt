@@ -14,7 +14,7 @@ suspend fun Feeder.motorTest() = use(this) {
 }
 suspend fun Shooter.pitchTest() = use(this) {
     periodic {
-        pitchSetPower(-0.2)
+        pitchSetPower((OI.operatorRightTrigger - OI.operatorLeftTrigger) * 0.5)
     }
 }
 
@@ -26,7 +26,7 @@ suspend fun Climb.pivotTest() = use(this) {
 
 suspend fun Climb.motorTest() = use(this) {
     periodic {
-        setPower(OI.driveLeftTrigger - OI.driveRightTrigger)
-        angleSetPower((OI.operatorRightTrigger - OI.operatorLeftTrigger) * 0.5)
+        angleSetPower(OI.driveLeftTrigger - OI.driveRightTrigger)
+        setPower((OI.operatorRightTrigger - OI.operatorLeftTrigger) * 0.5)
     }
 }

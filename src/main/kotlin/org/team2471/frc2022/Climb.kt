@@ -25,6 +25,8 @@ object Climb : Subsystem("Climb") {
     val angleSetpointEntry = table.getEntry("Angle Setpoint")
 
     val climbMode = false
+    val height: Double
+        get() = heightMotor.position
     var heightSetpoint = 0.0
         get() = heightSetpointEntry.getDouble(0.0)
         set(value) {
@@ -32,8 +34,8 @@ object Climb : Subsystem("Climb") {
             heightSetpointEntry.setDouble(field)
         }
 
-    val angle: Angle
-        get() = ((angleEncoder.get() - 0.05) * -37.0 / 0.13).degrees
+    val angle: Double
+        get() = ((angleEncoder.get() - 0.05) * -37.0 / 0.13)
     var angleSetpoint = 0.0
         get() = angleSetpointEntry.getDouble(0.0)
         set(value) {
@@ -41,19 +43,14 @@ object Climb : Subsystem("Climb") {
             angleSetpointEntry.setDouble(field)
         }
     val anglePDController = PDController(0.5/30.0, 0.0)
-    var pitchEncoderPosition: Double
-        get() =  Shooter.pitch
-        set(value) {
-            Shooter.pitchSetpoint = value
-        }
 
     init {
         heightMotor.config {
             brakeMode()
             followersInverted(false)
-            feedbackCoefficient = 3.14 / 2048.0 / 9.38 * 30.0/25.0
+            feedbackCoefficient = 3.14 / 2048.0 / 9.38 * 30.0 / 25.0
             pid {
-                p(0.00000002)
+                p(0.000000002)
             }
         }
         angleMotor.config {
@@ -64,17 +61,21 @@ object Climb : Subsystem("Climb") {
 
             periodic {
                 heightEntry.setDouble(heightMotor.position)
-                angleEntry.setDouble(angle.asDegrees)
+                angleEntry.setDouble(angle)
 
                 if (climbMode) {
                     heightSetpoint -= OI.operatorLeftY * 0.12
                     angleSetpoint += OI.operatorRightX * 0.12
                     heightMotor.setPositionSetpoint(heightSetpoint)
-                    val power = anglePDController.update(angleSetpoint - angle.asDegrees)
+                    val power = anglePDController.update(angleSetpoint - angle)
                     angleSetPower(power)
                 }
             }
         }
+    }
+
+    override fun preEnable() {
+        angleSetpoint = angle
     }
 
     fun setPower(power: Double) {

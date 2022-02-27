@@ -29,7 +29,7 @@ object Intake : Subsystem("Intake") {
     val pivotEntry = table.getEntry("Pivot")
     val pivotSetpointEntry = table.getEntry("Pivot Setpoint")
 
-    var pivotOffset = -86.5
+    var pivotOffset = 21.0
     val pivotEncoder = DutyCycleEncoder(DigitalSensors.INTAKE_PIVOT)
     var pivotAngle : Double = 0.0
         get() = (pivotEncoder.get() - 0.1121) / 0.236 * 90.0 + pivotOffset
@@ -60,7 +60,7 @@ object Intake : Subsystem("Intake") {
     init {
         intakePivotMotor.config(20) {
             feedbackCoefficient =
-                360.0 / 2048.0 / 87.1875  // degrees in a rotation, ticks per rotation, gear reduction (44:1 reduction)
+                360.0 / 2048.0 / 87.1875 * 7.0 / 17.0 // degrees in a rotation, ticks per rotation, gear reduction (44:1 reduction)
             brakeMode()
             pid {
                 p(0.000002)
@@ -80,8 +80,19 @@ object Intake : Subsystem("Intake") {
     }
 
     override fun preEnable() {
-        intakePivotMotor.setRawOffset(pivotAngle.degrees)
-        pivotSetpoint = pivotAngle
+        if (pivotEncoder.isConnected && pivotAngle > PIVOT_BOTTOM && pivotAngle < PIVOT_TOP) {
+            intakePivotMotor.setRawOffset(pivotAngle.degrees)
+            pivotSetpoint = pivotAngle
+        } else {
+            intakePivotMotor.setRawOffset(PIVOT_BOTTOM.degrees)
+            pivotSetpoint = PIVOT_BOTTOM
+
+            /*
+            intakePivotMotor.setRawOffset(PIVOT_TOP.degrees)
+            pivotSetpoint = PIVOT_TOP
+            */
+            println("Encoder failure. Using top hard stop.")
+        }
         println(" Setpoint = $pivotSetpoint pivot angle = $pivotAngle  motor position = ${intakePivotMotor.position}")
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
@@ -122,7 +133,7 @@ object Intake : Subsystem("Intake") {
 
     override suspend fun default() {
         periodic {
-            currentEntry.setDouble(Shooter.shootingMotor.current)
+            currentEntry.setDouble(intakeMotor.current)
         }
     //    print(":)")
 //        if (ballIsStaged) {

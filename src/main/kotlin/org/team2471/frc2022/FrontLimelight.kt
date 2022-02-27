@@ -18,6 +18,7 @@ import org.team2471.frc.lib.units.*
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.tan
 
 @OptIn(DelicateCoroutinesApi::class)
 object FrontLimelight : Subsystem("Front Limelight") {
@@ -41,8 +42,8 @@ object FrontLimelight : Subsystem("Front Limelight") {
     private var angleOffsetEntry = FrontLimelight.table.getEntry("Angle Offset Entry")
 
     val distance: Length
-        get() = 6.33.feet  / (17.995 + yTranslation).degrees.tan() // val distance = heightFromDistanceToLimelight.feet / tan(angle + yTranslation)  // var angle = atan(heightFromTargetToLimelight / distance) - yTranslation
-
+        get() = (7.25 / tan((34.0 + xTranslation) / 180.0 * Math.PI)).feet
+        //get() = (7.25.feet) / (34.0 - xTranslation).degrees.tan() // val distance = heightFromDistanceToLimelight.feet / tan(angle + yTranslation)
 
     private val tempPIDTable = NetworkTableInstance.getDefault().getTable("fklsdajklfjsadlk;")
 
@@ -121,7 +122,7 @@ object FrontLimelight : Subsystem("Front Limelight") {
         }
 
     val aimError: Double
-        get() = xTranslation + FrontLimelight.angleOffset + parallax.asDegrees
+        get() = -yTranslation + FrontLimelight.angleOffset // + parallax.asDegrees
 
 
     fun leftAngleOffset() {

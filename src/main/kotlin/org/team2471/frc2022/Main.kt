@@ -39,8 +39,8 @@ object Robot : MeanlibRobot() {
         Drive.zeroGyro()
         Drive.heading = 0.0.degrees
        // AutoChooser
-        //FrontLimelight.startUp()
-        //FrontLimelight.ledEnabled = true
+        FrontLimelight.startUp()
+        FrontLimelight.ledEnabled = true
 //        ShootingTests
         Intake
         Shooter
@@ -81,7 +81,10 @@ object Robot : MeanlibRobot() {
         println("test mode begin. Hi.")
 //        intakePivotTest()
 //        shootTest2()
-        feedUntilCargo()
+//        feedUntilCargo()
+//        Climb.motorTest()
+//        Drive.steeringTests()
+        Shooter.pitchTest()
     }
 
 
