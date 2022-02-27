@@ -2,19 +2,22 @@ package org.team2471.frc2022.testing
 
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.use
-import org.team2471.frc2022.Climb
-import org.team2471.frc2022.Feeder
-import org.team2471.frc2022.OI
-import org.team2471.frc2022.Shooter
+import org.team2471.frc2022.*
 
 suspend fun Feeder.motorTest() = use(this) {
     periodic {
-        setPower(0.4)
+        setPower(0.2)
     }
 }
 suspend fun Shooter.pitchTest() = use(this) {
     periodic {
         pitchSetPower(-0.2)
+    }
+}
+
+suspend fun Shooter.motorTest() = use(this) {
+    periodic {
+        shootingMotor.setPercentOutput(0.2)
     }
 }
 
@@ -28,5 +31,11 @@ suspend fun Climb.motorTest() = use(this) {
     periodic {
         setPower(OI.driveLeftTrigger - OI.driveRightTrigger)
         angleSetPower((OI.operatorRightTrigger - OI.operatorLeftTrigger) * 0.5)
+    }
+}
+
+suspend fun Intake.motorTest() {
+    periodic {
+        setIntakePower(0.1)
     }
 }

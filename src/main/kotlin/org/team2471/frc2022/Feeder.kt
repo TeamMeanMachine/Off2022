@@ -23,7 +23,7 @@ object Feeder : Subsystem("Feeder") {
 
     val feedMotor = MotorController(TalonID(Talons.FEED))
 
-    val button = DigitalInput(4)
+    val button = DigitalInput(DigitalSensors.FEEDER_BUTTON)
 
     private val table = NetworkTableInstance.getDefault().getTable(Feeder.name)
     val currentEntry = table.getEntry("Current")
@@ -49,7 +49,6 @@ object Feeder : Subsystem("Feeder") {
 
     }
 
-//
     val ballIsStaged: Boolean
         get() = !button.get()
 

@@ -28,7 +28,7 @@ object Intake : Subsystem("Intake") {
     val pivotEntry = table.getEntry("Pivot")
     val pivotSetpointEntry = table.getEntry("Pivot Setpoint")
 
-    var pivotOffset = 140.0
+    var pivotOffset = if (isCompBotIHateEverything) 0.0 else 140.0
     val pivotEncoder = DutyCycleEncoder(DigitalSensors.INTAKE_PIVOT)
     var pivotAngle : Double
         get() = (((pivotEncoder.get() - 0.587) / 0.256) * 90.0) + pivotOffset
@@ -80,6 +80,8 @@ object Intake : Subsystem("Intake") {
 //                    setIntakePivotPower(power)
                     intakePivotMotor.setPositionSetpoint(pivotSetpoint)
                 }
+                println("intake encoder: ${pivotEncoder.get()}")
+
             }
         }
     }

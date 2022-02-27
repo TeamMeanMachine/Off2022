@@ -29,8 +29,8 @@ object Shooter : Subsystem("Shooter") {
     private val table = NetworkTableInstance.getDefault().getTable(name)
     val pitchEncoder = DutyCycleEncoder(DigitalSensors.SHOOTER_PITCH)
 
-    private val i2cPort: I2C.Port = I2C.Port.kMXP
-    private val colorSensor = ColorSensorV3(i2cPort)
+//    private val i2cPort: I2C.Port = I2C.Port.kMXP
+    //private val colorSensor = ColorSensorV3(i2cPort)
     val colorEntry = table.getEntry("Color")
 
     val rpmEntry = table.getEntry("RPM")
@@ -89,7 +89,7 @@ object Shooter : Subsystem("Shooter") {
 
     var shootMode = false
 
-    var color = "blue"
+    var color = "none"
 
 
     init {
@@ -157,15 +157,13 @@ object Shooter : Subsystem("Shooter") {
                     pitchSetPower(power)
                 }
                 pitchEntry.setDouble(pitch)
-                if (colorSensor.proximity < 200) {
-                    color = "none " +  colorSensor.proximity
-                } else {
-                    if (colorSensor.color.red >= colorSensor.color.blue) {
-                        color = "red" + colorSensor.proximity
-                    } else {
-                        color = "blue" + colorSensor.proximity
-                    }
-                }
+
+                color = when (cargoIsRed) {
+                    null -> "none"
+                    true -> "red"
+                    false -> "blue"
+                } //+ colorSensor.proximity
+                color = "ColorSensor Disabled in code."
                 colorEntry.setString(color)
 //                println("red: ${colorSensor.configureColorSensor()}          blue: ${colorSensor.blue}")
 //                println("angle = ${pitchAngle.asDegrees}")
@@ -175,7 +173,9 @@ object Shooter : Subsystem("Shooter") {
     }
 
     val cargoIsStaged : Boolean
-        get() = colorSensor.proximity > 300
+        get() = false //colorSensor.proximity > 300
+    val cargoIsRed : Boolean?
+        get() =  null //if (colorSensor.proximity < 200) null else colorSensor.color.red >= colorSensor.color.blue
 
     fun pitchSetPower(power: Double) {
         pitchMotor.setPercentOutput(power)

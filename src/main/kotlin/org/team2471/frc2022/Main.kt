@@ -10,6 +10,8 @@ import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2022.testing.*
 import java.net.NetworkInterface
 
+var isCompBotIHateEverything = true
+
 @DelicateCoroutinesApi
 object Robot : MeanlibRobot() {
 
@@ -26,7 +28,8 @@ object Robot : MeanlibRobot() {
                 }
                 println("FORMATTED---->$macString<-----")
 
-           }
+                isCompBotIHateEverything = true //(macString != "0-128472587-69")
+            }
         }
 
         // i heard the first string + double concatenations were expensive...
