@@ -9,7 +9,7 @@ import org.team2471.frc2022.Shooter
 
 suspend fun Feeder.motorTest() = use(this) {
     periodic {
-        setPower(0.4)
+        setShooterFeedPower(0.4)
     }
 }
 suspend fun Shooter.pitchTest() = use(this) {

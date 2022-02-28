@@ -2,26 +2,20 @@ package org.team2471.frc2022
 
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DigitalInput
-import edu.wpi.first.wpilibj.SensorUtil
-import edu.wpi.first.wpilibj.Timer
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.actuators.TalonID
 import org.team2471.frc.lib.coroutines.MeanlibDispatcher
-import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
-import org.team2471.frc.lib.motion_profiling.MotionCurve
-import kotlin.math.absoluteValue
-
 
 
 object Feeder : Subsystem("Feeder") {
 
-    val feedMotor = MotorController(TalonID(Talons.FEED))
+    val shooterFeedMotor = MotorController(TalonID(Talons.SHOOTER_FEED))
+    val bedFeedMotor = MotorController(TalonID(Talons.BED_FEED))
 
     val button = DigitalInput(4)
 
@@ -30,14 +24,15 @@ object Feeder : Subsystem("Feeder") {
     val angleEntry = table.getEntry("Angle")
     val feedEntry = table.getEntry("Staged")
 
-    val INTAKE_POWER = 0.7
+    const val SHOOTER_FEED_POWER = 0.8
+    const val BED_FEED_POWER = 0.8
 
     var blue = 0
 
 
 
     init {
-        feedMotor.config {
+        shooterFeedMotor.config {
             brakeMode()
             inverted(true)
         }
@@ -50,7 +45,7 @@ object Feeder : Subsystem("Feeder") {
     }
 
     override fun preEnable() {
-        setPower(0.0)
+        setShooterFeedPower(0.0)
     }
 
 //
@@ -58,20 +53,31 @@ object Feeder : Subsystem("Feeder") {
         get() = !button.get()
 
 
-    fun setPower(power: Double) {
-        feedMotor.setPercentOutput(power)
+    fun setShooterFeedPower(power: Double) {
+        shooterFeedMotor.setPercentOutput(power)
     }
 
+    fun setBedFeedPower(power: Double) {
+        bedFeedMotor.setPercentOutput(power)
+    }
 
     override suspend fun default() {
         periodic {
-            setPower(0.0)
+            if (Shooter.cargoIsStaged) {
+                setShooterFeedPower(0.0 + OI.driveRightTrigger)
+                println("Shooter Staged")
+                if (ballIsStaged) {
+                    setBedFeedPower(0.0)
+                    println("Intake Staged")
+                } else {
+                    setBedFeedPower(BED_FEED_POWER)
+                    println("Intake Powering - waiting for 2nd cargo")
+                }
+            } else {
+                setShooterFeedPower(SHOOTER_FEED_POWER)
+                setBedFeedPower(BED_FEED_POWER)
+                println("Feeder Power")
+            }
         }
-        //    print(":)")
-//        if (ballIsStaged) {
-//            setIntakePower(INTAKE_POWER)
-//        } else {
-//            setIntakePower(0.5 * INTAKE_POWER)
-//        }
     }
 }
