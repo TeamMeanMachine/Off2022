@@ -167,7 +167,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             var turn = 0.0
             if (OI.driveRotation.absoluteValue > 0.001) {
                 turn = OI.driveRotation
-            } else if (FrontLimelight.hasValidTarget ) {
+            } else if (FrontLimelight.hasValidTarget && Shooter.shootMode) {
                 turn = aimPDController.update(FrontLimelight.aimError)
                 println("FrontLimeLightAimError=${FrontLimelight.aimError}")
             }

@@ -37,7 +37,6 @@ object Robot : MeanlibRobot() {
             println("RANDOM NUMBER: ${Math.random()}")
         }
         println("TAKE ME HOOOOOME COUNTRY ROOOOOOOOADS TOOO THE PLAAAAAAACE WHERE I BELOOOOOOOOONG")
-
         println(BuildConfig.BUILD_TIME)
         Drive.zeroGyro()
         Drive.heading = 0.0.degrees

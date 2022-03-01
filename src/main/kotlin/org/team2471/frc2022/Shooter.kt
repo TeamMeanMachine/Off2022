@@ -104,15 +104,14 @@ object Shooter : Subsystem("Shooter") {
 //        pitchMotor.setBounds(2.50, 1.55, 1.50, 1.45, 0.50)
         pitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
         //right up against: 12.5
-        pitchCurve.storeValue(18.3, 30.0) //rpm 7000
-        pitchCurve.storeValue(13.5, 20.7)
-        pitchCurve.storeValue(9.0, 5.0)
+        pitchCurve.storeValue(5.0, 20.0)
+        pitchCurve.storeValue(10.0, 28.0)
+        pitchCurve.storeValue(13.0, 32.0)
 
         rpmCurve.setMarkBeginOrEndKeysToZeroSlope(false)
-        //right up against: 4000
-        rpmCurve.storeValue(18.3, 4000.0) //rpm 7000
-        rpmCurve.storeValue(13.5, 3000.0)
-        rpmCurve.storeValue(9.0, 2000.0)
+        rpmCurve.storeValue(5.0, 4500.0)
+        rpmCurve.storeValue(10.0, 5500.0)
+        rpmCurve.storeValue(13.0, 6000.0)
 
         shootingMotor.config {
             followersInverted(true)
