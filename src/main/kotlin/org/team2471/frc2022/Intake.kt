@@ -28,8 +28,7 @@ object Intake : Subsystem("Intake") {
     val pivotEntry = table.getEntry("Pivot")
     val pivotSetpointEntry = table.getEntry("Pivot Setpoint")
 
-
-    var pivotOffset = 1.4
+    var pivotOffset = if (isCompBotIHateEverything) 18.2 else 1.4
     val pivotEncoder = DutyCycleEncoder(DigitalSensors.INTAKE_PIVOT)
     var pivotAngle : Double = 0.0
         get() = (pivotEncoder.get() - 0.1121) / 0.236 * 90.0 + pivotOffset
@@ -50,7 +49,7 @@ object Intake : Subsystem("Intake") {
 
     const val PIVOT_BOTTOM = 0.0
     const val PIVOT_CATCH = 0.0
-    const val PIVOT_INTAKE = 20.5
+    val PIVOT_INTAKE = if (isCompBotIHateEverything) 12.0 else 20.5
     const val PIVOT_TOP = 103.0
 
 
@@ -64,7 +63,8 @@ object Intake : Subsystem("Intake") {
             brakeMode()
 //            inverted(true)
             pid {
-                p(0.000002)
+                p(0.0000015)
+//                d(0.00000005)
             }
             currentLimit(40, 60, 10)
         }
@@ -133,10 +133,10 @@ object Intake : Subsystem("Intake") {
         val angleCurve = MotionCurve()
         print("angle currently at $pivotAngle ")
         print(" going to $angle ")
-        println("${((pivotAngle - angle).absoluteValue / 90.0)}")
+        println("${((pivotAngle - angle).absoluteValue / 12.0)}")
         angleCurve.storeValue(0.0, pivotAngle)
 //        angleCurve.storeValue((pivotAngle - angle).absoluteValue / 90.0, angle)
-        angleCurve.storeValue((pivotAngle - angle).absoluteValue / 6.0, angle)
+        angleCurve.storeValue((pivotAngle - angle).absoluteValue / 12.0, angle)
         val timer = Timer()
         timer.start()
         periodic {
@@ -151,7 +151,7 @@ object Intake : Subsystem("Intake") {
 
     override suspend fun default() {
         periodic {
-            currentEntry.setDouble(intakeMotor.current)
+            currentEntry.setDouble(Shooter.shootingMotor.current)
         }
     //    print(":)")
 //        if (ballIsStaged) {

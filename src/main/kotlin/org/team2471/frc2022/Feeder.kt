@@ -17,7 +17,7 @@ object Feeder : Subsystem("Feeder") {
     val shooterFeedMotor = MotorController(TalonID(Talons.SHOOTER_FEED))
     val bedFeedMotor = MotorController(TalonID(Talons.BED_FEED))
 
-    val button = DigitalInput(4)
+    val button = DigitalInput(DigitalSensors.FEEDER_BUTTON)
 
     private val table = NetworkTableInstance.getDefault().getTable(Feeder.name)
     val currentEntry = table.getEntry("Current")
@@ -65,18 +65,14 @@ object Feeder : Subsystem("Feeder") {
         periodic {
             if (Shooter.cargoIsStaged) {
                 setShooterFeedPower(0.0 + OI.driveRightTrigger)
-                println("Shooter Staged")
                 if (ballIsStaged) {
                     setBedFeedPower(0.0)
-                    println("Intake Staged")
                 } else {
                     setBedFeedPower(BED_FEED_POWER)
-                    println("Intake Powering - waiting for 2nd cargo")
                 }
             } else {
                 setShooterFeedPower(SHOOTER_FEED_POWER)
                 setBedFeedPower(BED_FEED_POWER)
-                println("Feeder Power")
             }
         }
 */
