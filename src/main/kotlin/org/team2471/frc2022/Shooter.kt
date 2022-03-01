@@ -44,8 +44,9 @@ object Shooter : Subsystem("Shooter") {
     const val PITCH_LOW = -31.0
     const val PITCH_HIGH = 33.0
 
+    var pitchOffset = if (isCompBotIHateEverything) 1.3 else - 76.0
     var pitch: Double = 0.0
-        get() = (pitchEncoder.get() - 0.218) * 33.0 / 0.182 -76.0
+        get() = (pitchEncoder.get() - 0.218) * 33.0 / 0.182 + pitchOffset
         set(value) {
             pitchSetpoint = value
             field = value
@@ -66,10 +67,11 @@ object Shooter : Subsystem("Shooter") {
         }
 
     var pitchPDEnable = true
-    val pitchPDController = PDController(0.06, 0.0) // d 0.1
+    val pitchPDController = PDController(0.01, 0.0)//0.06, 0.0) // d 0.1
     val pitchIsReady : Boolean
         get() {
-            return pitchPDEnable && pitch > PITCH_LOW && pitch < PITCH_HIGH && pitchEncoder.isConnected
+            println("${pitchPDEnable}     ${pitchSetpoint > PITCH_LOW}     ${pitchSetpoint < PITCH_HIGH}     ${pitchEncoder.isConnected}")
+            return pitchPDEnable && pitch > (PITCH_LOW - 2.0) && pitchSetpoint < (PITCH_HIGH + 2.0) && pitchEncoder.isConnected
         }
     val pitchCurve: MotionCurve = MotionCurve()
     val rpmCurve: MotionCurve = MotionCurve()
@@ -127,7 +129,7 @@ object Shooter : Subsystem("Shooter") {
 
         pitchMotor.config {
             currentLimit(10, 15, 10)
-            inverted(true)
+            inverted(!isCompBotIHateEverything)
         }
 
         rpmSetpointEntry.setDouble(rpmSetpoint)
@@ -170,7 +172,7 @@ object Shooter : Subsystem("Shooter") {
                     true -> "red"
                     false -> "blue"
                 } //+ colorSensor.proximity
-                color = "ColorSensor Disabled in code."
+                color = "${color}  red: ${colorSensor.red}"//"ColorSensor Disabled in code."
                 colorEntry.setString(color)
 //                println("red: ${colorSensor.configureColorSensor()}          blue: ${colorSensor.blue}")
 //                println("angle = ${pitchAngle.asDegrees}")
@@ -186,6 +188,7 @@ object Shooter : Subsystem("Shooter") {
                 if (pitchIsReady) {
                     val power = pitchPDController.update(pitchSetpoint - pitch)
                     pitchSetPower(power)
+                    println("power: $power")
                 }
             }
         }
@@ -194,7 +197,7 @@ object Shooter : Subsystem("Shooter") {
     val cargoIsStaged : Boolean
         get() = colorSensor.proximity > 200
     val cargoIsRed : Boolean?
-        get() =  null //if (colorSensor.proximity < 200) null else colorSensor.color.red >= colorSensor.color.blue
+        get() =  if (colorSensor.proximity < 200) null else colorSensor.color.red >= colorSensor.color.blue
 
     fun pitchSetPower(power: Double) {
         pitchMotor.setPercentOutput(power)

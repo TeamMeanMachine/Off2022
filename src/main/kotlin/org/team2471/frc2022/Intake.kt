@@ -28,7 +28,7 @@ object Intake : Subsystem("Intake") {
     val pivotEntry = table.getEntry("Pivot")
     val pivotSetpointEntry = table.getEntry("Pivot Setpoint")
 
-    var pivotOffset = if (isCompBotIHateEverything) 0.0 else -278.8
+    var pivotOffset = if (isCompBotIHateEverything) 18.2 else -278.8
     val pivotEncoder = DutyCycleEncoder(DigitalSensors.INTAKE_PIVOT)
     var pivotAngle : Double = 0.0
         get() = (pivotEncoder.get() - 0.1121) / 0.236 * 90.0 + pivotOffset
@@ -49,7 +49,7 @@ object Intake : Subsystem("Intake") {
 
     const val PIVOT_BOTTOM = 0.0
     const val PIVOT_CATCH = 0.0
-    const val PIVOT_INTAKE = 20.5
+    val PIVOT_INTAKE = if (isCompBotIHateEverything) 12.0 else 20.5
     const val PIVOT_TOP = 103.0
 
 
@@ -59,10 +59,11 @@ object Intake : Subsystem("Intake") {
     init {
         intakePivotMotor.config(20) {
             feedbackCoefficient =
-                360.0 / 2048.0 / 87.1875 * 7.0 / 17.0 // 360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 degrees in a rotation, ticks per rotation, gear reduction (44:1 reduction)
+                360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 //degrees in a rotation, ticks per rotation, gear reduction (44:1 reduction)
             brakeMode()
             pid {
-                p(0.000002)
+                p(0.0000015)
+//                d(0.00000005)
             }
             currentLimit(40, 60, 10)
         }
@@ -128,10 +129,10 @@ object Intake : Subsystem("Intake") {
         val angleCurve = MotionCurve()
         print("angle currently at $pivotAngle ")
         print(" going to $angle ")
-        println("${((pivotAngle - angle).absoluteValue / 90.0)}")
+        println("${((pivotAngle - angle).absoluteValue / 6.0)}")
         angleCurve.storeValue(0.0, pivotAngle)
 //        angleCurve.storeValue((pivotAngle - angle).absoluteValue / 90.0, angle)
-        angleCurve.storeValue((pivotAngle - angle).absoluteValue / 30.0, angle)
+        angleCurve.storeValue((pivotAngle - angle).absoluteValue / 6.0, angle)
         val timer = Timer()
         timer.start()
         periodic {

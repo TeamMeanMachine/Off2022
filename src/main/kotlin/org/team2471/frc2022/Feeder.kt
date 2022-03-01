@@ -65,18 +65,14 @@ object Feeder : Subsystem("Feeder") {
         periodic {
             if (Shooter.cargoIsStaged) {
                 setShooterFeedPower(0.0 + OI.driveRightTrigger)
-                println("Shooter Staged")
                 if (ballIsStaged) {
                     setBedFeedPower(0.0)
-                    println("Intake Staged")
                 } else {
                     setBedFeedPower(BED_FEED_POWER)
-                    println("Intake Powering - waiting for 2nd cargo")
                 }
             } else {
                 setShooterFeedPower(SHOOTER_FEED_POWER)
                 setBedFeedPower(BED_FEED_POWER)
-                println("Feeder Power")
             }
         }
     }
