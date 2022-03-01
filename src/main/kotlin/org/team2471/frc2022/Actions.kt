@@ -53,6 +53,8 @@ suspend fun shootMode() = use(Shooter) {
         periodic {
             Shooter.rpm = Shooter.rpmSetpoint
             Shooter.pitch = Shooter.pitchSetpoint
+//            if (OI.driverController.leftBumper)
+//                stop()
         }
     } else {
         FrontLimelight.ledEnabled = false

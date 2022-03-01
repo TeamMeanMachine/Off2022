@@ -78,12 +78,14 @@ object Robot : MeanlibRobot() {
 
     override suspend fun test()  {
         println("test mode begin. Hi.")
-//        intakePivotTest()
+        intakePivotTest()
 //        shootTest2()
 //        feedUntilCargo()
 //        Climb.motorTest()
 //        Drive.steeringTests()
-        Shooter.pitchTest()
+//        Shooter.pitchTest()
+//        Intake.pivotTest()
+//        Feeder.motorTest()
     }
 
 

@@ -52,13 +52,13 @@ object Shooter : Subsystem("Shooter") {
         }
     var pitchSetpoint = pitch
         get() {
-            if (FrontLimelight.hasValidTarget) {
-                val pitch = pitchCurve.getValue(FrontLimelight.distance.asFeet)
-                pitchSetpointEntry.setDouble(pitch)
-                return pitch
-            } else {
+//            if (FrontLimelight.hasValidTarget) {
+//                val pitch = pitchCurve.getValue(FrontLimelight.distance.asFeet)
+//                pitchSetpointEntry.setDouble(pitch)
+//                return pitch
+//            } else {
                 return pitchSetpointEntry.getDouble(10.0)
-            }
+//            }
         }
         set(value) {
             field = value.coerceIn(PITCH_LOW, PITCH_HIGH)
@@ -81,12 +81,12 @@ object Shooter : Subsystem("Shooter") {
 
     var rpmSetpoint: Double = 0.0
         get() {
-            if (FrontLimelight.hasValidTarget) {
-                field = rpmCurve.getValue(FrontLimelight.distance.asFeet) + rpmOffset
-                rpmSetpointEntry.setDouble(rpm)
-            } else {
-                field = rpmSetpointEntry.getDouble(7000.0)
-            }
+//            if (FrontLimelight.hasValidTarget) {
+//                field = rpmCurve.getValue(FrontLimelight.distance.asFeet) + rpmOffset
+//                rpmSetpointEntry.setDouble(rpm)
+//            } else {
+                field = rpmSetpointEntry.getDouble(5000.0)
+//            }
             return field
         }
     var rpm: Double

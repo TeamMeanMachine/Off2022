@@ -29,8 +29,6 @@ object Feeder : Subsystem("Feeder") {
 
     var blue = 0
 
-
-
     init {
         shooterFeedMotor.config {
             brakeMode()
@@ -38,7 +36,8 @@ object Feeder : Subsystem("Feeder") {
         }
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
-                feedEntry.setBoolean(ballIsStaged)
+//                feedEntry.setBoolean(ballIsStaged)
+                feedEntry.setBoolean(Intake.pivotEncoder.isConnected)
             }
         }
 
@@ -62,6 +61,7 @@ object Feeder : Subsystem("Feeder") {
     }
 
     override suspend fun default() {
+/*
         periodic {
             if (Shooter.cargoIsStaged) {
                 setShooterFeedPower(0.0 + OI.driveRightTrigger)
@@ -79,5 +79,6 @@ object Feeder : Subsystem("Feeder") {
                 println("Feeder Power")
             }
         }
+*/
     }
 }

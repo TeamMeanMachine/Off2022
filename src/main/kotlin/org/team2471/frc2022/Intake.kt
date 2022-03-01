@@ -28,7 +28,8 @@ object Intake : Subsystem("Intake") {
     val pivotEntry = table.getEntry("Pivot")
     val pivotSetpointEntry = table.getEntry("Pivot Setpoint")
 
-    var pivotOffset = -278.8
+
+    var pivotOffset = 1.4
     val pivotEncoder = DutyCycleEncoder(DigitalSensors.INTAKE_PIVOT)
     var pivotAngle : Double = 0.0
         get() = (pivotEncoder.get() - 0.1121) / 0.236 * 90.0 + pivotOffset
@@ -92,8 +93,9 @@ object Intake : Subsystem("Intake") {
                 }
                 if (timer.get()>2.0) {
                     val targetAngle = PIVOT_BOTTOM  // use PIVOT_TOP for competition
+                    val power = -0.2  // for competition  use 0.2
                     println("Encoder failure. Running against hard stop at $targetAngle")
-                    intakePivotMotor.setPercentOutput(if (targetAngle == PIVOT_BOTTOM) 0.2 else -0.2)
+//                    intakePivotMotor.setPercentOutput(power)
                     if (intakePivotMotor.current > 50.0) {
                         intakePivotMotor.setPercentOutput(0.0)
                         intakePivotMotor.setRawOffset(targetAngle.degrees)
@@ -134,7 +136,7 @@ object Intake : Subsystem("Intake") {
         println("${((pivotAngle - angle).absoluteValue / 90.0)}")
         angleCurve.storeValue(0.0, pivotAngle)
 //        angleCurve.storeValue((pivotAngle - angle).absoluteValue / 90.0, angle)
-        angleCurve.storeValue((pivotAngle - angle).absoluteValue / 30.0, angle)
+        angleCurve.storeValue((pivotAngle - angle).absoluteValue / 6.0, angle)
         val timer = Timer()
         timer.start()
         periodic {
