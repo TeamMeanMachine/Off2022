@@ -30,19 +30,23 @@ object Climb : Subsystem("Climb") {
     var heightSetpoint = 0.0
         get() = heightSetpointEntry.getDouble(0.0)
         set(value) {
-            field = value.coerceIn(0.0, 30.0)
+            var tuningCoerce = if (tuningMode) -37.0 else 0.0
+            field = value.coerceIn(tuningCoerce, tuningCoerce + 37.0)
             heightSetpointEntry.setDouble(field)
         }
 
+    val tuningMode = true
+
+    val angleOffset = -39.0
     val angle: Double
-        get() = ((angleEncoder.get() - 0.05) * -37.0 / 0.13)
+        get() = ((angleEncoder.get() - 0.05) * 37.0 / 0.13) + angleOffset
     var angleSetpoint = 0.0
         get() = angleSetpointEntry.getDouble(0.0)
         set(value) {
             field = value.coerceIn(-4.0, 36.0)
             angleSetpointEntry.setDouble(field)
         }
-    val anglePDController = PDController(0.5/30.0, 0.0)
+    val anglePDController = PDController(0.03, 0.0)
 
     init {
         heightMotor.config {
@@ -50,23 +54,31 @@ object Climb : Subsystem("Climb") {
             followersInverted(false)
             feedbackCoefficient = 3.14 / 2048.0 / 9.38 * 30.0 / 25.0
             pid {
-                p(0.000000002)
+                p(0.00000002)
             }
         }
         angleMotor.config {
             brakeMode()
+            inverted(true)
+//            feedbackCoefficient = 360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0 * 39.0 / 26.0
+//            pid {
+//                p(0.00000000000002)
+//            }
         }
 
         GlobalScope.launch(MeanlibDispatcher) {
-
             periodic {
                 heightEntry.setDouble(heightMotor.position)
                 angleEntry.setDouble(angle)
-
-                if (climbMode) {
+                if (tuningMode) {
+                    heightMotor.setPositionSetpoint(heightSetpoint)
+                    val power = anglePDController.update(angleSetpoint - angle)
+                    angleSetPower(power)
+                } else if (climbMode) {
                     heightSetpoint -= OI.operatorLeftY * 0.12
                     angleSetpoint += OI.operatorRightX * 0.12
                     heightMotor.setPositionSetpoint(heightSetpoint)
+//                    angleMotor.setPositionSetpoint(angleSetpoint)
                     val power = anglePDController.update(angleSetpoint - angle)
                     angleSetPower(power)
                 }
@@ -76,6 +88,7 @@ object Climb : Subsystem("Climb") {
 
     override fun preEnable() {
         angleSetpoint = angle
+        heightSetpoint = height
     }
 
     fun setPower(power: Double) {

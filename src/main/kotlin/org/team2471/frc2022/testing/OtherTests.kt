@@ -12,6 +12,7 @@ suspend fun Feeder.motorTest() = use(this) {
 }
 suspend fun Shooter.pitchTest() = use(this) {
     periodic {
+        println("${(org.team2471.frc2022.OI.operatorRightTrigger - org.team2471.frc2022.OI.operatorLeftTrigger) * 0.5}")
         pitchSetPower((OI.operatorRightTrigger - OI.operatorLeftTrigger) * 0.5)
     }
 }
@@ -29,9 +30,25 @@ suspend fun Climb.motorTest() = use(this) {
     }
 }
 
+suspend fun Climb.anglePIDTest() = use(this){
+    var setpoint = 0.0
+    periodic {
+        setpoint = (OI.operatorController.leftThumbstickY * 5.0 ) + 10.0
+        angleSetpoint = setpoint
+        println("climb setpoint: $setpoint")
+    }
+}
+
 suspend fun Intake.pivotTest() = use(this) {
     periodic {
         intakePivotMotor.setPercentOutput((OI.operatorRightTrigger - OI.operatorLeftTrigger) * 0.5)
         println("pivotTest active")
+    }
+}
+
+suspend fun Climb.adjustmentTest() = use(this) {
+    periodic {
+        heightSetpoint -= OI.operatorController.leftThumbstickY * (12.0 / 50.0)
+        angleSetpoint -= OI.operatorController.rightThumbstickX * (20.0 / 50.0)
     }
 }

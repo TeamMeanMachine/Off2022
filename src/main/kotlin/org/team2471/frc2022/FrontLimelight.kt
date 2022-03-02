@@ -126,7 +126,7 @@ object FrontLimelight : Subsystem("Front Limelight") {
 
 
     fun leftAngleOffset() {
-            FrontLimelight.angleOffset -= 0.1
+        FrontLimelight.angleOffset -= 0.1
     }
 
     fun rightAngleOffset() {

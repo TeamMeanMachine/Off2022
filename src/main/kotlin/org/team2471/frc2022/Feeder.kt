@@ -61,7 +61,6 @@ object Feeder : Subsystem("Feeder") {
     }
 
     override suspend fun default() {
-/*
         periodic {
             if (Shooter.cargoIsStaged) {
                 setShooterFeedPower(0.0 + OI.driveRightTrigger)
@@ -75,6 +74,5 @@ object Feeder : Subsystem("Feeder") {
                 setBedFeedPower(BED_FEED_POWER)
             }
         }
-*/
     }
 }

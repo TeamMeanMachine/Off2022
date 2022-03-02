@@ -7,7 +7,6 @@ import edu.wpi.first.wpilibj.I2C
 import edu.wpi.first.wpilibj.Timer
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.gradle.utils.`is`
 import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.actuators.TalonID
@@ -18,13 +17,13 @@ import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller
 import org.team2471.frc.lib.motion_profiling.MotionCurve
-import org.team2471.frc.lib.units.Angle
 import org.team2471.frc.lib.units.asFeet
-import org.team2471.frc.lib.units.degrees
 import kotlin.math.absoluteValue
 
 
 object Shooter : Subsystem("Shooter") {
+    val tuningMode = true
+
     val shootingMotor = MotorController(FalconID(Falcons.SHOOTER), FalconID(Falcons.SHOOTER_TWO)) //private
     private val pitchMotor = MotorController(TalonID(Talons.PITCH))
     private val table = NetworkTableInstance.getDefault().getTable(name)
@@ -53,13 +52,16 @@ object Shooter : Subsystem("Shooter") {
         }
     var pitchSetpoint = pitch
         get() {
-//            if (FrontLimelight.hasValidTarget) {
-//                val pitch = pitchCurve.getValue(FrontLimelight.distance.asFeet)
-//                pitchSetpointEntry.setDouble(pitch)
-//                return pitch
-//            } else {
-                return pitchSetpointEntry.getDouble(10.0)
-//            }
+            if (tuningMode) {
+                field = pitchSetpointEntry.getDouble(10.0)
+            } else if (FrontLimelight.hasValidTarget) {
+                val pitch = pitchCurve.getValue(FrontLimelight.distance.asFeet)
+                pitchSetpointEntry.setDouble(pitch)
+                field = pitch
+            } else {
+                field = pitchSetpointEntry.getDouble(10.0)
+            }
+            return field
         }
         set(value) {
             field = value.coerceIn(PITCH_LOW, PITCH_HIGH)
@@ -70,7 +72,7 @@ object Shooter : Subsystem("Shooter") {
     val pitchPDController = PDController(0.01, 0.0)//0.06, 0.0) // d 0.1
     val pitchIsReady : Boolean
         get() {
-            println("${pitchPDEnable}     ${pitchSetpoint > PITCH_LOW}     ${pitchSetpoint < PITCH_HIGH}     ${pitchEncoder.isConnected}")
+//            println("${pitchPDEnable}     ${pitchSetpoint > PITCH_LOW}     ${pitchSetpoint < PITCH_HIGH}     ${pitchEncoder.isConnected}")
             return pitchPDEnable && pitch > (PITCH_LOW - 2.0) && pitchSetpoint < (PITCH_HIGH + 2.0) && pitchEncoder.isConnected
         }
     val pitchCurve: MotionCurve = MotionCurve()
@@ -83,12 +85,14 @@ object Shooter : Subsystem("Shooter") {
 
     var rpmSetpoint: Double = 0.0
         get() {
-//            if (FrontLimelight.hasValidTarget) {
-//                field = rpmCurve.getValue(FrontLimelight.distance.asFeet) + rpmOffset
-//                rpmSetpointEntry.setDouble(rpm)
-//            } else {
+            if (tuningMode) {
                 field = rpmSetpointEntry.getDouble(5000.0)
-//            }
+            } else if (FrontLimelight.hasValidTarget) {
+                field = rpmCurve.getValue(FrontLimelight.distance.asFeet) + rpmOffset
+                rpmSetpointEntry.setDouble(rpm)
+            } else {
+                field = rpmSetpointEntry.getDouble(5000.0)
+            }
             return field
         }
     var rpm: Double
@@ -188,7 +192,6 @@ object Shooter : Subsystem("Shooter") {
                 if (pitchIsReady) {
                     val power = pitchPDController.update(pitchSetpoint - pitch)
                     pitchSetPower(power)
-                    println("power: $power")
                 }
             }
         }
