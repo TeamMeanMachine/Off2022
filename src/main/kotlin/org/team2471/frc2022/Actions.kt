@@ -1,5 +1,6 @@
 package org.team2471.frc2022
 
+import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.use
 
@@ -9,21 +10,19 @@ import org.team2471.frc.lib.framework.use
 suspend fun intake() = use(Intake) {
     Intake.setIntakePower(Intake.INTAKE_POWER)
     Intake.changeAngle(Intake.PIVOT_INTAKE)
+    Climb.changeAngle(Climb.HOLDING_ANGLE)
 }
 
 suspend fun catch() = use(Intake) {
     Intake.setIntakePower(0.0)
     Intake.changeAngle(Intake.PIVOT_CATCH)
-}
-
-suspend fun armDown() = use(Intake) {
-    Intake.setIntakePower(0.0)
-    Intake.changeAngle(Intake.PIVOT_BOTTOM)
+    Climb.changeAngle(Climb.HOLDING_ANGLE)
 }
 
 suspend fun armUp() = use(Intake) {
     Intake.setIntakePower(0.0)
     Intake.changeAngle(Intake.PIVOT_TOP)
+    Climb.changeAngle(Climb.HOLDING_ANGLE)
 }
 
 suspend fun feedUntilCargo() = use(Intake, Feeder) {
@@ -103,4 +102,14 @@ suspend fun shoot() = use(Shooter/*, Feeder*/) {
 
 suspend fun spit() = use(Shooter) {
 
+}
+
+suspend fun goToPose(targetPose: Pose) = use(Climb, Intake) {
+    parallel({
+        Climb.changeHeight(targetPose.height)
+    }, {
+        Climb.changeAngle(targetPose.angle)
+    }, {
+        Intake.changeAngle(targetPose.intake)
+    })
 }

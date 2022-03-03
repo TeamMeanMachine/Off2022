@@ -54,11 +54,13 @@ object OI {
     init {
         driverController::back.whenTrue { Drive.zeroGyro(); Drive.initializeSteeringMotors() }
         driverController::leftBumper.whenTrue { shootMode() }
+        driverController::start.whenTrue{
+            goToPose(Pose.CLIMB_PREP)
+        }
 
-        operatorController::a.whenTrue { armDown() }
         operatorController::b.whenTrue { intake() }
         operatorController::x.whenTrue { catch() }
         operatorController::y.whenTrue { armUp() }
-        operatorController::back.whenTrue { Climb.heightMotor.setRawOffset(0.0.radians) }
+        operatorController::back.whenTrue { Climb.zeroClimb() }
     }
 }

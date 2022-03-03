@@ -47,7 +47,7 @@ object Robot : MeanlibRobot() {
         Intake
         Shooter
         Feeder
-        //Climb
+//        Climb
     }
 
     override suspend fun enable() {
