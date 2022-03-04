@@ -10,7 +10,7 @@ import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2022.testing.*
 import java.net.NetworkInterface
 
-var isCompBotIHateEverything = true
+var isCompBot = true
 
 @DelicateCoroutinesApi
 object Robot : MeanlibRobot() {
@@ -28,7 +28,8 @@ object Robot : MeanlibRobot() {
                 }
                 println("FORMATTED---->$macString<-----")
 
-                isCompBotIHateEverything = true //(macString != "0-128472587-69")
+                isCompBot = (macString != "0-12847512372")
+                println("I am compbot = $isCompBot")
             }
         }
 

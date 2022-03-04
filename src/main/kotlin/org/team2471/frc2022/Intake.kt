@@ -28,7 +28,7 @@ object Intake : Subsystem("Intake") {
     val pivotEntry = table.getEntry("Pivot")
     val pivotSetpointEntry = table.getEntry("Pivot Setpoint")
 
-    var pivotOffset = if (isCompBotIHateEverything) 9.7 else 1.4
+    var pivotOffset = if (isCompBot) 9.7 else 1.4
     val pivotEncoder = DutyCycleEncoder(DigitalSensors.INTAKE_PIVOT)
     var pivotAngle : Double = 0.0
         get() = (pivotEncoder.get() - 0.1121) / 0.236 * 90.0 + pivotOffset

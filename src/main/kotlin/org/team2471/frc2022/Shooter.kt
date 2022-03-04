@@ -43,7 +43,7 @@ object Shooter : Subsystem("Shooter") {
     const val PITCH_LOW = -31.0
     const val PITCH_HIGH = 35.0
 
-    var pitchOffset = if (isCompBotIHateEverything) 1.3 else - 76.0
+    var pitchOffset = if (isCompBot) 1.3 else - 76.0
     var pitch: Double = 0.0
         get() = (pitchEncoder.get() - 0.218) * 33.0 / 0.182 + pitchOffset
         set(value) {
@@ -135,7 +135,7 @@ object Shooter : Subsystem("Shooter") {
 
         pitchMotor.config {
             currentLimit(10, 15, 10)
-            inverted(!isCompBotIHateEverything)
+            inverted(!isCompBot)
         }
 
         rpmSetpointEntry.setDouble(rpmSetpoint)
