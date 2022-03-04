@@ -15,23 +15,36 @@ import org.team2471.frc.lib.input.Controller
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.*
-import kotlin.math.abs
-import kotlin.math.cos
-import kotlin.math.sin
-import kotlin.math.tan
+import kotlin.math.*
 
 @OptIn(DelicateCoroutinesApi::class)
 object FrontLimelight : Subsystem("Front Limelight") {
     private val table = NetworkTableInstance.getDefault().getTable("limelight-front")
     private val thresholdTable = table.getSubTable("thresholds")
-    private val xEntry = table.getEntry("tx")
+    private val xEntry = table.getEntry("tx")     // = if (useFrontLimelight) frontXEntry else backXEntry
+//    private val frontXEntry = frontTable.getEntry("tx")
+//    private val backxXEntry = backTable.getEntry("tx")
     private val yEntry = table.getEntry("ty")
+//    private val frontYEntry = frontTable.getEntry("ty")
+//    private val backYEntry = backTable.getEntry("ty")
     private val areaEntry = table.getEntry("ta")
+//    private val frontAreaEntry = frontTable.getEntry("ta")
+//    private val backAreaEntry = backTable.getEntry("ta")
     private var camModeEntry = table.getEntry("camMode")
     private val ledModeEntry = table.getEntry("ledMode")
+//    private val frontLedModeEntry = frontTable.getEntry("frontLedMode")
+//    private val backLedModeEntry = backable.getEntry("backLedMode")
     private val targetValidEntry = table.getEntry("tv")
+//    private val frontTargetValidEntry = frontTable.getEntry("tv")
+//    private val backTargetValidEntry = backTable.getEntry("tv")
+
+
     private val currentPipelineEntry = table.getEntry("getpipe")
+//    private val frontCurrentPipelineEntry = frontTable.getEntry("getpipe")
+//    private val backCurrentPipelineEntry = backTable.getEntry("getpipe")
     private val setPipelineEntry = table.getEntry("pipeline")
+//    private val frontSetPipelineEntry = frontTable.getEntry("pipeline")
+//    private val backSetPipelineEntry = backTable.getEntry("pipeline")
     private val heightToDistance = MotionCurve()
     private var distanceEntry = table.getEntry("Distance")
     private var positionXEntry = table.getEntry("PositionX")
@@ -41,9 +54,17 @@ object FrontLimelight : Subsystem("Front Limelight") {
 
     private var angleOffsetEntry = FrontLimelight.table.getEntry("Angle Offset Entry")
 
+    private val useFrontLimelight: Boolean
+    get() {
+        var angleFromCenter = Math.atan2(Drive.position.x, Drive.position.y)
+//        var isFacingShooter = (angleFromCenter.degrees - heading).wrap().asDegrees.absoluteValue >= 90.0  //if the robot is facing toward (angleFromCenter opposite from heading), don't use front
+//        return isFacingShooter     //do this or add other inputs like hasValidTarget
+        return true
+    }
+
     val distance: Length
-        get() = (7.25 / tan((34.0 + xTranslation) / 180.0 * Math.PI)).feet
-        //get() = (7.25.feet) / (34.0 - xTranslation).degrees.tan() // val distance = heightFromDistanceToLimelight.feet / tan(angle + yTranslation)
+        get() = (7.25 / tan((31.0 + xTranslation) / 180.0 * Math.PI)).feet
+    //get() = (7.25.feet) / (34.0 - xTranslation).degrees.tan() // val distance = heightFromDistanceToLimelight.feet / tan(angle + yTranslation)
 
     private val tempPIDTable = NetworkTableInstance.getDefault().getTable("fklsdajklfjsadlk;")
 
@@ -63,10 +84,10 @@ object FrontLimelight : Subsystem("Front Limelight") {
     }
 
     var angleOffset: Double = 0.0
-        get() = FrontLimelight.angleOffsetEntry.getDouble(0.0)
+        get() = angleOffsetEntry.getDouble(0.0)
         set(value) {
             field = value
-            FrontLimelight.angleOffsetEntry.setDouble(value)
+            angleOffsetEntry.setDouble(value)
         }
 
     val position: Vector2
@@ -91,6 +112,8 @@ object FrontLimelight : Subsystem("Front Limelight") {
         set(value) {
             field = value
             ledModeEntry.setDouble(if (value) 0.0 else 1.0)
+//            frontLedModeEntry.setDouble(if (value) 0.0 else 1.0)
+//            backLedModeEntry.setDouble(if (value) 0.0 else 1.0)
         }
 
     val xTranslation
@@ -141,32 +164,32 @@ object FrontLimelight : Subsystem("Front Limelight") {
         heightToDistance.storeValue(9.6, 11.5)
         heightToDistance.storeValue(-4.1, 22.2)
         heightToDistance.storeValue(-20.0, 35.0)
-//        var i = -4.1
-//        while (i < 22.5) {
-//            val tmpDistance = heightToDistance.getValue(i).feet
-//            //println("$i, ${tmpDistance.asFeet}")
-//            i += 0.5
-//        }
+        //        var i = -4.1
+        //        while (i < 22.5) {
+        //            val tmpDistance = heightToDistance.getValue(i).feet
+        //            //println("$i, ${tmpDistance.asFeet}")
+        //            i += 0.5
+        //        }
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
                 var leftPressed = false
                 var rightPressed = false
 
-                if(OI.operatorController.dPad == Controller.Direction.LEFT) {
+                if (OI.operatorController.dPad == Controller.Direction.LEFT) {
                     leftPressed = true
                 }
 
-                if(OI.operatorController.dPad == Controller.Direction.RIGHT) {
+                if (OI.operatorController.dPad == Controller.Direction.RIGHT) {
                     rightPressed = true
                 }
 
-                if(OI.operatorController.dPad != Controller.Direction.LEFT && leftPressed) {
-                  //  leftPressed = false
+                if (OI.operatorController.dPad != Controller.Direction.LEFT && leftPressed) {
+                    //  leftPressed = false
                     leftAngleOffset()
                 }
 
-                if(OI.operatorController.dPad != Controller.Direction.RIGHT && rightPressed) {
-                  //  rightPressed = false
+                if (OI.operatorController.dPad != Controller.Direction.RIGHT && rightPressed) {
+                    //  rightPressed = false
                     rightAngleOffset()
                 }
             }

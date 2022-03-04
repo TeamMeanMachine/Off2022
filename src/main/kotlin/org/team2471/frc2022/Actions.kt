@@ -3,6 +3,7 @@ package org.team2471.frc2022
 import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.use
+import org.team2471.frc2022.Pose.Companion.CLIMB_PREP
 
 //Intake
 
@@ -112,4 +113,9 @@ suspend fun goToPose(targetPose: Pose) = use(Climb, Intake) {
     }, {
         Intake.changeAngle(targetPose.intake)
     })
+}
+
+suspend fun climb() = use(Climb, Intake) {
+    Climb.changeAngle(8.0) // takes brake off climb height
+    goToPose(CLIMB_PREP)
 }

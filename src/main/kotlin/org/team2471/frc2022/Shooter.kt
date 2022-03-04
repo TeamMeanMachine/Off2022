@@ -22,7 +22,7 @@ import kotlin.math.absoluteValue
 
 
 object Shooter : Subsystem("Shooter") {
-    val tuningMode = true
+    val tuningMode = false
 
     val shootingMotor = MotorController(FalconID(Falcons.SHOOTER), FalconID(Falcons.SHOOTER_TWO)) //private
     private val pitchMotor = MotorController(TalonID(Talons.PITCH))
@@ -41,7 +41,7 @@ object Shooter : Subsystem("Shooter") {
     val pitchSetpointEntry = table.getEntry("pitch Setpoint")
 
     const val PITCH_LOW = -31.0
-    const val PITCH_HIGH = 33.0
+    const val PITCH_HIGH = 35.0
 
     var pitchOffset = if (isCompBotIHateEverything) 1.3 else - 76.0
     var pitch: Double = 0.0
@@ -110,14 +110,16 @@ object Shooter : Subsystem("Shooter") {
 //        pitchMotor.setBounds(2.50, 1.55, 1.50, 1.45, 0.50)
         pitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
         //right up against: 12.5
-        pitchCurve.storeValue(5.0, 20.0)
-        pitchCurve.storeValue(10.0, 28.0)
-        pitchCurve.storeValue(13.0, 32.0)
+        pitchCurve.storeValue(5.0, 23.0)
+        pitchCurve.storeValue(10.0, 32.0)
+        pitchCurve.storeValue(15.0, 35.0)
+        pitchCurve.storeValue(20.0, 35.0)
 
         rpmCurve.setMarkBeginOrEndKeysToZeroSlope(false)
-        rpmCurve.storeValue(5.0, 4500.0)
-        rpmCurve.storeValue(10.0, 5500.0)
-        rpmCurve.storeValue(13.0, 6000.0)
+        rpmCurve.storeValue(5.0, 3500.0)
+        rpmCurve.storeValue(10.0, 3750.0)
+        rpmCurve.storeValue(15.0, 4500.0)
+        rpmCurve.storeValue(20.0, 5500.0)
 
         shootingMotor.config {
             followersInverted(true)
@@ -142,7 +144,7 @@ object Shooter : Subsystem("Shooter") {
         GlobalScope.launch(MeanlibDispatcher) {
             var upPressed = false
             var downPressed = false
-            rpmOffset = rpmOffsetEntry.getDouble(1600.0)
+            rpmOffset = rpmOffsetEntry.getDouble(0.0)
 
             periodic {
                 rpmEntry.setDouble(rpm)
@@ -198,9 +200,9 @@ object Shooter : Subsystem("Shooter") {
     }
 
     val cargoIsStaged : Boolean
-        get() = colorSensor.proximity > 200
+        get() = colorSensor.proximity > 180
     val cargoIsRed : Boolean?
-        get() =  if (colorSensor.proximity < 200) null else colorSensor.color.red >= colorSensor.color.blue
+        get() =  if (colorSensor.proximity < 180) null else colorSensor.color.red >= colorSensor.color.blue
 
     fun pitchSetPower(power: Double) {
         pitchMotor.setPercentOutput(power)
