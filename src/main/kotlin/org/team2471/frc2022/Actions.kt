@@ -47,15 +47,10 @@ suspend fun feedUntilCargo() = use(Intake, Feeder) {
 }
 
 suspend fun shootMode() = use(Shooter) {
+    println("shoot mode has been called. Shootmode = ${Shooter.shootMode}")
     Shooter.shootMode = !Shooter.shootMode
     if (Shooter.shootMode) {
         FrontLimelight.ledEnabled = true
-        periodic {
-            Shooter.rpm = Shooter.rpmSetpoint
-            Shooter.pitch = Shooter.pitchSetpoint
-//            if (OI.driverController.leftBumper)
-//                stop()
-        }
     } else {
         FrontLimelight.ledEnabled = false
         Shooter.rpm = 0.0

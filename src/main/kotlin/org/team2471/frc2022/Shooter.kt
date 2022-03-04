@@ -89,7 +89,7 @@ object Shooter : Subsystem("Shooter") {
                 field = rpmSetpointEntry.getDouble(5000.0)
             } else if (FrontLimelight.hasValidTarget) {
                 field = rpmCurve.getValue(FrontLimelight.distance.asFeet) + rpmOffset
-                rpmSetpointEntry.setDouble(rpm)
+                rpmSetpointEntry.setDouble(field)
             } else {
                 field = rpmSetpointEntry.getDouble(5000.0)
             }
@@ -145,8 +145,12 @@ object Shooter : Subsystem("Shooter") {
             var upPressed = false
             var downPressed = false
             rpmOffset = rpmOffsetEntry.getDouble(0.0)
-
+            pitchSetpoint = pitch
             periodic {
+                if (pitchIsReady) {
+                    val power = pitchPDController.update(pitchSetpoint - pitch)
+                    pitchSetPower(power)
+                }
                 rpmEntry.setDouble(rpm)
                 rpmErrorEntry.setDouble(rpmSetpoint - rpm)
 
@@ -183,21 +187,22 @@ object Shooter : Subsystem("Shooter") {
 //                println("red: ${colorSensor.configureColorSensor()}          blue: ${colorSensor.blue}")
 //                println("angle = ${pitchAngle.asDegrees}")
 
-            }
-        }
-    }
-
-    override fun preEnable() {
-        GlobalScope.launch(MeanlibDispatcher) {
-            pitchSetpoint = pitch
-            periodic {
-                if (pitchIsReady) {
-                    val power = pitchPDController.update(pitchSetpoint - pitch)
-                    pitchSetPower(power)
+                if (shootMode) {
+                    rpm = rpmSetpoint
+                    pitch = pitchSetpoint
                 }
             }
         }
     }
+
+//    override fun preEnable() {
+//        GlobalScope.launch(MeanlibDispatcher) {
+//            pitchSetpoint = pitch
+//            periodic {
+//
+//            }
+//        }
+//    }
 
     val cargoIsStaged : Boolean
         get() = colorSensor.proximity > 180

@@ -169,7 +169,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 turn = OI.driveRotation
             } else if (FrontLimelight.hasValidTarget && Shooter.shootMode) {
                 turn = aimPDController.update(FrontLimelight.aimError)
-                println("FrontLimeLightAimError=${FrontLimelight.aimError}")
+//                println("FrontLimeLightAimError=${FrontLimelight.aimError}")
             }
 //            printEncoderValues()
 
