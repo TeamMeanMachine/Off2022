@@ -43,7 +43,7 @@ object Climb : Subsystem("Climb") {
     const val HEIGHT_VERTICAL_TOP = 26.0
     const val HEIGHT_BOTTOM = 0.0
 
-    val angleOffset = -39.0
+    val angleOffset = if (isCompBot) -39.0 else 0.0
     val angle: Double
         get() = ((angleEncoder.get() - 0.05) * 37.0 / 0.13) + angleOffset
     var angleSetpoint = 0.0
