@@ -49,6 +49,7 @@ object Robot : MeanlibRobot() {
         Shooter
         Feeder
 //        Climb
+        PowerDistribution
     }
 
     override suspend fun enable() {
@@ -63,6 +64,7 @@ object Robot : MeanlibRobot() {
         Climb.enable()
 //        zeroIntakePivot()
         println("ending enable")
+        PowerDistribution.enable()
     }
 
     override suspend fun autonomous() {
@@ -94,6 +96,7 @@ object Robot : MeanlibRobot() {
         Shooter.disable()
         Feeder.disable()
         Climb.disable()
+        PowerDistribution.disable()
         //FrontLimelight.disable()
 
         //FrontLimelight.ledEnabled = false
