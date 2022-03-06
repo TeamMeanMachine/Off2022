@@ -59,7 +59,7 @@ object OI {
         }
 
         operatorController::b.whenTrue { intake() }
-        operatorController::x.whenTrue { catch() }
+        operatorController::a.whenTrue { catch() }
         operatorController::y.whenTrue { armUp() }
         operatorController::back.whenTrue { Climb.zeroClimb() }
     }

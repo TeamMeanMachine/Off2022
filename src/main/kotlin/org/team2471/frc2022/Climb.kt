@@ -153,15 +153,13 @@ object Climb : Subsystem("Climb") {
                 heightSetpoint -= OI.operatorLeftY * 0.12
                 angleSetpoint += OI.operatorRightX * 0.12
             }
-            if (OI.operatorLeftTrigger > 0.1 ||OI.operatorRightTrigger > 0.1) {
-                setPower((OI.operatorRightTrigger - OI.operatorLeftTrigger) * 0.3)
-            } else {
+//            if (OI.operatorLeftTrigger > 0.1 ||OI.operatorRightTrigger > 0.1) {
+//                setPower((OI.operatorRightTrigger - OI.operatorLeftTrigger) * 0.3)
+//            } else {
                 heightMotor.setPositionSetpoint(heightSetpoint)
                 val power = anglePDController.update(angleSetpoint - angle)
                 angleSetPower(power)
-            }
+//            }
         }
     }
-
-
 }

@@ -1,5 +1,6 @@
 package org.team2471.frc2022
 
+import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.use
@@ -49,12 +50,14 @@ suspend fun feedUntilCargo() = use(Intake, Feeder) {
 suspend fun shootMode() = use(Shooter) {
     println("shoot mode has been called. Shootmode = ${Shooter.shootMode}")
     Shooter.shootMode = !Shooter.shootMode
-    if (Shooter.shootMode) {
-        FrontLimelight.ledEnabled = true
-    } else {
-        FrontLimelight.ledEnabled = false
-        Shooter.rpm = 0.0
-    }
+    Limelight.ledEnabled = Shooter.shootMode
+}
+
+suspend fun autoShoot() = use(Shooter, Feeder) {
+    println("autoshooting")
+    Shooter.shootMode = true
+    delay(0.5)
+    Feeder.feed(10.0)
 }
 
 suspend fun intakePivotTest() = use(Intake) {
@@ -90,14 +93,6 @@ suspend fun shootTest2() = use(Shooter, Feeder) {
         Shooter.rpm = Shooter.rpmSetpoint
         println("in shooter test. Hi.")
     }
-}
-
-suspend fun shoot() = use(Shooter/*, Feeder*/) {
-
-}
-
-suspend fun spit() = use(Shooter) {
-
 }
 
 suspend fun goToPose(targetPose: Pose) = use(Climb, Intake) {

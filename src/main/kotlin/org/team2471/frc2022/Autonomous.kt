@@ -123,7 +123,7 @@ object AutoChooser {
         when (selAuto) {
             "Tests" -> testAuto()
             "Carpet Bias Test" -> carpetBiasTest()
-            //"Right Side 5" -> right5()
+            "Right Side 5 Auto" -> right5()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -180,27 +180,26 @@ object AutoChooser {
         }
     }
 
-//    suspend fun right5() = use(Drive, Shooter, Intake) {
-//        val auto = autonomi["Right Side 5 Auto"]
-//        if (auto != null) {
-//            shoot()
-//            parallel({
-//                Intake.setExtend(true)
-//                Intake.setIntakePower(Intake.INTAKE_POWER)
-//            }, {
-//                Drive.driveAlongPath(auto["1- Field Cargo"], true)
-//            })
-//            shoot()
-//            Drive.driveAlongPath(auto["2- Feeder Cargo"], false)
-//            parallel({
-//                Intake.setExtend(false)
-//                Intake.setIntakePower(0.0)
-//            }, {
-//                Drive.driveAlongPath(auto["3- Shoot"], false)
-//            })
-//            shoot()
-//        }
-//    }
+    suspend fun right5() = use(Drive, Intake, Shooter, Feeder) {
+        println("In right5 auto.")
+        val auto = autonomi["Right Side 5 Auto"]
+        if (auto != null) {
+            parallel({
+                Intake.changeAngle(Intake.PIVOT_INTAKE)
+                Intake.setIntakePower(Intake.INTAKE_POWER)
+            }, {
+                Drive.driveAlongPath(auto["1- First Field Cargo"], true)
+            })
+            autoShoot()
+            Drive.driveAlongPath(auto["2- Field and Feeder Cargo"], false)
+            parallel({
+                Intake.setIntakePower(0.0)
+            }, {
+                Drive.driveAlongPath(auto["3- Shoot"], false)
+            })
+            autoShoot()
+        }
+    }
 //
 //    suspend fun leftSideAuto() = use(Drive, Shooter, Intake) {
 //        val auto = autonomi["Left Side 2 Auto"]

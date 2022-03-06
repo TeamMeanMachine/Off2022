@@ -41,15 +41,14 @@ object Robot : MeanlibRobot() {
         println(BuildConfig.BUILD_TIME)
         Drive.zeroGyro()
         Drive.heading = 0.0.degrees
-       // AutoChooser
-        FrontLimelight.startUp()
-        FrontLimelight.ledEnabled = true
+        AutoChooser
 //        ShootingTests
         Intake
         Shooter
         Feeder
+        Limelight
 //        Climb
-        PowerDistribution
+//        PowerDistribution
     }
 
     override suspend fun enable() {
@@ -64,7 +63,7 @@ object Robot : MeanlibRobot() {
         Climb.enable()
 //        zeroIntakePivot()
         println("ending enable")
-        PowerDistribution.enable()
+//        PowerDistribution.enable()
     }
 
     override suspend fun autonomous() {
@@ -73,7 +72,7 @@ object Robot : MeanlibRobot() {
 //        Drive.zeroGyro()
         Drive.brakeMode()
         println("autonomous Drive brakeMode ${totalTimeTaken()}")
-        //AutoChooser.autonomous()
+        AutoChooser.autonomous()
         println("autonomous ending ${totalTimeTaken()}")
     }
 
@@ -85,8 +84,9 @@ object Robot : MeanlibRobot() {
     override suspend fun test()  {
         println("test mode begin. Hi.")
 //        Climb.anglePIDTest()
-        Climb.adjustmentTest()
+//        Climb.adjustmentTest()
 //        Climb.motorTest()
+        Intake.pivotTest()
     }
 
 
@@ -96,7 +96,7 @@ object Robot : MeanlibRobot() {
         Shooter.disable()
         Feeder.disable()
         Climb.disable()
-        PowerDistribution.disable()
+//        PowerDistribution.disable()
         //FrontLimelight.disable()
 
         //FrontLimelight.ledEnabled = false

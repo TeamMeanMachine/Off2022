@@ -79,6 +79,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override val headingRate: AngularVelocity
         get() = -gyro.rate.degrees.perSecond
 
+    var autoAim: Boolean = false
+
     override var velocity = Vector2(0.0, 0.0)
 
     override var position = Vector2(0.0, 0.0)
@@ -97,7 +99,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         kHeadingFeedForward = 0.001
     )
 
-    val aimPDController = PDConstantFController(0.006, 0.032, 0.011) //0.012, 0.03, 0.0
+    val aimPDController = PDConstantFController(0.011, 0.032, 0.008) // 0.006, 0.032, 0.011  // 0.012, 0.03, 0.0
     var lastError = 0.0
 
     init {
@@ -130,6 +132,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             val angleTwoEntry = table.getEntry("Swerve Angle 2")
             val angleThreeEntry = table.getEntry("Swerve Angle 3")
 
+            val autoAimEntry = table.getEntry("Auto Aim")
+
 //            aimPEntry.setDouble(0.015)
 //            aimDEntry.setDouble(0.005)
             periodic {
@@ -137,11 +141,13 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 xEntry.setDouble(x)
                 yEntry.setDouble(y)
                 headingEntry.setDouble(heading.asDegrees)
-                aimErrorEntry.setDouble(FrontLimelight.aimError)
+                aimErrorEntry.setDouble(Limelight.aimError)
                 angleZeroEntry.setDouble((modules[0] as Module).analogAngle.asDegrees)
                 angleOneEntry.setDouble((modules[1] as Module).analogAngle.asDegrees)
                 angleTwoEntry.setDouble((modules[2] as Module).analogAngle.asDegrees)
                 angleThreeEntry.setDouble((modules[3] as Module).analogAngle.asDegrees)
+                autoAim = autoAimEntry.getBoolean(false) || OI.driverController.a
+
 //                for (moduleCount in 0..3) {
 //                    val module = (modules[moduleCount] as Module)
 //                    print("Module: $moduleCount analogAngle: ${round(module.analogAngle.asDegrees, 2)}  ")
@@ -167,8 +173,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             var turn = 0.0
             if (OI.driveRotation.absoluteValue > 0.001) {
                 turn = OI.driveRotation
-            } else if (FrontLimelight.hasValidTarget && Shooter.shootMode) {
-                turn = aimPDController.update(FrontLimelight.aimError)
+            } else if (Limelight.hasValidTarget && (Shooter.shootMode || autoAim)) {
+                turn = aimPDController.update(Limelight.aimError)
 //                println("FrontLimeLightAimError=${FrontLimelight.aimError}")
             }
 //            printEncoderValues()

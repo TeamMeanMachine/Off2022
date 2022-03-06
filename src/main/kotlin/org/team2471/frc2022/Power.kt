@@ -8,16 +8,17 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 
 object PowerDistribution : Subsystem("PowerDistribution") {
-    var PDH = PowerDistribution()
+    private var PDH = PowerDistribution()
+    private val table = NetworkTableInstance.getDefault().getTable(name)
+    private val totalCurrent = table.getEntry("Current")
     init {
         GlobalScope.launch {
-            val table = NetworkTableInstance.getDefault().getTable(name)
+
             println("setting power distribution info")
             val totalPower = table.getEntry("Power")
-            val totalCurrent = table.getEntry("Current")
             val totalEnergy = table.getEntry("Energy")
             periodic {
-                totalCurrent.setDouble(PDH.totalCurrent)
+
                 totalPower.setDouble(PDH.totalPower)
                 totalEnergy.setDouble(PDH.totalEnergy)
 
@@ -35,9 +36,8 @@ object PowerDistribution : Subsystem("PowerDistribution") {
     }
 
     override suspend fun default() {
-        super.default()
         periodic {
-            val x = 42
+            totalCurrent.setDouble(PDH.totalCurrent)
         }
     }
 }

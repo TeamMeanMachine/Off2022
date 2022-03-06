@@ -4,7 +4,7 @@ package org.team2471.frc2022
 
 object Talons {
     const val PITCH = 7
-    const val SHOOTER_FEED = 1
+    const val SHOOTER_FEED = 4
     const val BED_FEED = 2
     const val INTAKE = 17
     const val TALON_TEST_TWO = 3

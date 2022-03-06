@@ -39,6 +39,7 @@ object Shooter : Subsystem("Shooter") {
     val rpmOffsetEntry = table.getEntry("RPM Offset")
     val pitchEntry = table.getEntry("pitch")
     val pitchSetpointEntry = table.getEntry("pitch Setpoint")
+    val shootModeEntry = table.getEntry("Shoot Mode")
 
     const val PITCH_LOW = -31.0
     const val PITCH_HIGH = 35.0
@@ -54,10 +55,14 @@ object Shooter : Subsystem("Shooter") {
         get() {
             if (tuningMode) {
                 field = pitchSetpointEntry.getDouble(10.0)
-            } else if (FrontLimelight.hasValidTarget) {
-                val pitch = pitchCurve.getValue(FrontLimelight.distance.asFeet)
-                pitchSetpointEntry.setDouble(pitch)
-                field = pitch
+            } else if (Limelight.hasValidFrontTarget) {
+                val tempPitch = pitchCurve.getValue(Limelight.distance.asFeet)
+                pitchSetpointEntry.setDouble(tempPitch)
+                field = tempPitch
+            } else if (Limelight.hasValidBackTarget) {
+                val tempPitch = -pitchCurve.getValue(Limelight.distance.asFeet)
+                pitchSetpointEntry.setDouble(tempPitch)
+                field = tempPitch
             } else {
                 field = pitchSetpointEntry.getDouble(10.0)
             }
@@ -69,7 +74,7 @@ object Shooter : Subsystem("Shooter") {
         }
 
     var pitchPDEnable = true
-    val pitchPDController = PDController(0.01, 0.0)//0.06, 0.0) // d 0.1
+    val pitchPDController = PDController(0.02, 0.0) //0.055, 0.03) //0.06, 0.0) // d 0.1
     val pitchIsReady : Boolean
         get() {
 //            println("${pitchPDEnable}     ${pitchSetpoint > PITCH_LOW}     ${pitchSetpoint < PITCH_HIGH}     ${pitchEncoder.isConnected}")
@@ -87,8 +92,8 @@ object Shooter : Subsystem("Shooter") {
         get() {
             if (tuningMode) {
                 field = rpmSetpointEntry.getDouble(5000.0)
-            } else if (FrontLimelight.hasValidTarget) {
-                field = rpmCurve.getValue(FrontLimelight.distance.asFeet) + rpmOffset
+            } else if (Limelight.hasValidTarget) {
+                field = rpmCurve.getValue(Limelight.distance.asFeet) + rpmOffset
                 rpmSetpointEntry.setDouble(field)
             } else {
                 field = rpmSetpointEntry.getDouble(5000.0)
@@ -108,18 +113,29 @@ object Shooter : Subsystem("Shooter") {
 
     init {
 //        pitchMotor.setBounds(2.50, 1.55, 1.50, 1.45, 0.50)
-        pitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
         //right up against: 12.5
-        pitchCurve.storeValue(5.0, 23.0)
-        pitchCurve.storeValue(10.0, 32.0)
-        pitchCurve.storeValue(15.0, 35.0)
-        pitchCurve.storeValue(20.0, 35.0)
+//        pitchCurve.storeValue(5.0, 23.0)
+//        pitchCurve.storeValue(10.0, 32.0)
+//        pitchCurve.storeValue(15.0, 35.0)
+//        pitchCurve.storeValue(20.0, 35.0)
+
+        // 03/05 tuned
+        pitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+        pitchCurve.storeValue(5.0, 12.0)
+        pitchCurve.storeValue(10.0, 20.0)
+        pitchCurve.storeValue(15.0, 31.0)
+        pitchCurve.storeValue(20.0, 31.0)
+
 
         rpmCurve.setMarkBeginOrEndKeysToZeroSlope(false)
-        rpmCurve.storeValue(5.0, 3500.0)
-        rpmCurve.storeValue(10.0, 3750.0)
-        rpmCurve.storeValue(15.0, 4500.0)
-        rpmCurve.storeValue(20.0, 5500.0)
+//        rpmCurve.storeValue(5.0, 3500.0)
+//        rpmCurve.storeValue(10.0, 3750.0)
+//        rpmCurve.storeValue(15.0, 4500.0)
+//        rpmCurve.storeValue(20.0, 5500.0)
+        rpmCurve.storeValue(5.0, 3200.0)
+        rpmCurve.storeValue(10.0, 3500.0)
+        rpmCurve.storeValue(15.0, 4050.0)
+        rpmCurve.storeValue(20.0, 5000.0)
 
         shootingMotor.config {
             followersInverted(true)
@@ -150,9 +166,11 @@ object Shooter : Subsystem("Shooter") {
                 if (pitchIsReady) {
                     val power = pitchPDController.update(pitchSetpoint - pitch)
                     pitchSetPower(power)
+//                    println("pitchPower $power")
                 }
                 rpmEntry.setDouble(rpm)
                 rpmErrorEntry.setDouble(rpmSetpoint - rpm)
+                shootModeEntry.setBoolean(shootMode)
 
                  //val detectedColor: Color = m_colorSensor.color
 
@@ -187,25 +205,23 @@ object Shooter : Subsystem("Shooter") {
 //                println("red: ${colorSensor.configureColorSensor()}          blue: ${colorSensor.blue}")
 //                println("angle = ${pitchAngle.asDegrees}")
 
-                if (shootMode) {
+                if (shootMode || tuningMode) {
                     rpm = rpmSetpoint
-                    pitch = pitchSetpoint
+                } else {
+                    rpm = 0.0
                 }
             }
         }
     }
 
-//    override fun preEnable() {
-//        GlobalScope.launch(MeanlibDispatcher) {
-//            pitchSetpoint = pitch
-//            periodic {
-//
-//            }
-//        }
-//    }
+    override fun preEnable() {
+        shootMode = false
+    }
+
+
 
     val cargoIsStaged : Boolean
-        get() = colorSensor.proximity > 180
+        get() = colorSensor.proximity > 250
     val cargoIsRed : Boolean?
         get() =  if (colorSensor.proximity < 180) null else colorSensor.color.red >= colorSensor.color.blue
 
@@ -270,7 +286,6 @@ object Shooter : Subsystem("Shooter") {
         periodic {
 //            shootingMotor.stop()
             pitchEntry.setDouble(pitch)
-            rpm = 0.0
         }
     }
 }
