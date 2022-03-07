@@ -8,30 +8,34 @@ import kotlinx.coroutines.launch
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 
-object PowerDistribution : Subsystem("PowerDistribution") {
-    var PDH = PowerDistribution()
+object PowerInfo : Subsystem("PowerDistribution") {
+    var PDH = PowerDistribution(1, PowerDistribution.ModuleType.kRev)
     val table = NetworkTableInstance.getDefault().getTable(name)
     val totalPower = table.getEntry("Power")
     val totalCurrent = table.getEntry("Current")
     val totalEnergy = table.getEntry("Energy")
+    val enableDashboardOutput = false
     init {
         GlobalScope.launch {
             println("setting power distribution info")
+            PDH.clearStickyFaults()
             periodic {
-                try {
-                    totalCurrent.setDouble(PDH.totalCurrent)
-                    totalPower.setDouble(PDH.totalPower)
-                    totalEnergy.setDouble(PDH.totalEnergy)
-                } catch (ex: Exception) {
-                    println("Exception when reading power: ${ex.message}")
-                }
-                for (i in 0..23) {
+                if (enableDashboardOutput) {
                     try {
-                        val entry = table.getEntry("port_$i")
-                        entry.setDouble(PDH.getCurrent(i))
-                        val x = 42
+                        totalCurrent.setDouble(PDH.totalCurrent)
+                        totalPower.setDouble(PDH.totalPower)
+                        totalEnergy.setDouble(PDH.totalEnergy)
                     } catch (ex: Exception) {
-                        println("port $i couldn't be read")
+                        println("Exception when reading power: ${ex.message}")
+                    }
+                    for (i in 0..23) {
+                        try {
+                            val entry = table.getEntry("port_$i")
+                            entry.setDouble(PDH.getCurrent(i))
+                            val x = 42
+                        } catch (ex: Exception) {
+                            println("port $i couldn't be read")
+                        }
                     }
                 }
             }

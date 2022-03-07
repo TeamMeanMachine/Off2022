@@ -125,12 +125,13 @@ suspend fun goToPose(targetPose: Pose, fullCurve : Boolean = false, minTime: Dou
 suspend fun climbPrep() = use(Climb, Shooter, Intake) {
     Feeder.autoFeedMode = false
     Drive.limitingFactor = 0.25
+    Climb.setStatusFrames(forClimb = true)
     Climb.changeAngle(8.0, 0.3)
-//    parallel ({
-//
-//    }, {
-//        Shooter.changeAngle(Shooter.PITCH_LOW)
-//    })
+    parallel ({
+        Intake.changeAngle(Intake.PIVOT_BOTTOM)
+    }, {
+        Shooter.changeAngle(Shooter.PITCH_LOW)
+    })
     goToPose(Pose.CLIMB_PREP)
     Climb.climbIsPrepped = true
     println("climb is prepped")

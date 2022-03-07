@@ -48,7 +48,7 @@ object Robot : MeanlibRobot() {
         Feeder
         Limelight
 //        Climb
-//        PowerDistribution
+        PowerInfo
     }
 
     override suspend fun enable() {
@@ -63,7 +63,7 @@ object Robot : MeanlibRobot() {
         Climb.enable()
 //        zeroIntakePivot()
         println("ending enable")
-//        PowerDistribution.enable()
+        PowerInfo.enable()
     }
 
     override suspend fun autonomous() {
@@ -96,6 +96,7 @@ object Robot : MeanlibRobot() {
         Shooter.disable()
         Feeder.disable()
         Climb.disable()
+        PowerInfo.disable()
         OI.operatorController.rumble = 0.0
 //        PowerDistribution.disable()
         //FrontLimelight.disable()

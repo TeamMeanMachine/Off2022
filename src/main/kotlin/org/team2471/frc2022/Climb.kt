@@ -1,5 +1,6 @@
 package org.team2471.frc2022
 
+import com.ctre.phoenix.motorcontrol.StatusFrame
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DutyCycleEncoder
 import edu.wpi.first.wpilibj.Timer
@@ -26,6 +27,7 @@ object Climb : Subsystem("Climb") {
     val heightSetpointEntry = table.getEntry("Height Setpoint")
     val angleEntry = table.getEntry("Angle")
     val angleSetpointEntry = table.getEntry("Angle Setpoint")
+    val robotRollEntry = table.getEntry("Roll")
 
     var climbIsPrepped = false
     var climbStage = 0
@@ -51,6 +53,8 @@ object Climb : Subsystem("Climb") {
     const val ANGLE_TOP = 36.0
     const val ANGLE_BOTTOM = -4.0
 
+    val roll : Double
+        get() = Drive.gyro.getRoll()
     val angleOffset = if (isCompBot) -39.0 else 28.0
     val angleEncoderModifier = if (isCompBot) 1.0 else -1.0
 //    val angleAbsoluteRaw : Double
@@ -89,6 +93,7 @@ object Climb : Subsystem("Climb") {
         }
         heightSetpointEntry.setDouble(height)
         angleSetpointEntry.setDouble(angle)
+        setStatusFrames(false)
         GlobalScope.launch {
             parallel ({
                 periodic {
@@ -104,9 +109,20 @@ object Climb : Subsystem("Climb") {
                     //println("absolute: ${round(angleAbsoluteRaw, 4)} relative:$angleRelativeRaw abs: $angleAbsolute rel: $angle diff = ${angleAbsolute - angle}")
                     heightEntry.setDouble(heightMotor.position)
                     angleEntry.setDouble(angle)
+                    robotRollEntry.setDouble(roll)
                 }
             })
         }
+    }
+    fun setStatusFrames(forClimb : Boolean = false) {
+        val framePeriod_1 = if (forClimb) 10 else 100
+        val framePeriod_2 = 2*framePeriod_1
+        println("height statusframe1 from ${heightMotor.getStatusFramePeriod(StatusFrame.Status_1_General)} to $framePeriod_1")
+        println("height statusframe2 from ${heightMotor.getStatusFramePeriod(StatusFrame.Status_2_Feedback0)} to $framePeriod_2")
+        heightMotor.setStatusFramePeriod(StatusFrame.Status_1_General, framePeriod_1)
+        heightMotor.setStatusFramePeriod(StatusFrame.Status_2_Feedback0, framePeriod_2)
+        angleMotor.setStatusFramePeriod(StatusFrame.Status_1_General, framePeriod_1)
+        angleMotor.setStatusFramePeriod(StatusFrame.Status_2_Feedback0, framePeriod_2)
     }
 
     override fun postEnable() {
