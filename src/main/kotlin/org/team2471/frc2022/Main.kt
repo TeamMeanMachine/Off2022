@@ -86,7 +86,7 @@ object Robot : MeanlibRobot() {
 //        Climb.anglePIDTest()
 //        Climb.adjustmentTest()
 //        Climb.motorTest()
-        Intake.pivotTest()
+        Drive.autoSteerTest()
     }
 
 

@@ -19,7 +19,8 @@ suspend fun pathThenVision(path: Path2D, stopTime: Double, resetOdometry: Boolea
     pathJob.cancelAndJoin()
 
     //limelight takes over
-    Limelight.ledEnabled = true
+    Limelight.backLedEnabled = true
+    Limelight.frontLedEnabled = true
 
     periodic {
         if (Limelight.hasValidFrontTarget) {

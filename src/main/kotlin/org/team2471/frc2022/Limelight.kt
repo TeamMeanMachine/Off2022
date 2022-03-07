@@ -53,7 +53,13 @@ object Limelight : Subsystem("Front Limelight") {
         var isFacingShooter = (angleFromCenter - heading).wrap().asDegrees.absoluteValue >= 90.0  //if the robot is facing toward (angleFromCenter opposite from heading), don't use front
 //        println("isFacingShooter: $isFacingShooter   heading: ${heading.asDegrees.roundToInt()}    angleFromCenter: ${angleFromCenter.asDegrees.roundToInt()}     x: ${Drive.position.x.roundToInt()}     y: ${Drive.position.y.roundToInt()}")
 //        return isFacingShooter     //do this or add other inputs like hasValidTarget
-        return isFacingShooter
+        return if (frontLedEnabled && backLedEnabled) {
+            isFacingShooter
+        } else if (frontLedEnabled) {
+            true
+        } else {
+            false
+        }
     }
 
     val distance: Length
@@ -101,13 +107,19 @@ object Limelight : Subsystem("Front Limelight") {
         ) + Drive.position
 
 
-    var ledEnabled = true
+    var backLedEnabled = true
         set(value) {
             field = value
 //            ledModeEntry.setDouble(if (value) 0.0 else 1.0)
-            frontLedModeEntry.setDouble(if (value) 0.0 else 1.0)
             backLedModeEntry.setDouble(if (value) 0.0 else 1.0)
         }
+
+    var frontLedEnabled = true
+        set(value) {
+            field = value
+            frontLedModeEntry.setDouble(if (value) 0.0 else 1.0)
+        }
+
 
     val xTranslation
         get() = if (useFrontLimelight) frontXEntry.getDouble(0.0) else -backXEntry.getDouble(0.0)
@@ -160,7 +172,8 @@ object Limelight : Subsystem("Front Limelight") {
 
 
     init {
-        ledEnabled = true
+        backLedEnabled = false
+        frontLedEnabled = false
         heightToDistance.storeValue(33.0, 3.0)
         heightToDistance.storeValue(22.0, 7.2)
         heightToDistance.storeValue(9.6, 11.5)
@@ -228,7 +241,7 @@ object Limelight : Subsystem("Front Limelight") {
 //    }
 
     override suspend fun default() {
-        ledEnabled = true
+        backLedEnabled = false
         halt()
     }
 

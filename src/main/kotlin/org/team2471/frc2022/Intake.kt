@@ -29,7 +29,7 @@ object Intake : Subsystem("Intake") {
     val pivotSetpointEntry = table.getEntry("Pivot Setpoint")
     val pivotMotorEntry = table.getEntry("Pivot Motor")
 
-    var pivotOffset = if (isCompBot) -298.7 else 1.4
+    var pivotOffset = if (isCompBot)  -42.0 else 1.4
     val pivotEncoder = DutyCycleEncoder(DigitalSensors.INTAKE_PIVOT)  // this encoder seems to give randomly changing answers - very naughty encoder
     var pivotAngle : Double = 0.0
         get() = (pivotEncoder.get() * 360.0 / 0.944 + pivotOffset).degrees.wrap().asDegrees
@@ -50,10 +50,9 @@ object Intake : Subsystem("Intake") {
         }
 
     const val INTAKE_POWER = 0.9
-
     const val PIVOT_BOTTOM = 0.0
     const val PIVOT_CATCH = 0.0
-    val PIVOT_INTAKE = 24.0
+    val PIVOT_INTAKE = 21.0
     const val PIVOT_TOP = 103.0
 
 
@@ -63,7 +62,7 @@ object Intake : Subsystem("Intake") {
     init {
         intakePivotMotor.config(20) {
             feedbackCoefficient =
-                360.0 / 2048.0 / 87.1875 * 90.0 / 85.0  // degrees in a rotation, ticks per rotation, gear reduction (44:1 reduction)
+                360.0 / 2048.0 / 92.3 / 84.22 * 100.5 // degrees in a rotation, ticks per rotation, gear reduction (44:1 reduction)
             brakeMode()
 //            inverted(true)
             pid {
@@ -109,9 +108,10 @@ object Intake : Subsystem("Intake") {
 //            periodic {
 //                if (pivotEncoder.isConnected && pivotAngle > PIVOT_BOTTOM && pivotAngle < PIVOT_TOP) {
 //                    intakePivotMotor.setRawOffset(pivotAngle.degrees)
-//                    pivotSetpoint = pivotAngle
+                    pivotSetpoint = pivotAngle
 //                    println("setpoints pivotAngle")
-//                } else {
+//                }
+//                else {
 //                    intakePivotMotor.setRawOffset(PIVOT_BOTTOM.degrees)
 //                    pivotSetpoint = PIVOT_BOTTOM
 //                    println("setpoints PIVOT_BOTTOM")

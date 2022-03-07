@@ -175,7 +175,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 turn = OI.driveRotation
             } else if (Limelight.hasValidTarget && (Shooter.shootMode || autoAim)) {
                 turn = aimPDController.update(Limelight.aimError)
-//                println("FrontLimeLightAimError=${FrontLimelight.aimError}")
+//                println("LimeLightAimError=${Limelight.aimError}")
             }
 //            printEncoderValues()
 
@@ -188,6 +188,18 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 false
             )
         }
+    }
+
+    fun autoSteer() {
+        var turn = 0.0
+        if (Limelight.hasValidTarget) {
+            turn = aimPDController.update(Limelight.aimError)
+        }
+        Drive.drive(
+            Vector2(0.0,0.0),
+            turn,
+            false
+        )
     }
 
     fun printEncoderValues() {

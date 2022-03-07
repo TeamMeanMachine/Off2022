@@ -5,6 +5,7 @@ import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc2022.Pose.Companion.CLIMB_PREP
+import kotlin.math.roundToInt
 
 //Intake
 
@@ -50,14 +51,31 @@ suspend fun feedUntilCargo() = use(Intake, Feeder) {
 suspend fun shootMode() = use(Shooter) {
     println("shoot mode has been called. Shootmode = ${Shooter.shootMode}")
     Shooter.shootMode = !Shooter.shootMode
-    Limelight.ledEnabled = Shooter.shootMode
+    Limelight.backLedEnabled = (Shooter.shootMode && !Limelight.useFrontLimelight)
+    Limelight.frontLedEnabled = (Shooter.shootMode && !Limelight.useFrontLimelight)
 }
 
-suspend fun autoShoot() = use(Shooter, Feeder) {
-    println("autoshooting")
+suspend fun autoShoot() = use(Shooter, Feeder, Drive) {
     Shooter.shootMode = true
-    delay(0.5)
-    Feeder.feed(10.0)
+    parallel ({
+        Feeder.setBedFeedPower(Feeder.BED_FEED_POWER)
+        println("autoshooting   usingFrontLL ${Limelight.useFrontLimelight} distance ${Limelight.distance}")
+        Feeder.autoFeedMode = false
+        delay(0.5)
+        Feeder.setShooterFeedPower(0.8)
+        delay(2.0)
+        Feeder.setShooterFeedPower(0.0)
+        Shooter.shootMode = false
+        Feeder.autoFeedMode = true
+    }, {
+        periodic {
+            Drive.autoSteer()
+            println("rpm ${Shooter.rpm.roundToInt()}     rpmSetpoint ${Shooter.rpmSetpoint.roundToInt()}    pitch ${Shooter.pitch.roundToInt()}       pitchSetpoint ${Shooter.pitchSetpoint.roundToInt()}")
+            if (!Shooter.shootMode) {
+                stop()
+            }
+        }
+    })
 }
 
 suspend fun intakePivotTest() = use(Intake) {

@@ -45,6 +45,7 @@ object Shooter : Subsystem("Shooter") {
     const val PITCH_HIGH = 35.0
 
     var pitchOffset = if (isCompBot) 1.3 else - 76.0
+    var curvepitchOffset = 3.0
     var pitch: Double = 0.0
         get() = (pitchEncoder.get() - 0.218) * 33.0 / 0.182 + pitchOffset
         set(value) {
@@ -55,18 +56,19 @@ object Shooter : Subsystem("Shooter") {
         get() {
             if (tuningMode) {
                 field = pitchSetpointEntry.getDouble(10.0)
-            } else if (Limelight.hasValidFrontTarget) {
-                val tempPitch = pitchCurve.getValue(Limelight.distance.asFeet)
+            } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
+                val tempPitch = -pitchCurve.getValue(Limelight.distance.asFeet)
                 pitchSetpointEntry.setDouble(tempPitch)
                 field = tempPitch
-            } else if (Limelight.hasValidBackTarget) {
-                val tempPitch = -pitchCurve.getValue(Limelight.distance.asFeet)
+            } else if (Limelight.useFrontLimelight && Limelight.hasValidFrontTarget) {
+                val tempPitch = pitchCurve.getValue(Limelight.distance.asFeet)
                 pitchSetpointEntry.setDouble(tempPitch)
                 field = tempPitch
             } else {
                 field = pitchSetpointEntry.getDouble(10.0)
             }
-            return field
+//            println("tuningMode $tuningMode     useFrontLL ${Limelight.useFrontLimelight}     frontTarget ${Limelight.hasValidFrontTarget}        backTarget ${Limelight.hasValidBackTarget}")
+            return field + curvepitchOffset
         }
         set(value) {
             field = value.coerceIn(PITCH_LOW, PITCH_HIGH)
@@ -152,6 +154,7 @@ object Shooter : Subsystem("Shooter") {
         pitchMotor.config {
             currentLimit(10, 15, 10)
             inverted(!isCompBot)
+            brakeMode()
         }
 
         rpmSetpointEntry.setDouble(rpmSetpoint)
@@ -244,7 +247,7 @@ object Shooter : Subsystem("Shooter") {
         }
     }
 
-    var rpmOffset: Double = 0.0 //400.0
+    var rpmOffset: Double = 1000.0
         set(value) {
             field = value
             rpmOffsetEntry.setDouble(value)

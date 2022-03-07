@@ -12,6 +12,7 @@ import org.team2471.frc.lib.control.PDController
 import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
+import org.team2471.frc.lib.framework.use
 import kotlin.math.absoluteValue
 
 
@@ -35,7 +36,7 @@ object Feeder : Subsystem("Feeder") {
     const val STAGE_DISTANCE = 3.0
 
     var blue = 0
-    var autoFeed = 0.0
+    var autoFeedMode = true
 
     init {
         shooterFeedMotor.config {
@@ -48,23 +49,24 @@ object Feeder : Subsystem("Feeder") {
 //                feedEntry.setBoolean(ballIsStaged)
                 feedEntry.setBoolean(Limelight.useFrontLimelight)
                 distanceEntry.setDouble(feedDistance)
-
-                if (Shooter.cargoIsStaged) {
-                    if (!cargoWasStaged) {
-                        feedDistanceEncoder.reset()
-                        cargoWasStaged = true
-                    }
-                    val power = feedPDController.update(feedDistance - STAGE_DISTANCE)
-                    setShooterFeedPower(power + OI.driveRightTrigger + autoFeed)
-                    if (ballIsStaged) {
-                        setBedFeedPower(0.0)
+                if (autoFeedMode) {
+                    if (Shooter.cargoIsStaged) {
+                        if (!cargoWasStaged) {
+                            feedDistanceEncoder.reset()
+                            cargoWasStaged = true
+                        }
+                        val power = feedPDController.update(feedDistance - STAGE_DISTANCE)
+                        setShooterFeedPower(power + OI.driveRightTrigger)
+                        if (ballIsStaged) {
+                            setBedFeedPower(0.0)
+                        } else {
+                            setBedFeedPower(BED_FEED_POWER)
+                        }
                     } else {
+                        setShooterFeedPower(SHOOTER_FEED_POWER)
                         setBedFeedPower(BED_FEED_POWER)
+                        cargoWasStaged = false
                     }
-                } else {
-                    setShooterFeedPower(SHOOTER_FEED_POWER)
-                    setBedFeedPower(BED_FEED_POWER)
-                    cargoWasStaged = false
                 }
             }
         }
@@ -80,7 +82,7 @@ object Feeder : Subsystem("Feeder") {
         get() = !button.get()
 
     val feedDistance: Double
-        get() = feedDistanceEncoder.get() / Math.PI * 20.0
+        get() = -feedDistanceEncoder.get() / Math.PI * 20.0
 
     fun setShooterFeedPower(power: Double) {
         shooterFeedMotor.setPercentOutput(power)
@@ -90,13 +92,16 @@ object Feeder : Subsystem("Feeder") {
         bedFeedMotor.setPercentOutput(power)
     }
 
-    suspend fun feed(distance: Double) {
-        feedDistanceEncoder.reset()
+    suspend fun feed(distance: Double) = use(this){
+//        feedDistanceEncoder.reset()
+        setShooterFeedPower(0.8)
         periodic {
-            var error = distance - feedDistance
-            val power = feedPDController.update(error)
-            setShooterFeedPower(power)
-            if (distance > feedDistance) {
+//            var error = distance - feedDistance
+//            val power = feedPDController.update(error)
+//            setShooterFeedPower(power)
+//            println("feed power $power")
+            println("distance: ${Limelight.distance}    rpm: ${Shooter.rpm}    pitchSetpoint: ${Shooter.pitchSetpoint}")
+            if (!Shooter.cargoIsStaged && !ballIsStaged) {
                 println("stopped feed")
                 stop()
             }

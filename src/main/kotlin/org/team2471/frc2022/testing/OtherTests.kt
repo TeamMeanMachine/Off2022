@@ -52,3 +52,10 @@ suspend fun Climb.adjustmentTest() = use(this) {
         angleSetpoint -= OI.operatorController.rightThumbstickX * (20.0 / 50.0)
     }
 }
+
+suspend fun Drive.autoSteerTest() = use(Drive){
+    Limelight.backLedEnabled = true
+    periodic {
+        autoSteer()
+    }
+}
