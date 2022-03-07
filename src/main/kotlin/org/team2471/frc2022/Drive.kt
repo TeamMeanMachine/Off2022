@@ -24,6 +24,7 @@ import kotlin.math.absoluteValue
 object Drive : Subsystem("Drive"), SwerveDrive {
 
     val navXGyroEntry = NetworkTableInstance.getDefault().getTable(name).getEntry("NavX Gyro")
+    var limitingFactor = 1.0
 
     /**
      * Coordinates of modules
@@ -182,8 +183,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             headingSetpoint = OI.driverController.povDirection
 
             drive(
-                OI.driveTranslation,
-                turn,
+                OI.driveTranslation * limitingFactor,
+                turn * limitingFactor,
                 SmartDashboard.getBoolean("Use Gyro", true) && !DriverStation.isAutonomous(),
                 false
             )

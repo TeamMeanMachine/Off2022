@@ -47,7 +47,7 @@ object Shooter : Subsystem("Shooter") {
     var pitchOffset = if (isCompBot) 1.3 else - 76.0
     var curvepitchOffset = 3.0
     var pitch: Double = 0.0
-        get() = (pitchEncoder.get() - 0.218) * 33.0 / 0.182 + pitchOffset
+        get() = (pitchEncoder.absolutePosition - 0.218) * 33.0 / 0.182 + pitchOffset
         set(value) {
             pitchSetpoint = value
             field = value

@@ -5,7 +5,6 @@ import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.cube
 import org.team2471.frc.lib.math.deadband
 import org.team2471.frc.lib.math.squareWithSign
-import org.team2471.frc.lib.units.radians
 
 object OI {
     val driverController = XboxController(0)
@@ -57,10 +56,11 @@ object OI {
         driverController::start.whenTrue{
             goToPose(Pose.CLIMB_PREP)
         }
-
+        operatorController::start.whenTrue { climbPrep() }
         operatorController::b.whenTrue { intake() }
         operatorController::a.whenTrue { catch() }
         operatorController::y.whenTrue { armUp() }
         operatorController::back.whenTrue { Climb.zeroClimb() }
+        operatorController::leftBumper.whenTrue { startClimb() }
     }
 }

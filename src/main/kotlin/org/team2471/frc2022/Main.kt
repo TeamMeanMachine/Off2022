@@ -96,6 +96,7 @@ object Robot : MeanlibRobot() {
         Shooter.disable()
         Feeder.disable()
         Climb.disable()
+        OI.operatorController.rumble = 0.0
 //        PowerDistribution.disable()
         //FrontLimelight.disable()
 

@@ -31,7 +31,7 @@ object Feeder : Subsystem("Feeder") {
     val feedEntry = table.getEntry("useFrontLimelight")
     val distanceEntry = table.getEntry("Distance")
 
-    const val SHOOTER_FEED_POWER = 0.7
+    val SHOOTER_FEED_POWER = if (isCompBot) 0.7 else 1.0
     const val BED_FEED_POWER = 0.8
     const val STAGE_DISTANCE = 3.0
 
@@ -42,6 +42,9 @@ object Feeder : Subsystem("Feeder") {
         shooterFeedMotor.config {
             brakeMode()
             inverted(true)
+        }
+        bedFeedMotor.config {
+            inverted(!isCompBot)
         }
         GlobalScope.launch(MeanlibDispatcher) {
             var cargoWasStaged = false
@@ -82,7 +85,7 @@ object Feeder : Subsystem("Feeder") {
         get() = !button.get()
 
     val feedDistance: Double
-        get() = -feedDistanceEncoder.get() / Math.PI * 20.0
+        get() = -feedDistanceEncoder.absolutePosition / Math.PI * 20.0
 
     fun setShooterFeedPower(power: Double) {
         shooterFeedMotor.setPercentOutput(power)

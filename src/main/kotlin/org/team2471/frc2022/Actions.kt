@@ -4,25 +4,24 @@ import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.use
-import org.team2471.frc2022.Pose.Companion.CLIMB_PREP
 import kotlin.math.roundToInt
 
 //Intake
 
 
-suspend fun intake() = use(Intake) {
+suspend fun intake() = use(Intake, Climb) {
     Intake.setIntakePower(Intake.INTAKE_POWER)
     Intake.changeAngle(Intake.PIVOT_INTAKE)
     Climb.changeAngle(Climb.HOLDING_ANGLE)
 }
 
-suspend fun catch() = use(Intake) {
+suspend fun catch() = use(Intake, Climb) {
     Intake.setIntakePower(0.0)
     Intake.changeAngle(Intake.PIVOT_CATCH)
     Climb.changeAngle(Climb.HOLDING_ANGLE)
 }
 
-suspend fun armUp() = use(Intake) {
+suspend fun armUp() = use(Intake, Climb) {
     Intake.setIntakePower(0.0)
     Intake.changeAngle(Intake.PIVOT_TOP)
     Climb.changeAngle(Climb.HOLDING_ANGLE)
@@ -113,17 +112,50 @@ suspend fun shootTest2() = use(Shooter, Feeder) {
     }
 }
 
-suspend fun goToPose(targetPose: Pose) = use(Climb, Intake) {
+suspend fun goToPose(targetPose: Pose, fullCurve : Boolean = false, minTime: Double = 0.0) = use(Climb, Intake) {
+    val time = if (fullCurve) {maxOf(minTime, Climb.angleChangeTime(targetPose.angle), Climb.heightChangeTime(targetPose.height))} else {minTime}
+    println("Pose Values: $time ${targetPose.height} ${targetPose.angle}")
     parallel({
-        Climb.changeHeight(targetPose.height)
+        Climb.changeHeight(targetPose.height, time)
     }, {
-        Climb.changeAngle(targetPose.angle)
-    }, {
-        Intake.changeAngle(targetPose.intake)
+        Climb.changeAngle(targetPose.angle, time)
     })
 }
 
-suspend fun climb() = use(Climb, Intake) {
-    Climb.changeAngle(8.0) // takes brake off climb height
-    goToPose(CLIMB_PREP)
+suspend fun climbPrep() = use(Climb, Shooter, Intake) {
+    Feeder.autoFeedMode = false
+    Drive.limitingFactor = 0.25
+    Climb.changeAngle(8.0, 0.3)
+//    parallel ({
+//
+//    }, {
+//        Shooter.changeAngle(Shooter.PITCH_LOW)
+//    })
+    goToPose(Pose.CLIMB_PREP)
+    Climb.climbIsPrepped = true
+    println("climb is prepped")
+}
+
+suspend fun  startClimb() = use(Climb, Intake) {
+    println("trying to start climb")
+    if (Climb.climbIsPrepped) {
+        println("Climb stage executing: ${Climb.climbStage}")
+        OI.operatorController.rumble = 0.5
+        when (Climb.climbStage){
+            0 -> {
+                Climb.angleMotor.brakeMode()
+                goToPose(Pose.PULL_UP)
+            }
+            1 -> {
+                goToPose(Pose.PULL_UP_LATCH, true, 0.5)
+                goToPose(Pose.PULL_UP_LATCH_RELEASE, true, 1.0)
+            }
+            2 -> goToPose(Pose.EXTEND_HOOKS)
+            3 -> goToPose(Pose.TRAVERSE_ENGAGE)
+            4 -> goToPose(Pose.TRAVERSE_PULL_UP)
+            else -> Climb.climbStage = -1
+        }
+        Climb.climbStage += 1
+        OI.operatorController.rumble = 0.0
+    }
 }

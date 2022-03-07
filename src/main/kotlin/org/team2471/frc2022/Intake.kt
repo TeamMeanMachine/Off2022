@@ -10,6 +10,7 @@ import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.actuators.TalonID
 import org.team2471.frc.lib.control.PDController
 import org.team2471.frc.lib.coroutines.MeanlibDispatcher
+import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.motion_profiling.MotionCurve
@@ -29,10 +30,10 @@ object Intake : Subsystem("Intake") {
     val pivotSetpointEntry = table.getEntry("Pivot Setpoint")
     val pivotMotorEntry = table.getEntry("Pivot Motor")
 
-    var pivotOffset = if (isCompBot)  -42.0 else 1.4
+    var pivotOffset = if (isCompBot) -42.0 else 84.0
     val pivotEncoder = DutyCycleEncoder(DigitalSensors.INTAKE_PIVOT)  // this encoder seems to give randomly changing answers - very naughty encoder
     var pivotAngle : Double = 0.0
-        get() = (pivotEncoder.get() * 360.0 / 0.944 + pivotOffset).degrees.wrap().asDegrees
+        get() = (pivotEncoder.absolutePosition * 360.0 / 0.944 + pivotOffset).degrees.wrap().asDegrees
 
 //        get() = intakePivotMotor.position
 //        set(value) {
@@ -52,8 +53,8 @@ object Intake : Subsystem("Intake") {
     const val INTAKE_POWER = 0.9
     const val PIVOT_BOTTOM = 0.0
     const val PIVOT_CATCH = 0.0
-    val PIVOT_INTAKE = 21.0
-    const val PIVOT_TOP = 103.0
+    val PIVOT_INTAKE = if (isCompBot) 21.0 else 20.0
+    val PIVOT_TOP = if (isCompBot) 103.0 else 98.0
 
 
 //    val button = DigitalInput(9)
@@ -76,6 +77,7 @@ object Intake : Subsystem("Intake") {
         }
 
         GlobalScope.launch(MeanlibDispatcher) {
+            parallel({
             periodic {
                 if (pivotEncoder.isConnected && pivotAngle > PIVOT_BOTTOM && pivotAngle < PIVOT_TOP) {
                     intakePivotMotor.setRawOffset(pivotAngle.degrees)
@@ -92,12 +94,13 @@ object Intake : Subsystem("Intake") {
 //    //                    pivotSetpoint = PIVOT_TOP
 //    //                    println("setpoints PIVOT_TOP")
 //                }
-            }
+            }},{
             periodic {
                 currentEntry.setDouble(intakePivotMotor.current)  // intakeMotor.current)
                 pivotEntry.setDouble(pivotAngle) // intakePivotMotor.position)
                 pivotMotorEntry.setDouble(intakePivotMotor.position)
-            }
+                //println("$isCompBot intake angle: $pivotAngle ${pivotEncoder.absolutePosition}")
+            }})
         }
     }
 
@@ -173,7 +176,7 @@ object Intake : Subsystem("Intake") {
         periodic {
             val t = timer.get()
             pivotSetpoint = angleCurve.getValue(t)
-            println("${angleCurve.getValue(t)}")
+            //println("${angleCurve.getValue(t)}")
             if (t >= angleCurve.length) {
                 stop()
             }
