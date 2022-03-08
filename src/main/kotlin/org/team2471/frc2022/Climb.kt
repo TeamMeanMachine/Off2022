@@ -26,12 +26,13 @@ object Climb : Subsystem("Climb") {
     val heightEntry = table.getEntry("Height")
     val heightSetpointEntry = table.getEntry("Height Setpoint")
     val angleEntry = table.getEntry("Angle")
+    val angleMotorEntry = table.getEntry("Angle Motor")
     val angleSetpointEntry = table.getEntry("Angle Setpoint")
     val robotRollEntry = table.getEntry("Roll")
 
     var climbIsPrepped = false
     var climbStage = 0
-    val climbMode = true //set to false after climb auto creation
+    var climbMode = false
     val height: Double
         get() = heightMotor.position
     var heightSetpoint = 0.0
@@ -64,14 +65,17 @@ object Climb : Subsystem("Climb") {
 //    val angleRelative: Double
 //        get() = ((((angleEncoder.get() * angleEncoderModifier) - 0.05) * 37.0 / 0.13) + angleOffset).degrees.wrap().asDegrees
     val angle: Double
-        get() = ((((angleEncoder.absolutePosition * angleEncoderModifier) - 0.05) * 37.0 / 0.13) + angleOffset).degrees.wrap().asDegrees
+        get() = angleMotor.position
+        // get() = ((((angleEncoder.absolutePosition * angleEncoderModifier) - 0.05) * 37.0 / 0.13) + angleOffset).degrees.wrap().asDegrees
     var angleSetpoint = 0.0
         get() = angleSetpointEntry.getDouble(0.0)
         set(value) {
             field = value.coerceIn(ANGLE_BOTTOM, ANGLE_TOP)
             angleSetpointEntry.setDouble(field)
         }
-    val anglePDController = PDController(0.03, 0.0)
+    val anglePDController = PDController(0.006, 0.002) //0.03, 0.0)
+    val angleFeedForward = if (climbIsPrepped || tuningMode) 0.06 else 0.0
+    var isAngleMotorControlled = true
 
     init {
         heightMotor.config {
@@ -86,32 +90,33 @@ object Climb : Subsystem("Climb") {
         angleMotor.config {
             coastMode()
             inverted(true)
-//            feedbackCoefficient = 360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0 * 39.0 / 26.0
-//            pid {
-//                p(0.00000000000002)
-//            }
+            feedbackCoefficient = 360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0 * 39.0 / 26.0
+            pid {
+                p(0.0000001)
+            }
+            setRawOffsetConfig(-4.0.degrees)
         }
         heightSetpointEntry.setDouble(height)
         angleSetpointEntry.setDouble(angle)
         setStatusFrames(false)
         GlobalScope.launch {
-            parallel ({
-                periodic {
-                    if (angleEncoder.isConnected && angle > ANGLE_BOTTOM && angle < ANGLE_TOP) {
-                        angleMotor.setRawOffset(angle.degrees)
-                        angleSetpoint = angle
-                        println("setpoints angle $angle")
-                        this.stop()
-                    }
-                }
-            }, {
+//            parallel ({
+//                periodic {
+//                    if (angleEncoder.isConnected && angle > ANGLE_BOTTOM && angle < ANGLE_TOP) {
+//                        angleMotor.setRawOffset(-4.0.degrees) //angle.degrees) goodbye encoder
+//                        angleSetpoint = angle
+//                        println("setpoints angle $angle")
+//                        this.stop()
+//                    }
+//                }
+//            }, {
                 periodic {
                     //println("absolute: ${round(angleAbsoluteRaw, 4)} relative:$angleRelativeRaw abs: $angleAbsolute rel: $angle diff = ${angleAbsolute - angle}")
                     heightEntry.setDouble(heightMotor.position)
                     angleEntry.setDouble(angle)
+                    angleMotorEntry.setDouble(angleMotor.position)
                     robotRollEntry.setDouble(roll)
                 }
-            })
         }
     }
     fun setStatusFrames(forClimb : Boolean = false) {
@@ -127,6 +132,7 @@ object Climb : Subsystem("Climb") {
 
     override fun postEnable() {
         heightSetpoint = height
+        climbMode = false
     }
 
     fun setPower(power: Double) {
@@ -192,10 +198,16 @@ object Climb : Subsystem("Climb") {
         }
     }
 
-    private fun updatePositions(){
+    fun updatePositions() {
         heightMotor.setPositionSetpoint(heightSetpoint)
-        val power = anglePDController.update(angleSetpoint - angle)
-        angleSetPower(power)
+        if (isAngleMotorControlled) {
+            angleMotor.setPositionSetpoint(angleSetpoint, angleFeedForward * 1024.0)
+            println("motor setting angle power to ${angleMotor.output}")
+        } else {
+            val power = anglePDController.update(angleSetpoint - angle)
+            angleSetPower(power + angleFeedForward)
+            println("pdController setting angle power to ${power + angleFeedForward}")
+        }
     }
 
     override suspend fun default() {
@@ -205,11 +217,15 @@ object Climb : Subsystem("Climb") {
             } else if (climbMode) {
                 heightSetpoint -= OI.operatorLeftY * 0.45
                 angleSetpoint += OI.operatorRightY * 0.5
+                updatePositions()
+            } else if (Shooter.pitch > 24.0) {
+                angleSetpoint = Shooter.pitch - 24.0
+                updatePositions()
+            } else {
+                angleMotor.setPercentOutput(0.0)
             }
             if (OI.operatorLeftTrigger > 0.1 ||OI.operatorRightTrigger > 0.1) {
                 setPower((OI.operatorLeftTrigger - OI.operatorRightTrigger) * 0.5)
-            } else {
-                updatePositions()
             }
         }
     }

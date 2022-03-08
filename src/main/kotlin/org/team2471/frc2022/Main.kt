@@ -71,9 +71,11 @@ object Robot : MeanlibRobot() {
         println("autonomous starting")
 //        Drive.zeroGyro()
         Drive.brakeMode()
+        Feeder.autoFeedMode = true
         println("autonomous Drive brakeMode ${totalTimeTaken()}")
         AutoChooser.autonomous()
         println("autonomous ending ${totalTimeTaken()}")
+        Feeder.autoFeedMode = false
     }
 
     override suspend fun teleop() {
@@ -83,10 +85,9 @@ object Robot : MeanlibRobot() {
 
     override suspend fun test()  {
         println("test mode begin. Hi.")
-//        Climb.anglePIDTest()
 //        Climb.adjustmentTest()
 //        Climb.motorTest()
-        Drive.autoSteerTest()
+        Shooter.pitchClimbTest()
     }
 
 

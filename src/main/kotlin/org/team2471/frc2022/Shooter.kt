@@ -169,7 +169,7 @@ object Shooter : Subsystem("Shooter") {
                 if (pitchIsReady) {
                     val power = pitchPDController.update(pitchSetpoint - pitch)
                     pitchSetPower(power)
-//                    println("pitchPower $power")
+                    println("pitchPower $power")
                 }
                 rpmEntry.setDouble(rpm)
                 rpmErrorEntry.setDouble(rpmSetpoint - rpm)
@@ -233,6 +233,7 @@ object Shooter : Subsystem("Shooter") {
     }
 
     suspend fun changeAngle(angle: Double) {
+        println("shooter change angle from $pitch to $angle")
         val angleCurve = MotionCurve()
         angleCurve.storeValue(0.0, pitch)
         angleCurve.storeValue((pitch - angle).absoluteValue / 30.0, angle)

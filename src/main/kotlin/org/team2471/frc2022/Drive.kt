@@ -103,6 +103,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val aimPDController = PDConstantFController(0.011, 0.032, 0.008) // 0.006, 0.032, 0.011  // 0.012, 0.03, 0.0
     var lastError = 0.0
 
+
     init {
         println("drive init")
         initializeSteeringMotors()
@@ -148,6 +149,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 angleTwoEntry.setDouble((modules[2] as Module).analogAngle.asDegrees)
                 angleThreeEntry.setDouble((modules[3] as Module).analogAngle.asDegrees)
                 autoAim = autoAimEntry.getBoolean(false) || OI.driverController.a
+
+               // println(gyro.getNavX().pitch.degrees)
 
 //                for (moduleCount in 0..3) {
 //                    val module = (modules[moduleCount] as Module)

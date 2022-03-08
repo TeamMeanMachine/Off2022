@@ -36,7 +36,7 @@ object Feeder : Subsystem("Feeder") {
     const val STAGE_DISTANCE = 3.0
 
     var blue = 0
-    var autoFeedMode = true
+    var autoFeedMode = false
 
     init {
         shooterFeedMotor.config {

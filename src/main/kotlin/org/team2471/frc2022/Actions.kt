@@ -12,19 +12,16 @@ import kotlin.math.roundToInt
 suspend fun intake() = use(Intake, Climb) {
     Intake.setIntakePower(Intake.INTAKE_POWER)
     Intake.changeAngle(Intake.PIVOT_INTAKE)
-    Climb.changeAngle(Climb.HOLDING_ANGLE)
 }
 
 suspend fun catch() = use(Intake, Climb) {
     Intake.setIntakePower(0.0)
     Intake.changeAngle(Intake.PIVOT_CATCH)
-    Climb.changeAngle(Climb.HOLDING_ANGLE)
 }
 
 suspend fun armUp() = use(Intake, Climb) {
     Intake.setIntakePower(0.0)
     Intake.changeAngle(Intake.PIVOT_TOP)
-    Climb.changeAngle(Climb.HOLDING_ANGLE)
 }
 
 suspend fun feedUntilCargo() = use(Intake, Feeder) {
@@ -124,6 +121,7 @@ suspend fun goToPose(targetPose: Pose, fullCurve : Boolean = false, minTime: Dou
 
 suspend fun climbPrep() = use(Climb, Shooter, Intake) {
     Feeder.autoFeedMode = false
+    Climb.climbMode = true
     Drive.limitingFactor = 0.25
     Climb.setStatusFrames(forClimb = true)
     Climb.changeAngle(8.0, 0.3)
