@@ -13,7 +13,6 @@ import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.framework.use
-import kotlin.math.absoluteValue
 
 
 object Feeder : Subsystem("Feeder") {
@@ -46,34 +45,65 @@ object Feeder : Subsystem("Feeder") {
         bedFeedMotor.config {
             inverted(!isCompBot)
         }
+/*
         GlobalScope.launch(MeanlibDispatcher) {
+            periodic {
+                if (Shooter.cargoIsStaged) {
+                    setShooterFeedPower(0.0 + OI.driveRightTrigger)
+                    if (ballIsStaged) {
+                        setBedFeedPower(0.0)
+                    } else {
+                        setBedFeedPower(BED_FEED_POWER)
+                    }
+                } else {
+                    setShooterFeedPower(SHOOTER_FEED_POWER)
+                    setBedFeedPower(BED_FEED_POWER)
+                }
+            }
+        }
+*/
+
+        GlobalScope.launch(MeanlibDispatcher) {
+            var stickyStaged = false
             var cargoWasStaged = false
+            var drivePower = 0.0
             periodic {
 //                feedEntry.setBoolean(ballIsStaged)
                 feedEntry.setBoolean(Limelight.useFrontLimelight)
                 distanceEntry.setDouble(feedDistance)
                 if (autoFeedMode) {
                     if (Shooter.cargoIsStaged) {
-                        if (!cargoWasStaged) {
-                            feedDistanceEncoder.reset()
-                            cargoWasStaged = true
+                        if (!stickyStaged) {
+//                            feedDistanceEncoder.reset()
+                            stickyStaged = true
                         }
-                        val power = feedPDController.update(feedDistance - STAGE_DISTANCE)
-                        setShooterFeedPower(power + OI.driveRightTrigger)
-                        if (ballIsStaged) {
-                            setBedFeedPower(0.0)
+                    }
+                    if (stickyStaged) {
+//                        val power = feedPDController.update(feedDistance - STAGE_DISTANCE)
+                        drivePower = if (Shooter.shootMode) OI.driveRightTrigger else 0.0
+                        if (Shooter.cargoIsStaged) {
+                            setShooterFeedPower(-0.2 + drivePower)
                         } else {
-                            setBedFeedPower(BED_FEED_POWER)
+                            setShooterFeedPower(drivePower)
                         }
                     } else {
                         setShooterFeedPower(SHOOTER_FEED_POWER)
                         setBedFeedPower(BED_FEED_POWER)
-                        cargoWasStaged = false
+                    }
+                    if (stickyStaged) {
+                        if (OI.driveRightTrigger > 0.1 && cargoWasStaged && Shooter.cargoIsStaged) {
+                            stickyStaged = false
+                        }
+                        cargoWasStaged = Shooter.cargoIsStaged
+                    }
+                    if (Feeder.cargoIsStaged) {
+                        setBedFeedPower(0.0)
+                    } else {
+                        setBedFeedPower(BED_FEED_POWER)
                     }
                 }
             }
         }
-
     }
 
     override fun preEnable() {
@@ -81,7 +111,7 @@ object Feeder : Subsystem("Feeder") {
     }
 
 //
-    val ballIsStaged: Boolean
+    val cargoIsStaged: Boolean
         get() = !button.get()
 
     val feedDistance: Double
@@ -104,7 +134,7 @@ object Feeder : Subsystem("Feeder") {
 //            setShooterFeedPower(power)
 //            println("feed power $power")
             println("distance: ${Limelight.distance}    rpm: ${Shooter.rpm}    pitchSetpoint: ${Shooter.pitchSetpoint}")
-            if (!Shooter.cargoIsStaged && !ballIsStaged) {
+            if (!Shooter.cargoIsStaged && !cargoIsStaged) {
                 println("stopped feed")
                 stop()
             }
