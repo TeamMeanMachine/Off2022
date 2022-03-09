@@ -2,6 +2,7 @@ package org.team2471.frc2022
 
 import com.revrobotics.ColorSensorV3
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DutyCycleEncoder
 import edu.wpi.first.wpilibj.I2C
 import edu.wpi.first.wpilibj.Timer
@@ -23,7 +24,9 @@ import kotlin.math.absoluteValue
 
 object Shooter : Subsystem("Shooter") {
     val tuningMode = false
-
+    const val RED = 0
+    const val BLUE = 1
+    val allianceColor = if (DriverStation.getAlliance().name.first().lowercaseChar() == 'r') { this.RED } else {this.BLUE}
     val shootingMotor = MotorController(FalconID(Falcons.SHOOTER), FalconID(Falcons.SHOOTER_TWO)) //private
     private val pitchMotor = MotorController(TalonID(Talons.PITCH))
     private val table = NetworkTableInstance.getDefault().getTable(name)
@@ -169,7 +172,7 @@ object Shooter : Subsystem("Shooter") {
                 if (pitchIsReady) {
                     val power = pitchPDController.update(pitchSetpoint - pitch)
                     pitchSetPower(power)
-                    println("pitchPower $power")
+//                    println("pitchPower $power")
                 }
                 rpmEntry.setDouble(rpm)
                 rpmErrorEntry.setDouble(rpmSetpoint - rpm)

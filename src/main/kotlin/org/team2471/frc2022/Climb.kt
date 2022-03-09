@@ -80,9 +80,9 @@ object Climb : Subsystem("Climb") {
     init {
         heightMotor.config {
             brakeMode()
-            inverted(isCompBot)
-            followersInverted(isCompBot)
-            feedbackCoefficient = 3.14 / 2048.0 / 9.38 * 30.0 / 25.0
+            inverted(true)
+            followersInverted(true)
+            feedbackCoefficient = if (isCompBot) {3.14 / 2048.0 / 9.38 * 30.0 / 25.0} else {3.14 / 2048.0 / 9.38 * 30.0 / 27.0}
             pid {
                 p(0.00000002)
             }
@@ -94,11 +94,11 @@ object Climb : Subsystem("Climb") {
             pid {
                 p(0.0000001)
             }
-            setRawOffsetConfig(-4.0.degrees)
+            setRawOffsetConfig((-4.0).degrees)
         }
         heightSetpointEntry.setDouble(height)
         angleSetpointEntry.setDouble(angle)
-        setStatusFrames(false)
+        setStatusFrames(true)
         GlobalScope.launch {
 //            parallel ({
 //                periodic {
@@ -132,7 +132,7 @@ object Climb : Subsystem("Climb") {
 
     override fun postEnable() {
         heightSetpoint = height
-        climbMode = false
+        climbMode = true
     }
 
     fun setPower(power: Double) {
@@ -219,8 +219,10 @@ object Climb : Subsystem("Climb") {
                 angleSetpoint += OI.operatorRightY * 0.5
                 updatePositions()
             } else if (Shooter.pitch > 24.0) {
-                angleSetpoint = Shooter.pitch - 24.0
+                angleSetpoint = Shooter.pitch - 22.0
                 updatePositions()
+                println("$angleSetpoint")
+
             } else {
                 angleMotor.setPercentOutput(0.0)
             }

@@ -140,21 +140,25 @@ suspend fun  startClimb() = use(Climb, Intake) {
     if (Climb.climbIsPrepped) {
         println("Climb stage executing: ${Climb.climbStage}")
         OI.operatorController.rumble = 0.5
-        when (Climb.climbStage){
-            0 -> {
-                Climb.angleMotor.brakeMode()
-                goToPose(Pose.PULL_UP)
+        Climb.climbStage = 0
+        while (Climb.climbStage < 5) {
+            when (Climb.climbStage) {
+                0 -> {
+                    Climb.angleMotor.brakeMode()
+                    goToPose(Pose.PULL_UP)
+                }
+                1 -> {
+                    goToPose(Pose.PULL_UP_LATCH, true, 0.5)
+                    goToPose(Pose.PULL_UP_LATCH_RELEASE, true, 1.0)
+                }
+                2 -> goToPose(Pose.EXTEND_HOOKS)
+                3 -> goToPose(Pose.TRAVERSE_ENGAGE)
+                4 -> goToPose(Pose.TRAVERSE_PULL_UP)
+                //else -> Climb.climbStage = -1
             }
-            1 -> {
-                goToPose(Pose.PULL_UP_LATCH, true, 0.5)
-                goToPose(Pose.PULL_UP_LATCH_RELEASE, true, 1.0)
-            }
-            2 -> goToPose(Pose.EXTEND_HOOKS)
-            3 -> goToPose(Pose.TRAVERSE_ENGAGE)
-            4 -> goToPose(Pose.TRAVERSE_PULL_UP)
-            else -> Climb.climbStage = -1
+            delay(0.5)
+            Climb.climbStage += 1
         }
-        Climb.climbStage += 1
         OI.operatorController.rumble = 0.0
     }
 }

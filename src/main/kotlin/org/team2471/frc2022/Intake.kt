@@ -30,7 +30,7 @@ object Intake : Subsystem("Intake") {
     val pivotSetpointEntry = table.getEntry("Pivot Setpoint")
     val pivotMotorEntry = table.getEntry("Pivot Motor")
 
-    var pivotOffset = if (isCompBot) -42.0 else 84.0
+    var pivotOffset = if (isCompBot) -42.0 else 165.0
     val pivotEncoder = DutyCycleEncoder(DigitalSensors.INTAKE_PIVOT)  // this encoder seems to give randomly changing answers - very naughty encoder
     var pivotAngle : Double = 0.0
         get() = (pivotEncoder.absolutePosition * 360.0 / 0.944 + pivotOffset).degrees.wrap().asDegrees
