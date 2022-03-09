@@ -32,7 +32,7 @@ suspend fun feedUntilCargo() = use(Intake, Feeder) {
         if (Shooter.cargoIsStaged) {
             Feeder.setShooterFeedPower(0.0)
             println("Shooter Staged")
-            if (Feeder.ballIsStaged) {
+            if (Feeder.cargoIsStaged) {
                 Intake.setIntakePower(0.0)
                 println("Intake Staged")
             } else {

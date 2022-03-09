@@ -186,7 +186,7 @@ object Intake : Subsystem("Intake") {
     override suspend fun default() {
         periodic {
             currentEntry.setDouble(Shooter.shootingMotor.current)
-            if (Feeder.ballIsStaged) {
+            if (Feeder.cargoIsStaged) {
                 setIntakePower(0.0)
             }
         }
