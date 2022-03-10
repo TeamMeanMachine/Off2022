@@ -3,25 +3,35 @@ package org.team2471.frc2022
 import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.periodic
+import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
+import org.team2471.frc.lib.util.Timer
 import kotlin.math.roundToInt
 
 //Intake
 
 
-suspend fun intake() = use(Intake, Climb) {
-    Intake.setIntakePower(Intake.INTAKE_POWER)
-    Intake.changeAngle(Intake.PIVOT_INTAKE)
+suspend fun intake() = use(Intake) {
+        Feeder.autoFeedMode = true
+        Intake.setIntakePower(Intake.INTAKE_POWER)
+        Intake.changeAngle(Intake.PIVOT_INTAKE)
 }
 
-suspend fun catch() = use(Intake, Climb) {
+suspend fun catch() = use(Intake) {
+    Feeder.autoFeedMode = true
     Intake.setIntakePower(0.0)
     Intake.changeAngle(Intake.PIVOT_CATCH)
 }
 
-suspend fun armUp() = use(Intake, Climb) {
+suspend fun armUp() = use(Intake) {
+    Feeder.autoFeedMode = false
     Intake.setIntakePower(0.0)
     Intake.changeAngle(Intake.PIVOT_TOP)
+}
+suspend fun powerSave() = use(Intake) {
+    Feeder.autoFeedMode = false
+    Intake.setIntakePower(0.0)
+    Intake.changeAngle(Intake.PIVOT_BOTTOM)
 }
 
 suspend fun feedUntilCargo() = use(Intake, Feeder) {
@@ -53,21 +63,41 @@ suspend fun shootMode() = use(Shooter) {
 
 suspend fun autoShoot() = use(Shooter, Feeder, Drive) {
     Shooter.shootMode = true
+    var doneShooting = false
+    var t = Timer()
+    t.start()
     parallel ({
-        Feeder.setBedFeedPower(Feeder.BED_FEED_POWER)
         println("autoshooting   usingFrontLL ${Limelight.useFrontLimelight} distance ${Limelight.distance}")
         Feeder.autoFeedMode = false
+        Feeder.setBedFeedPower(Feeder.BED_FEED_POWER)
         delay(0.5)
         Feeder.setShooterFeedPower(0.8)
-        delay(2.0)
+        suspendUntil { doneShooting }
         Feeder.setShooterFeedPower(0.0)
         Shooter.shootMode = false
         Feeder.autoFeedMode = true
     }, {
         periodic {
             Drive.autoSteer()
-            println("rpm ${Shooter.rpm.roundToInt()}     rpmSetpoint ${Shooter.rpmSetpoint.roundToInt()}    pitch ${Shooter.pitch.roundToInt()}       pitchSetpoint ${Shooter.pitchSetpoint.roundToInt()}")
+//            println("rpm ${Shooter.rpm.roundToInt()}     rpmSetpoint ${Shooter.rpmSetpoint.roundToInt()}    pitch ${Shooter.pitch.roundToInt()}       pitchSetpoint ${Shooter.pitchSetpoint.roundToInt()}")
             if (!Shooter.shootMode) {
+                stop()
+            }
+        }
+    }, {
+        suspendUntil { Shooter.cargoIsStaged || doneShooting }
+        suspendUntil { !Shooter.cargoIsStaged || doneShooting }
+        suspendUntil { Shooter.cargoIsStaged || doneShooting }
+        suspendUntil { !Shooter.cargoIsStaged || doneShooting }
+        delay(0.1)
+        doneShooting = true
+        println("doneShooting after 2 cargo")
+    }, {
+        periodic {
+            if (!doneShooting && t.get() > 2.5) {
+                doneShooting = true
+                println("doneShooting after 2.5 sec")
+            } else if (doneShooting) {
                 stop()
             }
         }
@@ -149,6 +179,8 @@ suspend fun  startClimb() = use(Climb, Intake) {
                 }
                 1 -> {
                     goToPose(Pose.PULL_UP_LATCH, true, 0.5)
+                    // add pull up latch lift (needs to be tested)
+                    goToPose(Pose.PULL_UP_LATCH_LIFT, true)
                     goToPose(Pose.PULL_UP_LATCH_RELEASE, true, 1.0)
                 }
                 2 -> goToPose(Pose.EXTEND_HOOKS)
@@ -161,4 +193,14 @@ suspend fun  startClimb() = use(Climb, Intake) {
         }
         OI.operatorController.rumble = 0.0
     }
+}
+
+suspend fun clearFeeder() = use(Feeder) {
+    println("clearing out feeder and Intake")
+    val currFeedMode = Feeder.autoFeedMode
+    Feeder.autoFeedMode = false
+    Feeder.setBedFeedPower(-Feeder.BED_FEED_POWER)
+    Feeder.setShooterFeedPower(-Feeder.SHOOTER_FEED_POWER)
+    delay(0.5)
+    Feeder.autoFeedMode = currFeedMode
 }

@@ -202,7 +202,7 @@ object Climb : Subsystem("Climb") {
         heightMotor.setPositionSetpoint(heightSetpoint)
         if (isAngleMotorControlled) {
             angleMotor.setPositionSetpoint(angleSetpoint, angleFeedForward * 1024.0)
-            println("motor setting angle power to ${angleMotor.output}")
+//            println("motor setting angle power to ${angleMotor.output}")
         } else {
             val power = anglePDController.update(angleSetpoint - angle)
             angleSetPower(power + angleFeedForward)

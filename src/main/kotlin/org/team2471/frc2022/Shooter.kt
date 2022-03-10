@@ -24,9 +24,6 @@ import kotlin.math.absoluteValue
 
 object Shooter : Subsystem("Shooter") {
     val tuningMode = false
-    const val RED = 0
-    const val BLUE = 1
-    val allianceColor = if (DriverStation.getAlliance().name.first().lowercaseChar() == 'r') { this.RED } else {this.BLUE}
     val shootingMotor = MotorController(FalconID(Falcons.SHOOTER), FalconID(Falcons.SHOOTER_TWO)) //private
     private val pitchMotor = MotorController(TalonID(Talons.PITCH))
     private val table = NetworkTableInstance.getDefault().getTable(name)
@@ -113,8 +110,19 @@ object Shooter : Subsystem("Shooter") {
 
     var shootMode = false
 
-    var color = "blue"
 
+
+    const val RED = 'r'
+    const val BLUE = 'b'
+    const val NOTSET = 'n'
+    val dsAllianceColor : Char
+        get() = when (DriverStation.getAlliance().name.first().lowercaseChar()) {
+                'r' -> RED
+                'b' -> BLUE
+                else -> NOTSET
+            }
+    var allianceColor = dsAllianceColor
+    var stagedColorString = "notset"
 
     init {
 //        pitchMotor.setBounds(2.50, 1.55, 1.50, 1.45, 0.50)
@@ -201,35 +209,32 @@ object Shooter : Subsystem("Shooter") {
                 }
                 pitchEntry.setDouble(pitch)
 
-                color = when (cargoIsRed) {
-                    null -> "none"
-                    true -> "red"
-                    false -> "blue"
-                } //+ colorSensor.proximity
-                color = "${color}  red: ${colorSensor.red}"//"ColorSensor Disabled in code."
-                colorEntry.setString(color)
-//                println("red: ${colorSensor.configureColorSensor()}          blue: ${colorSensor.blue}")
-//                println("angle = ${pitchAngle.asDegrees}")
-
-                if (shootMode || tuningMode) {
-                    rpm = rpmSetpoint
-                } else {
-                    rpm = 0.0
+                // adjust shot for non alliance color cargo
+                stagedColorString = when (cargoColor) {
+                    RED -> "red"
+                    BLUE -> "blue"
+                    else -> "notset"
                 }
+                val isCargoAlignedWithAlliance = (allianceColor == cargoColor || cargoColor == NOTSET)
+                val rpmBadShotAdjustment = if (isCargoAlignedWithAlliance) 1.0 else 0.5
+                stagedColorString = "$stagedColorString $isCargoAlignedWithAlliance"
+                colorEntry.setString(stagedColorString)
+
+                // set rpm for shot
+                rpm = if (shootMode || tuningMode) rpmSetpoint * rpmBadShotAdjustment else 0.0
             }
         }
     }
 
     override fun preEnable() {
         shootMode = false
+        allianceColor = dsAllianceColor
     }
-
-
 
     val cargoIsStaged : Boolean
         get() = colorSensor.proximity > 250
-    val cargoIsRed : Boolean?
-        get() =  if (colorSensor.proximity < 180) null else colorSensor.color.red >= colorSensor.color.blue
+    val cargoColor : Char
+        get() =  if (colorSensor.proximity < 180) NOTSET else if (colorSensor.color.red >= colorSensor.color.blue) RED else BLUE
 
     fun pitchSetPower(power: Double) {
         pitchMotor.setPercentOutput(power)
@@ -265,33 +270,8 @@ object Shooter : Subsystem("Shooter") {
         rpmOffset -= 20.0
     }
 
-    suspend fun resetPitchEncoder() = use(this) {
-//        if (!pitchPDEnable) {
-//            pitchSetPower(1.0)
-//            var lastEncoderPosition = Intake.intakeMotor.position
-//            var samePositionCounter = 0
-//            periodic {
-//                if ((lastEncoderPosition - Intake.intakeMotor.position).absoluteValue < 0.01) {
-//                    samePositionCounter++
-//                } else {
-//                    samePositionCounter = 0
-//                }
-//                if (samePositionCounter > 10) {
-//                    this.stop()
-//                }
-//                lastEncoderPosition = Intake.intakeMotor.position
-//            }
-//            pitchSetPower(0.0)
-//            Intake.intakeMotor.position = 66.6
-//            pitchPDEnable = true
-//        }
-    }
-
-    var current = shootingMotor.current
-
     override suspend fun default() {
         periodic {
-//            shootingMotor.stop()
             pitchEntry.setDouble(pitch)
         }
     }
