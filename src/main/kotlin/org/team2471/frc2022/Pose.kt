@@ -8,8 +8,8 @@ data class Pose(val height: Double, val angle: Double, val intake: Double) {
 
         val CLIMB_PREP = Pose(Climb.HEIGHT_VERTICAL_TOP, 0.0, Intake.PIVOT_BOTTOM)
         val PULL_UP = Pose(Climb.HEIGHT_BOTTOM, -2.0, Intake.PIVOT_BOTTOM)
-        val PULL_UP_LATCH = Pose(Climb.HEIGHT_BOTTOM, 10.0, Intake.PIVOT_BOTTOM)
-        val PULL_UP_LATCH_LIFT = Pose(Climb.HEIGHT_BOTTOM_DETACH, 10.0, Intake.PIVOT_BOTTOM)
+        val PULL_UP_LATCH = Pose(Climb.HEIGHT_BOTTOM, 5.0, Intake.PIVOT_BOTTOM)
+        val PULL_UP_LATCH_LIFT = Pose(Climb.HEIGHT_BOTTOM_DETACH, 5.0, Intake.PIVOT_BOTTOM)
         val PULL_UP_LATCH_RELEASE = Pose(Climb.HEIGHT_BOTTOM_DETACH, 20.0, Intake.PIVOT_BOTTOM)
         val EXTEND_HOOKS = Pose(Climb.HEIGHT_TOP, 32.0, Intake.PIVOT_BOTTOM)
         val TRAVERSE_ENGAGE = Pose(Climb.HEIGHT_TOP, 10.0, Intake.PIVOT_BOTTOM)
