@@ -54,9 +54,9 @@ suspend fun shootMode() = use(Shooter) {
 suspend fun autoShoot() = use(Shooter, Feeder, Drive) {
     Shooter.shootMode = true
     parallel ({
-        Feeder.setBedFeedPower(Feeder.BED_FEED_POWER)
         println("autoshooting   usingFrontLL ${Limelight.useFrontLimelight} distance ${Limelight.distance}")
         Feeder.autoFeedMode = false
+        Feeder.setBedFeedPower(Feeder.BED_FEED_POWER)
         delay(0.5)
         Feeder.setShooterFeedPower(0.8)
         delay(2.0)
@@ -149,6 +149,8 @@ suspend fun  startClimb() = use(Climb, Intake) {
                 }
                 1 -> {
                     goToPose(Pose.PULL_UP_LATCH, true, 0.5)
+                    // add pull up latch lift (needs to be tested)
+                    goToPose(Pose.PULL_UP_LATCH_LIFT, true)
                     goToPose(Pose.PULL_UP_LATCH_RELEASE, true, 1.0)
                 }
                 2 -> goToPose(Pose.EXTEND_HOOKS)
@@ -161,4 +163,14 @@ suspend fun  startClimb() = use(Climb, Intake) {
         }
         OI.operatorController.rumble = 0.0
     }
+}
+
+suspend fun clearFeeder() = use(Feeder) {
+    println("clearing out feeder and Intake")
+    val currFeedMode = Feeder.autoFeedMode
+    Feeder.autoFeedMode = false
+    Feeder.setBedFeedPower(-Feeder.BED_FEED_POWER)
+    Feeder.setShooterFeedPower(-Feeder.SHOOTER_FEED_POWER)
+    delay(0.5)
+    Feeder.autoFeedMode = currFeedMode
 }
