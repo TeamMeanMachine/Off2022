@@ -199,12 +199,12 @@ object AutoChooser {
             autoShoot()
             Drive.driveAlongPath(auto["3- Feeder Cargo"])
             delay(0.5)
-            parallel({
-                delay(0.5)
-                Intake.setIntakePower(0.0)
-            }, {
-                Drive.driveAlongPath(auto["4- Shoot"], false)
-            })
+//            parallel({
+//                delay(0.5)
+//                Intake.setIntakePower(0.0)
+//            }, {
+                Drive.driveAlongPath(auto["5- Short Shoot"], false)
+//            })
             Shooter.rpmOffset = 200.0
             autoShoot()
         }

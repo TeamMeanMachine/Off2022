@@ -101,6 +101,9 @@ object Feeder : Subsystem("Feeder") {
                     } else {
                         setBedFeedPower(BED_FEED_POWER)
                     }
+                } else {
+                    drivePower = if (Shooter.shootMode) OI.driveRightTrigger else 0.0
+                    setShooterFeedPower(drivePower)
                 }
             }
         }

@@ -57,10 +57,7 @@ object OI {
         operatorController::b.whenTrue { intake() }
         operatorController::a.whenTrue { catch() }
         operatorController::y.whenTrue { armUp() }
-        operatorController::x.whenTrue {
-            Feeder.autoFeedMode = !Feeder.autoFeedMode
-            println("autoFeedMode ${Feeder.autoFeedMode}")
-        }
+        operatorController::x.whenTrue { powerSave() }
         operatorController::back.whenTrue { Climb.zeroClimb() }
         operatorController::leftBumper.whenTrue { startClimb() }
         operatorController::rightBumper.whenTrue { clearFeeder() }
