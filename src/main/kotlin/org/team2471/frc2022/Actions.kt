@@ -1,5 +1,6 @@
 package org.team2471.frc2022
 
+import edu.wpi.first.wpilibj.DriverStation
 import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.periodic
@@ -81,7 +82,7 @@ suspend fun autoShoot() = use(Shooter, Feeder, Drive) {
     t.start()
     parallel ({
         println("autoshooting   usingFrontLL ${Limelight.useFrontLimelight} distance ${Limelight.distance}")
-        Feeder.autoFeedMode = false
+        Feeder.autoFeedMode = true
         Feeder.setBedFeedPower(Feeder.BED_FEED_POWER)
         delay(0.5)
         Feeder.setShooterFeedPower(0.8)
@@ -103,8 +104,10 @@ suspend fun autoShoot() = use(Shooter, Feeder, Drive) {
         suspendUntil { Shooter.cargoIsStaged || doneShooting }
         suspendUntil { !Shooter.cargoIsStaged || doneShooting }
         delay(0.1)
+        if (!doneShooting) {
+            println("doneShooting after 2 cargo")
+        }
         doneShooting = true
-        println("doneShooting after 2 cargo")
     }, {
         periodic {
             if (!doneShooting && t.get() > 2.5) {

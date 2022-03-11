@@ -2,6 +2,7 @@ package org.team2471.frc2022
 
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DigitalInput
+import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DutyCycleEncoder
 
 import kotlinx.coroutines.GlobalScope
@@ -36,6 +37,8 @@ object Feeder : Subsystem("Feeder") {
     const val BED_FEED_POWER = 0.8
     const val STAGE_DISTANCE = 3.0
 
+    var isAuto = DriverStation.isAutonomous()
+
     enum class Status {
         EMPTY,
         SINGLE_STAGED,
@@ -55,6 +58,7 @@ object Feeder : Subsystem("Feeder") {
         bedFeedMotor.config {
             inverted(!isCompBot)
         }
+
 /*
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
@@ -79,7 +83,11 @@ object Feeder : Subsystem("Feeder") {
             var drivePower = 0.0
             periodic {
 //                feedEntry.setBoolean(ballIsStaged)
+                isAuto = DriverStation.isAutonomous()
+
+
                 currentFeedStatus = when {
+                    Shooter.shootMode && isAuto -> Status.ACTIVELY_SHOOTING
                     Shooter.shootMode && OI.driveRightTrigger > 0.1 -> Status.ACTIVELY_SHOOTING
                     Shooter.cargoIsStaged && cargoIsStaged -> Status.DUAL_STAGED
                     Shooter.cargoIsStaged -> Status.SINGLE_STAGED
@@ -111,6 +119,8 @@ object Feeder : Subsystem("Feeder") {
                             setShooterFeedPower(SHOOTER_STAGE_POWER)
                         }
                     }
+//                    if (isAuto && Shooter.shootMode)
+//                        feeder 0.8
 //
 //                    if (Shooter.cargoIsStaged) {
 //                        if (!stickyStaged) {
@@ -139,7 +149,7 @@ object Feeder : Subsystem("Feeder") {
 //                        setShooterFeedPower(SHOOTER_FEED_POWER)
 //                        setBedFeedPower(BED_FEED_POWER)
 //                    }
-                } else {
+                } else if (!isAuto) {
                     drivePower = if (Shooter.shootMode) OI.driveRightTrigger else 0.0
                     setShooterFeedPower(drivePower)
 
