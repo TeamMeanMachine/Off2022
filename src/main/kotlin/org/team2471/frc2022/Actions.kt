@@ -12,26 +12,39 @@ import kotlin.math.roundToInt
 
 
 suspend fun intake() = use(Intake) {
-        Feeder.autoFeedMode = true
-        Intake.setIntakePower(Intake.INTAKE_POWER)
-        Intake.changeAngle(Intake.PIVOT_INTAKE)
+    Feeder.autoFeedMode = true
+    Intake.setIntakePower(Intake.INTAKE_POWER)
+    Intake.intakeState = Intake.Mode.INTAKE
+    Intake.changeAngle(Intake.PIVOT_INTAKE)
+    Climb.climbMode = false
+    Climb.climbIsPrepped = false
 }
 
 suspend fun catch() = use(Intake) {
     Feeder.autoFeedMode = true
     Intake.setIntakePower(0.0)
+    Intake.intakeState = Intake.Mode.CATCH
     Intake.changeAngle(Intake.PIVOT_CATCH)
+    Climb.climbMode = false
+    Climb.climbIsPrepped = false
 }
 
 suspend fun armUp() = use(Intake) {
     Feeder.autoFeedMode = false
     Intake.setIntakePower(0.0)
+    Intake.intakeState = Intake.Mode.STOW
     Intake.changeAngle(Intake.PIVOT_TOP)
+    Climb.climbMode = false
+    Climb.climbIsPrepped = false
 }
 suspend fun powerSave() = use(Intake) {
     Feeder.autoFeedMode = false
     Intake.setIntakePower(0.0)
+    Intake.intakeState = Intake.Mode.POWERSAVE
+    Intake.resetPivotOffset()
     Intake.changeAngle(Intake.PIVOT_BOTTOM)
+    Climb.climbMode = false
+    Climb.climbIsPrepped = false
 }
 
 suspend fun feedUntilCargo() = use(Intake, Feeder) {
@@ -58,7 +71,7 @@ suspend fun shootMode() = use(Shooter) {
     println("shoot mode has been called. Shootmode = ${Shooter.shootMode}")
     Shooter.shootMode = !Shooter.shootMode
     Limelight.backLedEnabled = (Shooter.shootMode && !Limelight.useFrontLimelight)
-    Limelight.frontLedEnabled = (Shooter.shootMode && !Limelight.useFrontLimelight)
+    Limelight.frontLedEnabled = (Shooter.shootMode && Limelight.useFrontLimelight)
 }
 
 suspend fun autoShoot() = use(Shooter, Feeder, Drive) {
@@ -152,7 +165,6 @@ suspend fun goToPose(targetPose: Pose, fullCurve : Boolean = false, minTime: Dou
 suspend fun climbPrep() = use(Climb, Shooter, Intake) {
     Feeder.autoFeedMode = false
     Climb.climbMode = true
-    Drive.limitingFactor = 0.25
     Climb.setStatusFrames(forClimb = true)
     Climb.changeAngle(8.0, 0.3)
     parallel ({
@@ -168,7 +180,7 @@ suspend fun climbPrep() = use(Climb, Shooter, Intake) {
 suspend fun  startClimb() = use(Climb, Intake) {
     println("trying to start climb")
     if (Climb.climbIsPrepped) {
-        println("Climb stage executing: ${Climb.climbStage}")
+        println("Climb stage executing: ${Climb.climbStage} roll: ${Climb.roll}")
         OI.operatorController.rumble = 0.5
         Climb.climbStage = 0
         while (Climb.climbStage < 5) {
@@ -179,7 +191,6 @@ suspend fun  startClimb() = use(Climb, Intake) {
                 }
                 1 -> {
                     goToPose(Pose.PULL_UP_LATCH, true, 0.5)
-                    // add pull up latch lift (needs to be tested)
                     goToPose(Pose.PULL_UP_LATCH_LIFT, true)
                     goToPose(Pose.PULL_UP_LATCH_RELEASE, true, 1.0)
                 }

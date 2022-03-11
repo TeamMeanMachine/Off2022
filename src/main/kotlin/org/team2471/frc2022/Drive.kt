@@ -8,6 +8,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
+import org.team2471.frc.lib.actuators.TalonID
 import org.team2471.frc.lib.control.PDConstantFController
 import org.team2471.frc.lib.control.PDController
 import org.team2471.frc.lib.coroutines.*
@@ -24,7 +25,9 @@ import kotlin.math.absoluteValue
 object Drive : Subsystem("Drive"), SwerveDrive {
 
     val navXGyroEntry = NetworkTableInstance.getDefault().getTable(name).getEntry("NavX Gyro")
-    var limitingFactor = 1.0
+    val limitingFactor : Double
+        get() = if (Climb.climbIsPrepped) 0.25 else 1.0
+
 
     /**
      * Coordinates of modules
@@ -321,10 +324,26 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 //                burnSettings()
             }
 
+            val moduleContLimit: Int = when ((driveMotor.motorID as FalconID).value) {
+                Falcons.DRIVE_FRONTLEFT -> 20
+                Falcons.DRIVE_FRONTRIGHT -> 20
+                Falcons.DRIVE_BACKRIGHT -> 40
+                Falcons.DRIVE_BACKLEFT -> 40
+                else -> 40
+            }
+
+            val modulePeakLimit: Int = when ((driveMotor.motorID as FalconID).value) {
+                Falcons.DRIVE_FRONTLEFT -> 30
+                Falcons.DRIVE_FRONTRIGHT -> 30
+                Falcons.DRIVE_BACKRIGHT -> 60
+                Falcons.DRIVE_BACKLEFT -> 60
+                else -> 40
+            }
+
             driveMotor.config {
                 brakeMode()
                 feedbackCoefficient = 1.0 / 2048.0 / 5.857 / 1.067 // spark max-neo 1.0 / 42.0/ 5.857 / fudge factor
-                currentLimit(33, 0, 0)
+                currentLimit(moduleContLimit, modulePeakLimit, 1)
                 openLoopRamp(0.50)
 //                burnSettings()
             }

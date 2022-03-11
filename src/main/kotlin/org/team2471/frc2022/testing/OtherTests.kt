@@ -4,6 +4,10 @@ import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller
+import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.math.round
+import org.team2471.frc.lib.motion.following.SwerveDrive
+import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc2022.*
 
 suspend fun Feeder.motorTest() = use(this) {
@@ -63,7 +67,7 @@ suspend fun Drive.autoSteerTest() = use(Drive){
     }
 }
 
-suspend fun Climb.feedForwardTest() = use(this) {
+suspend fun Drive.currentTest() = use(this) {
     var power = 0.0
     var upPressed = false
     var downPressed = false
@@ -81,24 +85,19 @@ suspend fun Climb.feedForwardTest() = use(this) {
             downPressed = false
             power -= 0.01
         }
-        Climb.angleSetPower(power)
+        for (moduleCount in 0..3) {
+            val module = modules[moduleCount] as Drive.Module
+            print("Module: $moduleCount current: ${round(module.driveCurrent, 2)}  ")
+        }
+        println()
         println("power: $power")
+        drive(
+            Vector2(0.0, power),
+            0.0,
+            false
+        )
     }
 }
 
-suspend fun Shooter.pitchClimbTest() {
-    changeAngle(20.0)
-    delay(4.0)
-    changeAngle(31.0)
-    delay(4.0)
-    changeAngle(20.0)
-    changeAngle(31.0)
-    changeAngle(20.0)
-    changeAngle(31.0)
-    changeAngle(20.0)
-    changeAngle(31.0)
-    changeAngle(20.0)
-    changeAngle(31.0)
-    changeAngle(20.0)
-    changeAngle(31.0)
+suspend fun systemsCheck() = use(Intake, Feeder, Shooter, Climb, Limelight) {
 }
