@@ -10,6 +10,8 @@ import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2022.testing.*
 import java.net.NetworkInterface
 
+var isCompBot = true
+
 @DelicateCoroutinesApi
 object Robot : MeanlibRobot() {
 
@@ -26,7 +28,9 @@ object Robot : MeanlibRobot() {
                 }
                 println("FORMATTED---->$macString<-----")
 
-           }
+                isCompBot = (macString != "0-12847512372")
+                println("I am compbot = $isCompBot")
+            }
         }
 
         // i heard the first string + double concatenations were expensive...
@@ -37,14 +41,14 @@ object Robot : MeanlibRobot() {
         println(BuildConfig.BUILD_TIME)
         Drive.zeroGyro()
         Drive.heading = 0.0.degrees
-       // AutoChooser
-        FrontLimelight.startUp()
-        FrontLimelight.ledEnabled = true
+        AutoChooser
 //        ShootingTests
         Intake
         Shooter
         Feeder
-        //Climb
+        Limelight
+//        Climb
+        PowerInfo
     }
 
     override suspend fun enable() {
@@ -59,6 +63,7 @@ object Robot : MeanlibRobot() {
         Climb.enable()
 //        zeroIntakePivot()
         println("ending enable")
+        PowerInfo.enable()
     }
 
     override suspend fun autonomous() {
@@ -66,9 +71,11 @@ object Robot : MeanlibRobot() {
         println("autonomous starting")
 //        Drive.zeroGyro()
         Drive.brakeMode()
+        Feeder.autoFeedMode = true
         println("autonomous Drive brakeMode ${totalTimeTaken()}")
-        //AutoChooser.autonomous()
+        AutoChooser.autonomous()
         println("autonomous ending ${totalTimeTaken()}")
+        Feeder.autoFeedMode = false
     }
 
     override suspend fun teleop() {
@@ -78,12 +85,9 @@ object Robot : MeanlibRobot() {
 
     override suspend fun test()  {
         println("test mode begin. Hi.")
-//        intakePivotTest()
-//        shootTest2()
-//        feedUntilCargo()
+//        Climb.adjustmentTest()
 //        Climb.motorTest()
-//        Drive.steeringTests()
-        Shooter.pitchTest()
+        Shooter.pitchClimbTest()
     }
 
 
@@ -93,6 +97,9 @@ object Robot : MeanlibRobot() {
         Shooter.disable()
         Feeder.disable()
         Climb.disable()
+        PowerInfo.disable()
+        OI.operatorController.rumble = 0.0
+//        PowerDistribution.disable()
         //FrontLimelight.disable()
 
         //FrontLimelight.ledEnabled = false

@@ -10,8 +10,10 @@ import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.actuators.TalonID
 import org.team2471.frc.lib.control.PDController
 import org.team2471.frc.lib.coroutines.MeanlibDispatcher
+import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
+import org.team2471.frc.lib.input.Controller
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.degrees
 import kotlin.math.absoluteValue
@@ -27,43 +29,58 @@ object Intake : Subsystem("Intake") {
     val currentEntry = table.getEntry("Current")
     val pivotEntry = table.getEntry("Pivot")
     val pivotSetpointEntry = table.getEntry("Pivot Setpoint")
+    val pivotMotorEntry = table.getEntry("Pivot Motor")
+    val pivotDriverOffsetEntry = table.getEntry("Pivot Controller")
 
-    var pivotOffset = -278.8
-    val pivotEncoder = DutyCycleEncoder(DigitalSensors.INTAKE_PIVOT)
+    var pivotDriverOffset
+        get() = pivotDriverOffsetEntry.getDouble(0.0)
+        set(value) { pivotDriverOffsetEntry.setDouble(value) }
+    var pivotOffset = if (isCompBot) -59.0 else 165.0
+    val pivotEncoder = DutyCycleEncoder(DigitalSensors.INTAKE_PIVOT)  // this encoder seems to give randomly changing answers - very naughty encoder
     var pivotAngle : Double = 0.0
-        get() = (pivotEncoder.get() - 0.1121) / 0.236 * 90.0 + pivotOffset
+        get() = (pivotEncoder.absolutePosition * 360.0 / 0.944 + pivotOffset).degrees.wrap().asDegrees
+
+//        get() = intakePivotMotor.position
 //        set(value) {
 //            pivotOffset = 0.0
             //pivotOffset = value - pivotAngle
 //        }
+
     val pivotPDController = PDController(0.05, 0.0)
     var pivotPDEnable = true
     var pivotSetpoint = pivotAngle
         get() = pivotSetpointEntry.getDouble(94.0)
         set(value) {
-            field = value.coerceIn(PIVOT_BOTTOM, PIVOT_TOP)
+            field = value.coerceIn(PIVOT_BOTTOM, PIVOT_TOP) + pivotDriverOffset
             pivotSetpointEntry.setDouble(field)
         }
 
     const val INTAKE_POWER = 0.9
-
     const val PIVOT_BOTTOM = 0.0
     const val PIVOT_CATCH = 0.0
-    const val PIVOT_INTAKE = 20.5
-    const val PIVOT_TOP = 103.0
+    val PIVOT_INTAKE = if (isCompBot) 21.0 else 20.0
+    val PIVOT_TOP = if (isCompBot) 103.0 else 98.0
 
 
 //    val button = DigitalInput(9)
     var blue = 0
 
+    val timer = Timer()
+    val angleCurve = MotionCurve()
+
+    var upPressed = false
+    var downPressed = true
+
     init {
+        pivotDriverOffsetEntry.getDouble(0.0)
         intakePivotMotor.config(20) {
             feedbackCoefficient =
-                360.0 / 2048.0 / 87.1875 * 90.0 / 83.0  // degrees in a rotation, ticks per rotation, gear reduction (44:1 reduction)
+                360.0 / 2048.0 / 92.3 / 84.22 * 100.5 // degrees in a rotation, ticks per rotation, gear reduction (44:1 reduction)
             brakeMode()
 //            inverted(true)
             pid {
-                p(0.000002)
+                p(0.0000030)
+//                d(0.00000005)
             }
             currentLimit(40, 60, 10)
         }
@@ -72,39 +89,89 @@ object Intake : Subsystem("Intake") {
         }
 
         GlobalScope.launch(MeanlibDispatcher) {
+            parallel({
             periodic {
-                currentEntry.setDouble(Feeder.shooterFeedMotor.current)  // intakeMotor.current)
+                if (pivotEncoder.isConnected && pivotAngle > PIVOT_BOTTOM && pivotAngle < PIVOT_TOP) {
+                    intakePivotMotor.setRawOffset(pivotAngle.degrees)
+                    pivotSetpoint = pivotAngle + pivotDriverOffset
+                    println("setpoints pivotAngle")
+                    this.stop()
+                }
+//                else {
+//                    intakePivotMotor.setRawOffset(PIVOT_BOTTOM.degrees)
+//                    pivotSetpoint = PIVOT_BOTTOM
+//                    println("setpoints PIVOT_BOTTOM")
+//    // use this for competition...
+//    //                    intakePivotMotor.setRawOffset(PIVOT_TOP.degrees)
+//    //                    pivotSetpoint = PIVOT_TOP
+//    //                    println("setpoints PIVOT_TOP")
+//                }
+            }},{
+            periodic {
+                currentEntry.setDouble(intakePivotMotor.current)  // intakeMotor.current)
                 pivotEntry.setDouble(pivotAngle) // intakePivotMotor.position)
-//                println(intakePivotMotor.position)
-            }
+                pivotMotorEntry.setDouble(intakePivotMotor.position)
+                //println("$isCompBot intake angle: $pivotAngle ${pivotEncoder.absolutePosition}")
+//                if (OI.operatorController.b) {
+//                    setIntakePower(INTAKE_POWER)
+//                    changeAngle(PIVOT_INTAKE)
+//                }
+
+                if (OI.driverController.dPad == Controller.Direction.UP) {
+                    upPressed = true
+                } else if (OI.driverController.dPad == Controller.Direction.DOWN) {
+                    downPressed = true
+                }
+                if (OI.driverController.dPad != Controller.Direction.UP && upPressed) {
+                    upPressed = false
+                    pivotDriverOffset += 2
+                    //incrementRpmOffset()
+                    println("up. hi.")
+                }
+                if (OI.driverController.dPad != Controller.Direction.DOWN && downPressed) {
+                    downPressed = false
+                    pivotDriverOffset -= 2
+                    println("down. hi.")
+                }
+            }})
         }
     }
 
     override fun preEnable() {
-        GlobalScope.launch(MeanlibDispatcher) {
-            val timer = Timer()
-            timer.start()
-            periodic {
-                if (pivotEncoder.isConnected && pivotAngle > PIVOT_BOTTOM && pivotAngle < PIVOT_TOP) {
-                    intakePivotMotor.setRawOffset(pivotAngle.degrees)
+//        GlobalScope.launch(MeanlibDispatcher) {
+//            val timer = Timer()
+//            timer.start()
+//            periodic {
+//                if (pivotEncoder.isConnected && pivotAngle > PIVOT_BOTTOM && pivotAngle < PIVOT_TOP) {
+//                    intakePivotMotor.setRawOffset(pivotAngle.degrees)
                     pivotSetpoint = pivotAngle
-                    stop()
-                }
-                if (timer.get()>2.0) {
-                    val targetAngle = PIVOT_BOTTOM  // use PIVOT_TOP for competition
-                    println("Encoder failure. Running against hard stop at $targetAngle")
-                    intakePivotMotor.setPercentOutput(if (targetAngle == PIVOT_BOTTOM) 0.2 else -0.2)
-                    if (intakePivotMotor.current > 50.0) {
-                        intakePivotMotor.setPercentOutput(0.0)
-                        intakePivotMotor.setRawOffset(targetAngle.degrees)
-                        pivotSetpoint = targetAngle
-                        stop()
-                    }
-                }
-            }
-        }
+//                    println("setpoints pivotAngle")
+//                }
+//                else {
+//                    intakePivotMotor.setRawOffset(PIVOT_BOTTOM.degrees)
+//                    pivotSetpoint = PIVOT_BOTTOM
+//                    println("setpoints PIVOT_BOTTOM")
+//// use this for competition...
+////                    intakePivotMotor.setRawOffset(PIVOT_TOP.degrees)
+////                    pivotSetpoint = PIVOT_TOP
+////                    println("setpoints PIVOT_TOP")
+//                }
+                // this code zeros the encoder against the top or bottom hard stop
 
-        println(" Setpoint = $pivotSetpoint pivot angle = $pivotAngle  motor position = ${intakePivotMotor.position}")
+//                val targetAngle = PIVOT_BOTTOM  // use PIVOT_TOP for competition
+//                val power = -0.2  // for competition  use 0.2
+//                intakePivotMotor.setPercentOutput(power)
+//                if (intakePivotMotor.current > 35.0) {
+//                    intakePivotMotor.setPercentOutput(0.0)
+//                    intakePivotMotor.setRawOffset(targetAngle.degrees)
+//                    pivotSetpoint = targetAngle
+//                    println("Time 2 reset = ${timer.get()} targetAngle = $targetAngle")
+//                    stop()
+//                }
+
+//            }
+//        }
+
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
                 if (pivotPDEnable) {
@@ -131,25 +198,53 @@ object Intake : Subsystem("Intake") {
         val angleCurve = MotionCurve()
         print("angle currently at $pivotAngle ")
         print(" going to $angle ")
-        println("${((pivotAngle - angle).absoluteValue / 90.0)}")
+        val distance = (pivotAngle - angle).absoluteValue
+        val rate = 90.0 / 1.0  // degrees per sec
+        val time = distance / rate
+        println("intake angle $time")
         angleCurve.storeValue(0.0, pivotAngle)
-//        angleCurve.storeValue((pivotAngle - angle).absoluteValue / 90.0, angle)
-        angleCurve.storeValue((pivotAngle - angle).absoluteValue / 30.0, angle)
+        angleCurve.storeValue(time, angle)
         val timer = Timer()
         timer.start()
+//        changeAngleSetUp(angle)
         periodic {
             val t = timer.get()
             pivotSetpoint = angleCurve.getValue(t)
-            println("${angleCurve.getValue(t)}")
+            //println("${angleCurve.getValue(t)}")
             if (t >= angleCurve.length) {
                 stop()
             }
         }
+//                changeAnglePeriodic()
     }
+
+//    fun changeAngleSetUp(angle: Double) {
+//        print("angle currently at $pivotAngle ")
+//        print(" going to $angle ")
+//        val distance = (pivotAngle - angle).absoluteValue
+//        val rate = 90.0 / 1.0  // degrees per sec
+//        val time = distance / rate
+//        println("intake angle $time")
+//        angleCurve.storeValue(0.0, pivotAngle)
+//        angleCurve.storeValue(time, angle)
+//        timer.start()
+//    }
+
+//    fun changeAnglePeriodic() {
+//        val t = timer.get()
+//        pivotSetpoint = angleCurve.getValue(t)
+//        //println("${angleCurve.getValue(t)}")
+//        if (t >= angleCurve.length) {
+//            stop()
+//        }
+//    }
 
     override suspend fun default() {
         periodic {
-            currentEntry.setDouble(intakeMotor.current)
+            currentEntry.setDouble(Shooter.shootingMotor.current)
+            if (Feeder.cargoIsStaged) {
+                setIntakePower(0.0)
+            }
         }
     //    print(":)")
 //        if (ballIsStaged) {

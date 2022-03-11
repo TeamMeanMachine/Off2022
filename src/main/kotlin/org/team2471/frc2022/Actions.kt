@@ -1,29 +1,37 @@
 package org.team2471.frc2022
 
+import org.team2471.frc.lib.coroutines.delay
+import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.periodic
+import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
+import org.team2471.frc.lib.util.Timer
+import kotlin.math.roundToInt
 
 //Intake
 
 
 suspend fun intake() = use(Intake) {
-    Intake.setIntakePower(Intake.INTAKE_POWER)
-    Intake.changeAngle(Intake.PIVOT_INTAKE)
+        Feeder.autoFeedMode = true
+        Intake.setIntakePower(Intake.INTAKE_POWER)
+        Intake.changeAngle(Intake.PIVOT_INTAKE)
 }
 
 suspend fun catch() = use(Intake) {
+    Feeder.autoFeedMode = true
     Intake.setIntakePower(0.0)
     Intake.changeAngle(Intake.PIVOT_CATCH)
 }
 
-suspend fun armDown() = use(Intake) {
-    Intake.setIntakePower(0.0)
-    Intake.changeAngle(Intake.PIVOT_BOTTOM)
-}
-
 suspend fun armUp() = use(Intake) {
+    Feeder.autoFeedMode = false
     Intake.setIntakePower(0.0)
     Intake.changeAngle(Intake.PIVOT_TOP)
+}
+suspend fun powerSave() = use(Intake) {
+    Feeder.autoFeedMode = false
+    Intake.setIntakePower(0.0)
+    Intake.changeAngle(Intake.PIVOT_BOTTOM)
 }
 
 suspend fun feedUntilCargo() = use(Intake, Feeder) {
@@ -31,7 +39,7 @@ suspend fun feedUntilCargo() = use(Intake, Feeder) {
         if (Shooter.cargoIsStaged) {
             Feeder.setShooterFeedPower(0.0)
             println("Shooter Staged")
-            if (Feeder.ballIsStaged) {
+            if (Feeder.cargoIsStaged) {
                 Intake.setIntakePower(0.0)
                 println("Intake Staged")
             } else {
@@ -47,17 +55,53 @@ suspend fun feedUntilCargo() = use(Intake, Feeder) {
 }
 
 suspend fun shootMode() = use(Shooter) {
+    println("shoot mode has been called. Shootmode = ${Shooter.shootMode}")
     Shooter.shootMode = !Shooter.shootMode
-    if (Shooter.shootMode) {
-        FrontLimelight.ledEnabled = true
+    Limelight.backLedEnabled = (Shooter.shootMode && !Limelight.useFrontLimelight)
+    Limelight.frontLedEnabled = (Shooter.shootMode && !Limelight.useFrontLimelight)
+}
+
+suspend fun autoShoot() = use(Shooter, Feeder, Drive) {
+    Shooter.shootMode = true
+    var doneShooting = false
+    var t = Timer()
+    t.start()
+    parallel ({
+        println("autoshooting   usingFrontLL ${Limelight.useFrontLimelight} distance ${Limelight.distance}")
+        Feeder.autoFeedMode = false
+        Feeder.setBedFeedPower(Feeder.BED_FEED_POWER)
+        delay(0.5)
+        Feeder.setShooterFeedPower(0.8)
+        suspendUntil { doneShooting }
+        Feeder.setShooterFeedPower(0.0)
+        Shooter.shootMode = false
+        Feeder.autoFeedMode = true
+    }, {
         periodic {
-            Shooter.rpm = Shooter.rpmSetpoint
-            Shooter.pitch = Shooter.pitchSetpoint
+            Drive.autoSteer()
+//            println("rpm ${Shooter.rpm.roundToInt()}     rpmSetpoint ${Shooter.rpmSetpoint.roundToInt()}    pitch ${Shooter.pitch.roundToInt()}       pitchSetpoint ${Shooter.pitchSetpoint.roundToInt()}")
+            if (!Shooter.shootMode) {
+                stop()
+            }
         }
-    } else {
-        FrontLimelight.ledEnabled = false
-        Shooter.rpm = 0.0
-    }
+    }, {
+        suspendUntil { Shooter.cargoIsStaged || doneShooting }
+        suspendUntil { !Shooter.cargoIsStaged || doneShooting }
+        suspendUntil { Shooter.cargoIsStaged || doneShooting }
+        suspendUntil { !Shooter.cargoIsStaged || doneShooting }
+        delay(0.1)
+        doneShooting = true
+        println("doneShooting after 2 cargo")
+    }, {
+        periodic {
+            if (!doneShooting && t.get() > 2.5) {
+                doneShooting = true
+                println("doneShooting after 2.5 sec")
+            } else if (doneShooting) {
+                stop()
+            }
+        }
+    })
 }
 
 suspend fun intakePivotTest() = use(Intake) {
@@ -95,10 +139,68 @@ suspend fun shootTest2() = use(Shooter, Feeder) {
     }
 }
 
-suspend fun shoot() = use(Shooter/*, Feeder*/) {
-
+suspend fun goToPose(targetPose: Pose, fullCurve : Boolean = false, minTime: Double = 0.0) = use(Climb, Intake) {
+    val time = if (fullCurve) {maxOf(minTime, Climb.angleChangeTime(targetPose.angle), Climb.heightChangeTime(targetPose.height))} else {minTime}
+    println("Pose Values: $time ${targetPose.height} ${targetPose.angle}")
+    parallel({
+        Climb.changeHeight(targetPose.height, time)
+    }, {
+        Climb.changeAngle(targetPose.angle, time)
+    })
 }
 
-suspend fun spit() = use(Shooter) {
+suspend fun climbPrep() = use(Climb, Shooter, Intake) {
+    Feeder.autoFeedMode = false
+    Climb.climbMode = true
+    Drive.limitingFactor = 0.25
+    Climb.setStatusFrames(forClimb = true)
+    Climb.changeAngle(8.0, 0.3)
+    parallel ({
+        Intake.changeAngle(Intake.PIVOT_BOTTOM)
+    }, {
+        Shooter.changeAngle(Shooter.PITCH_LOW)
+    })
+    goToPose(Pose.CLIMB_PREP)
+    Climb.climbIsPrepped = true
+    println("climb is prepped")
+}
 
+suspend fun  startClimb() = use(Climb, Intake) {
+    println("trying to start climb")
+    if (Climb.climbIsPrepped) {
+        println("Climb stage executing: ${Climb.climbStage}")
+        OI.operatorController.rumble = 0.5
+        Climb.climbStage = 0
+        while (Climb.climbStage < 5) {
+            when (Climb.climbStage) {
+                0 -> {
+                    Climb.angleMotor.brakeMode()
+                    goToPose(Pose.PULL_UP)
+                }
+                1 -> {
+                    goToPose(Pose.PULL_UP_LATCH, true, 0.5)
+                    // add pull up latch lift (needs to be tested)
+                    goToPose(Pose.PULL_UP_LATCH_LIFT, true)
+                    goToPose(Pose.PULL_UP_LATCH_RELEASE, true, 1.0)
+                }
+                2 -> goToPose(Pose.EXTEND_HOOKS)
+                3 -> goToPose(Pose.TRAVERSE_ENGAGE)
+                4 -> goToPose(Pose.TRAVERSE_PULL_UP)
+                //else -> Climb.climbStage = -1
+            }
+            delay(0.5)
+            Climb.climbStage += 1
+        }
+        OI.operatorController.rumble = 0.0
+    }
+}
+
+suspend fun clearFeeder() = use(Feeder) {
+    println("clearing out feeder and Intake")
+    val currFeedMode = Feeder.autoFeedMode
+    Feeder.autoFeedMode = false
+    Feeder.setBedFeedPower(-Feeder.BED_FEED_POWER)
+    Feeder.setShooterFeedPower(-Feeder.SHOOTER_FEED_POWER)
+    delay(0.5)
+    Feeder.autoFeedMode = currFeedMode
 }

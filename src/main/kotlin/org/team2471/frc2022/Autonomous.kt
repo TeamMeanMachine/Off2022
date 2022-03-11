@@ -5,6 +5,7 @@ import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.motion.following.driveAlongPath
@@ -70,8 +71,8 @@ object AutoChooser {
     }
 
     init {
-        DriverStation.reportWarning("Starting auto init warning", false)
-        DriverStation.reportError("Starting auto init error", false)         //            trying to get individual message in event log to get timestamp -- untested
+//        DriverStation.reportWarning("Starting auto init warning", false)
+//        DriverStation.reportError("Starting auto init error", false)         //            trying to get individual message in event log to get timestamp -- untested
 
         SmartDashboard.putData("Best Song Lyrics", lyricsChooser)
         SmartDashboard.putData("Tests", testAutoChooser)
@@ -123,7 +124,7 @@ object AutoChooser {
         when (selAuto) {
             "Tests" -> testAuto()
             "Carpet Bias Test" -> carpetBiasTest()
-            //"Right Side 5" -> right5()
+            "Right Side 5 Auto" -> right5()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -180,27 +181,34 @@ object AutoChooser {
         }
     }
 
-//    suspend fun right5() = use(Drive, Shooter, Intake) {
-//        val auto = autonomi["Right Side 5 Auto"]
-//        if (auto != null) {
-//            shoot()
+    suspend fun right5() = use(Intake, Shooter, Feeder, Drive) {
+        println("In right5 auto.")
+        val auto = autonomi["Right Side 5 Auto"]
+        if (auto != null) {
+            Limelight.backLedEnabled = true
+            parallel({
+                Intake.changeAngle(Intake.PIVOT_INTAKE)
+                Intake.setIntakePower(Intake.INTAKE_POWER)
+            }, {
+                Drive.driveAlongPath(auto["1- First Field Cargo"], true)
+            })
+            delay(1.0)
+            Shooter.rpmOffset = 300.0
+            autoShoot()
+            Drive.driveAlongPath(auto["2- Field Cargo"], false)
+            autoShoot()
+            Drive.driveAlongPath(auto["3- Feeder Cargo"])
+            delay(0.5)
 //            parallel({
-//                Intake.setExtend(true)
-//                Intake.setIntakePower(Intake.INTAKE_POWER)
-//            }, {
-//                Drive.driveAlongPath(auto["1- Field Cargo"], true)
-//            })
-//            shoot()
-//            Drive.driveAlongPath(auto["2- Feeder Cargo"], false)
-//            parallel({
-//                Intake.setExtend(false)
+//                delay(0.5)
 //                Intake.setIntakePower(0.0)
 //            }, {
-//                Drive.driveAlongPath(auto["3- Shoot"], false)
+                Drive.driveAlongPath(auto["5- Short Shoot"], false)
 //            })
-//            shoot()
-//        }
-//    }
+            Shooter.rpmOffset = 200.0
+            autoShoot()
+        }
+    }
 //
 //    suspend fun leftSideAuto() = use(Drive, Shooter, Intake) {
 //        val auto = autonomi["Left Side 2 Auto"]
