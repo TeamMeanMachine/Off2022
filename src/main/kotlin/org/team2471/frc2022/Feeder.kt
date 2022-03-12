@@ -38,6 +38,7 @@ object Feeder : Subsystem("Feeder") {
     const val STAGE_DISTANCE = 3.0
 
     var isAuto = DriverStation.isAutonomous()
+    var isClearing = false
 
     enum class Status {
         EMPTY,
@@ -150,10 +151,15 @@ object Feeder : Subsystem("Feeder") {
 //                        setBedFeedPower(BED_FEED_POWER)
 //                    }
                 } else if (!isAuto) {
-                    drivePower = if (Shooter.shootMode) OI.driveRightTrigger else 0.0
-                    setShooterFeedPower(drivePower)
-
-                    setBedFeedPower(0.0)
+                    if (Shooter.shootMode) {
+                        drivePower = OI.driveRightTrigger
+                        setShooterFeedPower(drivePower)
+                        setBedFeedPower(0.0)
+                    } else if (!isClearing) {
+                        drivePower = 0.0
+                        setShooterFeedPower(drivePower)
+                        setBedFeedPower(0.0)
+                    }
                 }
             }
         }

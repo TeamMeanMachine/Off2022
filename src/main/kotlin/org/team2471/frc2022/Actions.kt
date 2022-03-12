@@ -206,15 +206,20 @@ suspend fun  startClimb() = use(Climb, Intake) {
             Climb.climbStage += 1
         }
         OI.operatorController.rumble = 0.0
+        println("done with start climb")
     }
 }
+
+//suspend fun midClimb()
 
 suspend fun clearFeeder() = use(Feeder) {
     println("clearing out feeder and Intake")
     val currFeedMode = Feeder.autoFeedMode
     Feeder.autoFeedMode = false
+    Feeder.isClearing = true
     Feeder.setBedFeedPower(-Feeder.BED_FEED_POWER)
     Feeder.setShooterFeedPower(-Feeder.SHOOTER_FEED_POWER)
     delay(0.5)
     Feeder.autoFeedMode = currFeedMode
+    Feeder.isClearing = false
 }
