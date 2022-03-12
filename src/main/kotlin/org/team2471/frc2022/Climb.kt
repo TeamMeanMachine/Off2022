@@ -35,11 +35,11 @@ object Climb : Subsystem("Climb") {
     var climbMode = false
     val height: Double
         get() = heightMotor.position
-    var heightSetpoint = 0.0
+    var heightSetpoint
         get() = heightSetpointEntry.getDouble(0.0)
         set(value) {
-            field = value.coerceIn(HEIGHT_BOTTOM, HEIGHT_TOP)
-            heightSetpointEntry.setDouble(field)
+//            field = value.coerceIn(HEIGHT_BOTTOM, HEIGHT_TOP)
+            heightSetpointEntry.setDouble(value)
         }
 
     val tuningMode = false
@@ -47,7 +47,7 @@ object Climb : Subsystem("Climb") {
     const val HOLDING_ANGLE = 1.0
 
     const val HEIGHT_TOP = 32.0
-    const val HEIGHT_VERTICAL_TOP = 26.0
+    const val HEIGHT_VERTICAL_TOP = 25.0
     const val HEIGHT_BOTTOM_DETACH = 8.0
     const val HEIGHT_BOTTOM = 0.0
 
@@ -182,7 +182,7 @@ object Climb : Subsystem("Climb") {
 
     fun heightChangeTime(target: Double) : Double {
         val distance = (height - target).absoluteValue
-        val rate = 12.0 / 1.0  // degrees per sec
+        val rate = 15.0 / 1.0  // degrees per sec
         return distance / rate
     }
 
@@ -215,14 +215,14 @@ object Climb : Subsystem("Climb") {
             if (tuningMode) {
                 println("is tuning mode")
                 updatePositions()
+            } else if (OI.operatorLeftY.absoluteValue > 0.1 || OI.operatorRightY.absoluteValue > 0.1) {
+                heightSetpoint -= OI.operatorLeftY * 0.45
+                angleSetpoint += OI.operatorRightY * 0.2
+                updatePositions()
             } else if (Shooter.pitch > 24.0) {
                 angleSetpoint = Shooter.pitch - 26.0
                 updatePositions()
-            } else if (climbMode) {
-                heightSetpoint -= OI.operatorLeftY * 0.45
-                angleSetpoint += OI.operatorRightY * 0.5
-                updatePositions()
-            }  else {
+            } else {
                 angleMotor.setPercentOutput(0.0)
             }
             if (OI.operatorLeftTrigger > 0.1 ||OI.operatorRightTrigger > 0.1) {

@@ -146,8 +146,14 @@ object Shooter : Subsystem("Shooter") {
 
         // 03/05 tuned
         backPitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+//        // start of 3/11 comp with no offset
+//        backPitchCurve.storeValue(5.0, 12.0)
+//        backPitchCurve.storeValue(10.0, 20.0)
+//        backPitchCurve.storeValue(15.0, 31.0)
+//        backPitchCurve.storeValue(20.0, 31.0)
+
         backPitchCurve.storeValue(5.0, 12.0)
-        backPitchCurve.storeValue(10.0, 20.0)
+        backPitchCurve.storeValue(10.0, 22.0)
         backPitchCurve.storeValue(15.0, 31.0)
         backPitchCurve.storeValue(20.0, 31.0)
 
@@ -158,9 +164,14 @@ object Shooter : Subsystem("Shooter") {
 //        rpmCurve.storeValue(10.0, 3750.0)
 //        rpmCurve.storeValue(15.0, 4500.0)
 //        rpmCurve.storeValue(20.0, 5500.0)
-        rpmCurve.storeValue(5.0, 3200.0)
-        rpmCurve.storeValue(10.0, 3500.0)
-        rpmCurve.storeValue(15.0, 4050.0)
+            //start of 3/11 comp with 520 offset at 5pm
+//        rpmCurve.storeValue(5.0, 3200.0)
+//        rpmCurve.storeValue(10.0, 3500.0)
+//        rpmCurve.storeValue(15.0, 4050.0)
+//        rpmCurve.storeValue(20.0, 5000.0)
+        rpmCurve.storeValue(5.0, 3000.0)
+        rpmCurve.storeValue(10.0, 3400.0)
+        rpmCurve.storeValue(15.0, 3950.0)
         rpmCurve.storeValue(20.0, 5000.0)
 
         shootingMotor.config {
@@ -189,6 +200,8 @@ object Shooter : Subsystem("Shooter") {
             var downPressed = false
             var leftPressed = false
             var rightPressed = false
+            frontRPMOffsetEntry.setDouble(frontLLRPMOffset)
+            backRPMOffsetEntry.setDouble(backLLRPMOffset)
             frontRPMOffsetEntry.setDouble(frontLLRPMOffset)
             backRPMOffsetEntry.setDouble(backLLRPMOffset)
             pitchSetpoint = pitch
@@ -313,14 +326,14 @@ object Shooter : Subsystem("Shooter") {
         println("setting rpmOffset to ${rpmOffset}")
     }
 
-    var backLLRPMOffset: Double = 700.0
-        get() = backRPMOffsetEntry.getDouble(700.0)
+    var backLLRPMOffset: Double = 520.0
+        get() = backRPMOffsetEntry.getDouble(600.0)
         set(value) {
             field = value
             backRPMOffsetEntry.setDouble(value)
         }
-    var frontLLRPMOffset: Double = 1200.0
-        get() = frontRPMOffsetEntry.getDouble(1200.0)
+    var frontLLRPMOffset: Double = 1100.0
+        get() = frontRPMOffsetEntry.getDouble(1100.0)
         set(value) {
             field = value
             frontRPMOffsetEntry.setDouble(value)
@@ -343,14 +356,14 @@ object Shooter : Subsystem("Shooter") {
         println("setting pitchOffset to ${pitchDriverOffset}")
     }
 
-    var backLLPitchOffset: Double = 700.0
-        get() = backPitchOffsetEntry.getDouble(700.0)
+    var backLLPitchOffset: Double = 0.0
+        get() = backPitchOffsetEntry.getDouble(0.0)
         set(value) {
             field = value
             backPitchOffsetEntry.setDouble(value)
         }
-    var frontLLPitchOffset: Double = 1200.0
-        get() = frontPitchOffsetEntry.getDouble(1200.0)
+    var frontLLPitchOffset: Double = 0.0
+        get() = frontPitchOffsetEntry.getDouble(0.0)
         set(value) {
             field = value
             frontPitchOffsetEntry.setDouble(value)
