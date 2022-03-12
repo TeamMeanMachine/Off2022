@@ -107,7 +107,7 @@ object Limelight : Subsystem("Front Limelight") {
 
 
     var backLedEnabled = true
-        get() = frontLedModeEntry.getDouble(1.0) == 0.0
+        get() = backLedModeEntry.getDouble(1.0) == 0.0
         set(value) {
             field = value
 //            ledModeEntry.setDouble(if (value) 0.0 else 1.0)
@@ -175,6 +175,8 @@ object Limelight : Subsystem("Front Limelight") {
     init {
         backLedEnabled = false
         frontLedEnabled = false
+        backLedModeEntry.setDouble(1.0)
+        frontLedModeEntry.setDouble(1.0)
         heightToDistance.storeValue(33.0, 3.0)
         heightToDistance.storeValue(22.0, 7.2)
         heightToDistance.storeValue(9.6, 11.5)
