@@ -1,5 +1,6 @@
 package org.team2471.frc2022
 
+import edu.wpi.first.math.filter.LinearFilter
 import edu.wpi.first.networktables.NetworkTableInstance
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -47,19 +48,13 @@ object Limelight : Subsystem("Front Limelight") {
 
     private var angleOffsetEntry = Limelight.frontTable.getEntry("Angle Offset Entry")
 
+
     val useFrontLimelight: Boolean
     get() {
         var angleFromCenter = Drive.position.angle.radians
         var isFacingShooter = (angleFromCenter - heading).wrap().asDegrees.absoluteValue >= 90.0  //if the robot is facing toward (angleFromCenter opposite from heading), don't use front
 //        println("isFacingShooter: $isFacingShooter   heading: ${heading.asDegrees.roundToInt()}    angleFromCenter: ${angleFromCenter.asDegrees.roundToInt()}     x: ${Drive.position.x.roundToInt()}     y: ${Drive.position.y.roundToInt()}")
-//        return isFacingShooter     //do this or add other inputs like hasValidTarget
-        return if (frontLedEnabled && backLedEnabled) {
-            isFacingShooter
-        } else if (frontLedEnabled) {
-            true
-        } else {
-            false
-        }
+        return isFacingShooter
     }
 
     val distance: Length
@@ -90,10 +85,13 @@ object Limelight : Subsystem("Front Limelight") {
         }
 
     val position: Vector2
-        get() = Vector2(0.0, 0.0) - Vector2(
-            (distance.asFeet * (heading - xTranslation.degrees).sin()),
-            (distance.asFeet * (heading - xTranslation.degrees).cos())
-        )
+        get() {
+            var headingLimelight = if (useFrontLimelight) heading else heading + 180.0.degrees
+            return Vector2(0.0, 0.0) - Vector2(
+                (distance.asFeet * (headingLimelight - xTranslation.degrees).sin()),
+                (distance.asFeet * (headingLimelight - xTranslation.degrees).cos())
+            )
+        }
 
     val targetAngle: Angle
         get() {
@@ -108,6 +106,7 @@ object Limelight : Subsystem("Front Limelight") {
 
 
     var backLedEnabled = true
+        get() = frontLedModeEntry.getDouble(1.0) == 0.0
         set(value) {
             field = value
 //            ledModeEntry.setDouble(if (value) 0.0 else 1.0)
@@ -115,6 +114,7 @@ object Limelight : Subsystem("Front Limelight") {
         }
 
     var frontLedEnabled = true
+        get() = frontLedModeEntry.getDouble(1.0) == 0.0
         set(value) {
             field = value
             frontLedModeEntry.setDouble(if (value) 0.0 else 1.0)
@@ -217,6 +217,12 @@ object Limelight : Subsystem("Front Limelight") {
                 if (OI.operatorController.dPad != Controller.Direction.RIGHT && rightPressed) {
                     //  rightPressed = false
                     rightAngleOffset()
+                }
+
+                if (Shooter.shootMode && hasValidTarget) {
+                        val alpha = 0.0
+                        Drive.position = Drive.position * alpha + position * (1.0-alpha)
+//                        println("Reset odometry based on limelight. Hi.")
                 }
             }
         }

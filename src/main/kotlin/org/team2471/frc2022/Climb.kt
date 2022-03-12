@@ -51,7 +51,7 @@ object Climb : Subsystem("Climb") {
     const val HEIGHT_BOTTOM_DETACH = 8.0
     const val HEIGHT_BOTTOM = 0.0
 
-    const val ANGLE_TOP = 36.0
+    val ANGLE_TOP = if (isCompBot) 33.5 else 36.0
     const val ANGLE_BOTTOM = -4.0
 
     val roll : Double
@@ -90,7 +90,7 @@ object Climb : Subsystem("Climb") {
         angleMotor.config {
             coastMode()
             inverted(true)
-            feedbackCoefficient = 360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0 * 39.0 / 26.0
+            feedbackCoefficient = (360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0 * (if (isCompBot) 34.0 / 40.0 else 39.0 / 26.0))
             pid {
                 p(0.0000001)
             }
@@ -98,7 +98,7 @@ object Climb : Subsystem("Climb") {
         }
         heightSetpointEntry.setDouble(height)
         angleSetpointEntry.setDouble(angle)
-        setStatusFrames(true)
+        setStatusFrames(false)
         GlobalScope.launch {
 //            parallel ({
 //                periodic {
@@ -132,7 +132,7 @@ object Climb : Subsystem("Climb") {
 
     override fun postEnable() {
         heightSetpoint = height
-        climbMode = true
+        climbMode = false
     }
 
     fun setPower(power: Double) {
@@ -213,17 +213,16 @@ object Climb : Subsystem("Climb") {
     override suspend fun default() {
         periodic {
             if (tuningMode) {
+                println("is tuning mode")
+                updatePositions()
+            } else if (Shooter.pitch > 24.0) {
+                angleSetpoint = Shooter.pitch - 26.0
                 updatePositions()
             } else if (climbMode) {
                 heightSetpoint -= OI.operatorLeftY * 0.45
                 angleSetpoint += OI.operatorRightY * 0.5
                 updatePositions()
-            } else if (Shooter.pitch > 24.0) {
-                angleSetpoint = Shooter.pitch - 22.0
-                updatePositions()
-                println("$angleSetpoint")
-
-            } else {
+            }  else {
                 angleMotor.setPercentOutput(0.0)
             }
             if (OI.operatorLeftTrigger > 0.1 ||OI.operatorRightTrigger > 0.1) {

@@ -31,14 +31,15 @@ object Intake : Subsystem("Intake") {
     val pivotSetpointEntry = table.getEntry("Pivot Setpoint")
     val pivotMotorEntry = table.getEntry("Pivot Motor")
     val pivotDriverOffsetEntry = table.getEntry("Pivot Controller")
+    val intakeStateEntry = table.getEntry("Mode")
 
     var pivotDriverOffset
         get() = pivotDriverOffsetEntry.getDouble(0.0)
         set(value) { pivotDriverOffsetEntry.setDouble(value) }
-    var pivotOffset = if (isCompBot) -59.0 else 165.0
-    val pivotEncoder = DutyCycleEncoder(DigitalSensors.INTAKE_PIVOT)  // this encoder seems to give randomly changing answers - very naughty encoder
+    var pivotOffset = if (isCompBot) /*-59.0*/ 159.7 else 165.0
+    val pivotEncoder = DutyCycleEncoder(if (isCompBot) DigitalSensors.INTAKE_PIVOT else DigitalSensors.INTAKE_PIVOT_PRACTICE)  // this encoder seems to give randomly changing answers - very naughty encoder
     var pivotAngle : Double = 0.0
-        get() = (pivotEncoder.absolutePosition * 360.0 / 0.944 + pivotOffset).degrees.wrap().asDegrees
+        get() = (if (isCompBot) -1.0 else 1.0) * (pivotEncoder.absolutePosition * 360.0 / 0.944 + pivotOffset).degrees.wrap().asDegrees
 
 //        get() = intakePivotMotor.position
 //        set(value) {
@@ -69,8 +70,13 @@ object Intake : Subsystem("Intake") {
     val angleCurve = MotionCurve()
 
     var upPressed = false
-    var downPressed = true
+    var downPressed = false
+    var leftPressed = false
 
+    enum class Mode {
+        CATCH, INTAKE, STOW, POWERSAVE
+    }
+    var intakeState = Mode.STOW
     init {
         pivotDriverOffsetEntry.getDouble(0.0)
         intakePivotMotor.config(20) {
@@ -82,7 +88,7 @@ object Intake : Subsystem("Intake") {
                 p(0.0000030)
 //                d(0.00000005)
             }
-            currentLimit(40, 60, 10)
+            currentLimit(40, 60, 1)
         }
         intakeMotor.config {
             coastMode()
@@ -91,11 +97,13 @@ object Intake : Subsystem("Intake") {
         GlobalScope.launch(MeanlibDispatcher) {
             parallel({
             periodic {
-                if (pivotEncoder.isConnected && pivotAngle > PIVOT_BOTTOM && pivotAngle < PIVOT_TOP) {
-                    intakePivotMotor.setRawOffset(pivotAngle.degrees)
-                    pivotSetpoint = pivotAngle + pivotDriverOffset
+                if (pivotEncoder.isConnected && pivotAngle > (PIVOT_BOTTOM - 1.0) && pivotAngle < (PIVOT_TOP + 1.0)) {
+                    println("connected ${pivotEncoder.isConnected}   pivotAngle ${pivotAngle > (PIVOT_BOTTOM - 1.0)} ")
+                    resetPivotOffset()
                     println("setpoints pivotAngle")
                     this.stop()
+                } else {
+                    println("Intake not reset")
                 }
 //                else {
 //                    intakePivotMotor.setRawOffset(PIVOT_BOTTOM.degrees)
@@ -111,6 +119,7 @@ object Intake : Subsystem("Intake") {
                 currentEntry.setDouble(intakePivotMotor.current)  // intakeMotor.current)
                 pivotEntry.setDouble(pivotAngle) // intakePivotMotor.position)
                 pivotMotorEntry.setDouble(intakePivotMotor.position)
+                intakeStateEntry.setString(intakeState.name)
                 //println("$isCompBot intake angle: $pivotAngle ${pivotEncoder.absolutePosition}")
 //                if (OI.operatorController.b) {
 //                    setIntakePower(INTAKE_POWER)
@@ -121,6 +130,9 @@ object Intake : Subsystem("Intake") {
                     upPressed = true
                 } else if (OI.driverController.dPad == Controller.Direction.DOWN) {
                     downPressed = true
+                }
+                if (OI.operatorController.dPad == Controller.Direction.LEFT) {
+                    leftPressed = true
                 }
                 if (OI.driverController.dPad != Controller.Direction.UP && upPressed) {
                     upPressed = false
@@ -186,6 +198,12 @@ object Intake : Subsystem("Intake") {
 //    val ballIsStaged: Boolean
 //        get() = !button.get()
 
+    fun resetPivotOffset(){
+        println("resetting intake pivot")
+        intakePivotMotor.setRawOffset(pivotAngle.degrees)
+        pivotDriverOffset = 0.0
+        pivotSetpoint = pivotAngle
+    }
     fun setIntakePower(power: Double) {
         intakeMotor.setPercentOutput(power)
     }
@@ -242,9 +260,6 @@ object Intake : Subsystem("Intake") {
     override suspend fun default() {
         periodic {
             currentEntry.setDouble(Shooter.shootingMotor.current)
-            if (Feeder.cargoIsStaged) {
-                setIntakePower(0.0)
-            }
         }
     //    print(":)")
 //        if (ballIsStaged) {
