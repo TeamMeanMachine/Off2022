@@ -85,11 +85,6 @@ object Shooter : Subsystem("Shooter") {
     val pitchCurve: MotionCurve = MotionCurve()
     val rpmCurve: MotionCurve = MotionCurve()
 
-//    val facingCenter : Boolean
-//        get() {
-//            if (Drive.)
-//        }
-
     var rpmSetpoint: Double = 0.0
         get() {
             if (tuningMode) {
