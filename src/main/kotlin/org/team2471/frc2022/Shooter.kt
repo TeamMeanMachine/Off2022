@@ -171,7 +171,7 @@ object Shooter : Subsystem("Shooter") {
 //        rpmCurve.storeValue(20.0, 5000.0)
         rpmCurve.storeValue(5.0, 3000.0)
         rpmCurve.storeValue(10.0, 3400.0)
-        rpmCurve.storeValue(15.0, 3950.0)
+        rpmCurve.storeValue(15.0, 3900.0)
         rpmCurve.storeValue(20.0, 5000.0)
 
         shootingMotor.config {
@@ -326,7 +326,7 @@ object Shooter : Subsystem("Shooter") {
         println("setting rpmOffset to ${rpmOffset}")
     }
 
-    var backLLRPMOffset: Double = 520.0
+    var backLLRPMOffset: Double = 20.0
         get() = backRPMOffsetEntry.getDouble(600.0)
         set(value) {
             field = value
