@@ -1,7 +1,10 @@
 package org.team2471.frc2022
 
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.*
+import edu.wpi.first.wpilibj.smartdashboard.Field2d
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -25,10 +28,12 @@ import kotlin.math.absoluteValue
 object Drive : Subsystem("Drive"), SwerveDrive {
 
     val navXGyroEntry = NetworkTableInstance.getDefault().getTable(name).getEntry("NavX Gyro")
+    val fieldObject = Field2d()
+
     val limitingFactor : Double
         get() = if (Climb.climbIsPrepped) 0.25 else 1.0
-
-
+    val fieldDimends = Vector2(26.9375.feet.asMeters,54.0.feet.asMeters)
+    val fieldOffset = fieldDimends/2.0
     /**
      * Coordinates of modules
      * **/
@@ -128,6 +133,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
             SmartDashboard.setPersistent("Use Gyro")
             SmartDashboard.setPersistent("Gyro Type")
+            SmartDashboard.putData("Field", fieldObject)
+
 
             useGyroEntry.setBoolean(true)
             navXGyroEntry.setBoolean(false)
@@ -151,6 +158,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 angleOneEntry.setDouble((modules[1] as Module).analogAngle.asDegrees)
                 angleTwoEntry.setDouble((modules[2] as Module).analogAngle.asDegrees)
                 angleThreeEntry.setDouble((modules[3] as Module).analogAngle.asDegrees)
+                fieldObject.robotPose = Pose2d(position.x.feet.asMeters+fieldOffset.x, position.y.feet.asMeters+fieldOffset.y, Rotation2d((heading+90.0.degrees).asRadians))
                 autoAim = autoAimEntry.getBoolean(false) || OI.driverController.a
 
                // println(gyro.getNavX().pitch.degrees)

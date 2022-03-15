@@ -33,8 +33,16 @@ object Shooter : Subsystem("Shooter") {
     private val colorSensor = ColorSensorV3(i2cPort)
     val colorEntry = table.getEntry("Color")
 
+    const val aimMaxError = 3.0
+    const val rpmMaxError = 500.0
+    const val pitchMaxError = 5.0
+
     val rpmEntry = table.getEntry("RPM")
     val rpmSetpointEntry = table.getEntry("RPM Setpoint")
+    val aimMaxErrorEntry = table.getEntry("aimMaxError")
+    val pitchErrorEntry = table.getEntry("pitchError")
+    val rpmMaxErrorEntry = table.getEntry("rpm maxError")
+    val pitchMaxErrorEntry = table.getEntry("pitchMaxError")
     val rpmErrorEntry = table.getEntry("RPM Error")
     val frontRPMOffsetEntry = table.getEntry("Front RPM Offset")
     val backRPMOffsetEntry = table.getEntry("Back RPM Offset")
@@ -43,6 +51,10 @@ object Shooter : Subsystem("Shooter") {
     val shootModeEntry = table.getEntry("Shoot Mode")
     val frontPitchOffsetEntry = table.getEntry("Front Pitch Offset")
     val backPitchOffsetEntry = table.getEntry("Back Pitch Offset")
+    val pitchGoodEntry = table.getEntry("pitchGood")
+    val aimGoodEntry = table.getEntry("aimGood")
+    val rpmGoodEntry = table.getEntry("rpmGood")
+    val allGoodEntry = table.getEntry("allGood")
 
     val filter = LinearFilter.movingAverage(2)
 
@@ -214,8 +226,22 @@ object Shooter : Subsystem("Shooter") {
                 rpmEntry.setDouble(rpm)
                 rpmErrorEntry.setDouble(rpmSetpoint - rpm)
                 shootModeEntry.setBoolean(shootMode)
+                pitchMaxErrorEntry.setDouble(pitchMaxError)
+                rpmMaxErrorEntry.setDouble(rpmMaxError)
+                pitchErrorEntry.setDouble(pitchSetpoint-pitch)
+                aimMaxErrorEntry.setDouble(aimMaxError)
 
-                if (shootMode && Limelight.aimError < 3.0 && rpmError < 500.0 && pitchSetpoint - pitch < 5.0) {
+                val aimGood = Limelight.aimError < aimMaxError
+                val rpmGood = rpmError < rpmMaxError
+                val pitchGood = pitchSetpoint - pitch < pitchMaxError
+                val allGood = shootMode && aimGood && rpmGood && pitchGood
+
+                aimGoodEntry.setBoolean(aimGood)
+                rpmGoodEntry.setBoolean(rpmGood)
+                pitchGoodEntry.setBoolean(pitchGood)
+                allGoodEntry.setBoolean(allGood)
+
+                if (allGood) {
                     OI.driverController.rumble = 0.5
                 } else {
                     OI.driverController.rumble = 0.0

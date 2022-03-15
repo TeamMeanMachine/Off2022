@@ -59,7 +59,7 @@ object Intake : Subsystem("Intake") {
     const val INTAKE_POWER = 0.9
     const val PIVOT_BOTTOM = 0.0
     const val PIVOT_CATCH = 0.0
-    val PIVOT_INTAKE = if (isCompBot) 21.0 else 20.0
+    val PIVOT_INTAKE = if (isCompBot) 22.0 else 20.0
     val PIVOT_TOP = if (isCompBot) 103.0 else 98.0
 
 
