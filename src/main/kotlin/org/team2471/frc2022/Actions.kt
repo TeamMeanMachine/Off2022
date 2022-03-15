@@ -14,6 +14,7 @@ import kotlin.math.roundToInt
 
 
 suspend fun intake() = use(Intake) {
+    Intake.resetPivotOffset()
     Feeder.autoFeedMode = true
     Intake.setIntakePower(Intake.INTAKE_POWER)
     Intake.intakeState = Intake.Mode.INTAKE
@@ -23,6 +24,7 @@ suspend fun intake() = use(Intake) {
 }
 
 suspend fun catch() = use(Intake) {
+    Intake.resetPivotOffset()
     Feeder.autoFeedMode = true
     Intake.setIntakePower(0.0)
     Intake.intakeState = Intake.Mode.CATCH
@@ -32,6 +34,7 @@ suspend fun catch() = use(Intake) {
 }
 
 suspend fun armUp() = use(Intake) {
+    Intake.resetPivotOffset()
     Feeder.autoFeedMode = false
     Intake.setIntakePower(0.0)
     Intake.intakeState = Intake.Mode.STOW
@@ -40,6 +43,7 @@ suspend fun armUp() = use(Intake) {
     Climb.climbIsPrepped = false
 }
 suspend fun powerSave() = use(Intake) {
+    Intake.resetPivotOffset()
     Feeder.autoFeedMode = false
     Intake.setIntakePower(0.0)
     Intake.intakeState = Intake.Mode.POWERSAVE
@@ -216,12 +220,12 @@ suspend fun  startClimb() = use(Climb, Intake) {
 
 suspend fun clearFeeder() = use(Feeder) {
     println("clearing out feeder and Intake")
-    val currFeedMode = Feeder.autoFeedMode
-    Feeder.autoFeedMode = false
+    //val currFeedMode = Feeder.autoFeedMode
+   // Feeder.autoFeedMode = false
     Feeder.isClearing = true
-    Feeder.setBedFeedPower(-Feeder.BED_FEED_POWER)
-    Feeder.setShooterFeedPower(-Feeder.SHOOTER_FEED_POWER)
+//    Feeder.setBedFeedPower(-Feeder.BED_FEED_POWER)
+//    Feeder.setShooterFeedPower(-Feeder.SHOOTER_FEED_POWER)
     delay(0.5)
-    Feeder.autoFeedMode = currFeedMode
+    //Feeder.autoFeedMode = currFeedMode
     Feeder.isClearing = false
 }

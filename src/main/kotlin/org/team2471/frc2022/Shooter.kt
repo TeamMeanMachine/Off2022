@@ -17,6 +17,7 @@ import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.input.Controller
+import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.asFeet
 import kotlin.math.absoluteValue
@@ -55,11 +56,15 @@ object Shooter : Subsystem("Shooter") {
     val aimGoodEntry = table.getEntry("aimGood")
     val rpmGoodEntry = table.getEntry("rpmGood")
     val allGoodEntry = table.getEntry("allGood")
+    val colorAlignedEntry = table.getEntry("colorAligned")
 
     val filter = LinearFilter.movingAverage(2)
 
     const val PITCH_LOW = -31.0
     const val PITCH_HIGH = 35.0
+
+    const val PROXIMITY_STAGED_MIN = 250.0
+    const val PROXMITY_STAGED_MAX_SAFE = 350.0
 
     var pitchOffset = if (isCompBot) 1.3 else - 76.0
     var curvepitchOffset = 3.0
@@ -81,9 +86,14 @@ object Shooter : Subsystem("Shooter") {
                 val tempPitch = backPitchCurve.getValue(Limelight.distance.asFeet)
                 pitchSetpointEntry.setDouble(tempPitch)
                 field = tempPitch
+            } else if (Drive.position.distance(Vector2(0.0,0.0)) < 5.0) {
+                // fender shot
+                field = 10.0
             } else {
                 field = pitchSetpointEntry.getDouble(10.0)
             }
+            // don't allow values outside of range even with offset
+            field = field.coerceIn(PITCH_LOW-curvepitchOffset, PITCH_HIGH-curvepitchOffset)
 //            println("tuningMode $tuningMode     useFrontLL ${Limelight.useFrontLimelight}     frontTarget ${Limelight.hasValidFrontTarget}        backTarget ${Limelight.hasValidBackTarget}")
             return field + curvepitchOffset
         }
@@ -234,12 +244,14 @@ object Shooter : Subsystem("Shooter") {
                 val aimGood = Limelight.aimError < aimMaxError
                 val rpmGood = rpmError < rpmMaxError
                 val pitchGood = pitchSetpoint - pitch < pitchMaxError
+                val isCargoAlignedWithAlliance = (allianceColor == cargoColor || cargoColor == NOTSET)
                 val allGood = shootMode && aimGood && rpmGood && pitchGood
 
                 aimGoodEntry.setBoolean(aimGood)
                 rpmGoodEntry.setBoolean(rpmGood)
                 pitchGoodEntry.setBoolean(pitchGood)
                 allGoodEntry.setBoolean(allGood)
+                colorAlignedEntry.setBoolean(isCargoAlignedWithAlliance)
 
                 if (allGood) {
                     OI.driverController.rumble = 0.5
@@ -290,7 +302,7 @@ object Shooter : Subsystem("Shooter") {
                     BLUE -> "blue"
                     else -> "notset"
                 }
-                val isCargoAlignedWithAlliance = (allianceColor == cargoColor || cargoColor == NOTSET)
+
                 val rpmBadShotAdjustment = if (isCargoAlignedWithAlliance) 1.0 else if (pitch > 0) 0.4 else 0.1
                 stagedColorString = "$stagedColorString $isCargoAlignedWithAlliance ${colorSensor.proximity}"
                 colorEntry.setString(stagedColorString)
@@ -316,7 +328,7 @@ object Shooter : Subsystem("Shooter") {
     val cargoStageProximity : Int
         get() = colorSensor.proximity
     val cargoIsStaged : Boolean
-        get() = colorSensor.proximity > 250
+        get() = colorSensor.proximity > PROXIMITY_STAGED_MIN
     val cargoColor : Char
         get() =  if (colorSensor.proximity < 180) NOTSET else if (colorSensor.color.red >= colorSensor.color.blue) RED else BLUE
 
