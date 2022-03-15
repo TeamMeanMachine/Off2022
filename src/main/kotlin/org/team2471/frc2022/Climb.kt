@@ -47,7 +47,7 @@ object Climb : Subsystem("Climb") {
     const val HOLDING_ANGLE = 1.0
 
     const val HEIGHT_TOP = 32.0
-    const val HEIGHT_VERTICAL_TOP = 25.0
+    const val HEIGHT_VERTICAL_TOP = 25.5
     const val HEIGHT_BOTTOM_DETACH = 8.0
     const val HEIGHT_BOTTOM = 0.0
 

@@ -7,6 +7,7 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.util.Timer
+import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
 //Intake
@@ -84,7 +85,7 @@ suspend fun autoShoot() = use(Shooter, Feeder, Drive) {
         println("autoshooting   usingFrontLL ${Limelight.useFrontLimelight} distance ${Limelight.distance}")
         Feeder.autoFeedMode = true
         Feeder.setBedFeedPower(Feeder.BED_FEED_POWER)
-        delay(0.5)
+        suspendUntil { Limelight.aimError.absoluteValue < 2.0 || doneShooting }
         Feeder.setShooterFeedPower(0.8)
         suspendUntil { doneShooting }
         Feeder.setShooterFeedPower(0.0)
@@ -94,10 +95,11 @@ suspend fun autoShoot() = use(Shooter, Feeder, Drive) {
         periodic {
             Drive.autoSteer()
 //            println("rpm ${Shooter.rpm.roundToInt()}     rpmSetpoint ${Shooter.rpmSetpoint.roundToInt()}    pitch ${Shooter.pitch.roundToInt()}       pitchSetpoint ${Shooter.pitchSetpoint.roundToInt()}")
-            if (!Shooter.shootMode) {
+            if (doneShooting) {
                 stop()
             }
         }
+        println("aimError = ${Limelight.aimError}")
     }, {
         suspendUntil { Shooter.cargoIsStaged || doneShooting }
         suspendUntil { !Shooter.cargoIsStaged || doneShooting }

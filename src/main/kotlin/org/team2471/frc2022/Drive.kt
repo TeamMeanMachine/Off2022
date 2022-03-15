@@ -13,6 +13,7 @@ import org.team2471.frc.lib.control.PDConstantFController
 import org.team2471.frc.lib.control.PDController
 import org.team2471.frc.lib.coroutines.*
 import org.team2471.frc.lib.framework.Subsystem
+import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion.following.SwerveDrive
@@ -188,12 +189,14 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
             headingSetpoint = OI.driverController.povDirection
 
-            drive(
-                OI.driveTranslation * limitingFactor,
-                turn * limitingFactor,
-                SmartDashboard.getBoolean("Use Gyro", true) && !DriverStation.isAutonomous(),
-                false
-            )
+//            if (!Feeder.isAuto && !Shooter.shootMode) {
+                drive(
+                    OI.driveTranslation * limitingFactor,
+                    turn * limitingFactor,
+                    SmartDashboard.getBoolean("Use Gyro", true) && !DriverStation.isAutonomous(),
+                    false
+                )
+//            }
         }
     }
 
@@ -343,7 +346,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             driveMotor.config {
                 brakeMode()
                 feedbackCoefficient = 1.0 / 2048.0 / 5.857 / 1.067 // spark max-neo 1.0 / 42.0/ 5.857 / fudge factor
-                currentLimit(moduleContLimit, modulePeakLimit, 1)
+//                currentLimit(moduleContLimit, modulePeakLimit, 1)
                 openLoopRamp(0.50)
 //                burnSettings()
             }
