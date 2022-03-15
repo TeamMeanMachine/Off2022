@@ -164,8 +164,8 @@ object Shooter : Subsystem("Shooter") {
 //        backPitchCurve.storeValue(15.0, 31.0)
 //        backPitchCurve.storeValue(20.0, 31.0)
 
-        backPitchCurve.storeValue(5.0, 12.0)
-        backPitchCurve.storeValue(10.0, 22.0)
+        backPitchCurve.storeValue(5.0, 14.0)
+        backPitchCurve.storeValue(10.0, 20.0)
         backPitchCurve.storeValue(15.0, 31.0)
         backPitchCurve.storeValue(20.0, 31.0)
 
@@ -181,10 +181,10 @@ object Shooter : Subsystem("Shooter") {
 //        rpmCurve.storeValue(10.0, 3500.0)
 //        rpmCurve.storeValue(15.0, 4050.0)
 //        rpmCurve.storeValue(20.0, 5000.0)
-        rpmCurve.storeValue(5.0, 3000.0)
-        rpmCurve.storeValue(10.0, 3400.0)
-        rpmCurve.storeValue(15.0, 3900.0)
-        rpmCurve.storeValue(20.0, 5000.0)
+        rpmCurve.storeValue(5.0, 3100.0)
+        rpmCurve.storeValue(10.0, 3450.0)
+        rpmCurve.storeValue(15.0, 4100.0)
+        rpmCurve.storeValue(20.0, 5200.0)
 
         shootingMotor.config {
             followersInverted(true)
@@ -299,6 +299,11 @@ object Shooter : Subsystem("Shooter") {
                 }
                 // set rpm for shot
                 rpm = if (shootMode || tuningMode) rpmSetpoint * rpmBadShotAdjustment else 0.0
+//
+//            frontRPMOffsetEntry.setDouble(frontLLRPMOffset)
+//            backRPMOffsetEntry.setDouble(backLLRPMOffset)
+//            frontRPMOffsetEntry.setDouble(frontLLRPMOffset)
+//            backRPMOffsetEntry.setDouble(backLLRPMOffset)
             }
         }
     }
@@ -352,8 +357,8 @@ object Shooter : Subsystem("Shooter") {
         println("setting rpmOffset to ${rpmOffset}")
     }
 
-    var backLLRPMOffset: Double = 20.0
-        get() = backRPMOffsetEntry.getDouble(600.0)
+    var backLLRPMOffset: Double = 0.0
+        get() = backRPMOffsetEntry.getDouble(0.0)
         set(value) {
             field = value
             backRPMOffsetEntry.setDouble(value)
