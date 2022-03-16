@@ -85,6 +85,8 @@ object Robot : MeanlibRobot() {
 
     override suspend fun test()  {
         println("test mode begin. Hi.")
+        Drive.currentTest()
+//        Drive.rampTest()
     }
 
 
