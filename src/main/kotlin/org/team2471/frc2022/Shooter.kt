@@ -55,6 +55,11 @@ object Shooter : Subsystem("Shooter") {
     val aimGoodEntry = table.getEntry("aimGood")
     val rpmGoodEntry = table.getEntry("rpmGood")
     val allGoodEntry = table.getEntry("allGood")
+    val frontRPMCurveEntry = table.getEntry("frontRPMCurve")
+    val backRPMCurveEntry = table.getEntry("backRPMCurve")
+    val frontPitchCurveEntry = table.getEntry("frontPitchCurve")
+    val backPitchCurveEntry = table.getEntry("backPitchCurve")
+    val distanceEntry = table.getEntry("fixedDistances")
 
     val filter = LinearFilter.movingAverage(2)
 
@@ -214,7 +219,12 @@ object Shooter : Subsystem("Shooter") {
             var rightPressed = false
             frontRPMOffsetEntry.setDouble(frontLLRPMOffset)
             backRPMOffsetEntry.setDouble(backLLRPMOffset)
-            frontRPMOffsetEntry.setDouble(frontLLRPMOffset)
+            distanceEntry.setDoubleArray(doubleArrayOf(5.0, 10.0, 15.0, 20.0))
+            frontPitchCurveEntry.setDoubleArray(doubleArrayOf(frontPitchCurve.getValue(5.0), frontPitchCurve.getValue(10.0), frontPitchCurve.getValue(15.0), frontPitchCurve.getValue(20.0)))
+            backPitchCurveEntry.setDoubleArray(doubleArrayOf(backPitchCurve.getValue(5.0), backPitchCurve.getValue(10.0), backPitchCurve.getValue(15.0), backPitchCurve.getValue(20.0)))
+            frontRPMCurveEntry.setDoubleArray(doubleArrayOf(rpmCurve.getValue(5.0), rpmCurve.getValue(10.0), rpmCurve.getValue(15.0), rpmCurve.getValue(20.0)))
+            backRPMCurveEntry.setDoubleArray(doubleArrayOf(-rpmCurve.getValue(5.0), -rpmCurve.getValue(10.0), -rpmCurve.getValue(15.0), -rpmCurve.getValue(20.0)))
+
             backRPMOffsetEntry.setDouble(backLLRPMOffset)
             pitchSetpoint = pitch
             periodic {
@@ -299,11 +309,11 @@ object Shooter : Subsystem("Shooter") {
                 }
                 // set rpm for shot
                 rpm = if (shootMode || tuningMode) rpmSetpoint * rpmBadShotAdjustment else 0.0
-//
-//            frontRPMOffsetEntry.setDouble(frontLLRPMOffset)
-//            backRPMOffsetEntry.setDouble(backLLRPMOffset)
-//            frontRPMOffsetEntry.setDouble(frontLLRPMOffset)
-//            backRPMOffsetEntry.setDouble(backLLRPMOffset)
+
+            frontRPMOffsetEntry.setDouble(frontLLRPMOffset)
+            backRPMOffsetEntry.setDouble(backLLRPMOffset)
+            frontRPMOffsetEntry.setDouble(frontLLRPMOffset)
+            backRPMOffsetEntry.setDouble(backLLRPMOffset)
             }
         }
     }
