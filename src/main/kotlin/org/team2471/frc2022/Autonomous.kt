@@ -48,7 +48,9 @@ object AutoChooser {
     private val testAutoChooser = SendableChooser<String?>().apply {
         addOption("None", null)
         addOption("20 Foot Test", "20 Foot Test")
-        addOption("8 Foot Straight", "8 Foot Straight")
+        addOption("8 Foot Straight Downfield", "8 Foot Straight Downfield")
+        addOption("8 Foot Straight Upfield", "8 Foot Straight Upfield")
+        addOption("8 Foot Straight Sidefield", "8 Foot Straight Sidefield")
         addOption("2 Foot Circle", "2 Foot Circle")
         addOption("4 Foot Circle", "4 Foot Circle")
         addOption("8 Foot Circle", "8 Foot Circle")
