@@ -65,7 +65,7 @@ object Feeder : Subsystem("Feeder") {
                     Shooter.shootMode && isAuto -> Status.ACTIVELY_SHOOTING
                     Shooter.shootMode && OI.driveRightTrigger > 0.1 -> Status.ACTIVELY_SHOOTING
                     isClearing -> Status.CLEARING
-                    Shooter.cargoIsStaged && cargoIsStaged -> Status.DUAL_STAGED
+                    Shooter.cargoIsStaged && Feeder.cargoIsStaged -> Status.DUAL_STAGED
                     Shooter.cargoIsStaged -> Status.SINGLE_STAGED
                     else -> Status.EMPTY
                 }
@@ -81,7 +81,13 @@ object Feeder : Subsystem("Feeder") {
                         }
                         Status.DUAL_STAGED -> {
                             setBedFeedPower(0.0)
-                            setShooterFeedPower(0.0)
+                            if (Shooter.cargoStageProximity > Shooter.PROXMITY_STAGED_MAX_SAFE) {
+                                // back out shot staged while pushing out 2nd staged at half power
+                                setShooterFeedPower(-0.1)
+                                setBedFeedPower(-BED_FEED_POWER/2.0)
+                            } else {
+                                setShooterFeedPower(0.0)
+                            }
                         }
                         Status.SINGLE_STAGED -> {
                             setBedFeedPower(BED_FEED_POWER)

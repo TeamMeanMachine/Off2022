@@ -63,7 +63,7 @@ object Shooter : Subsystem("Shooter") {
     const val PITCH_LOW = -31.0
     const val PITCH_HIGH = 35.0
 
-    const val PROXIMITY_STAGED_MIN = 250.0
+    const val PROXIMITY_STAGED_MIN = 200.0
     const val PROXMITY_STAGED_MAX_SAFE = 350.0
 
     var pitchOffset = if (isCompBot) 1.3 else - 76.0
