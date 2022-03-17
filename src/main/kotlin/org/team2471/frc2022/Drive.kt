@@ -28,6 +28,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     val navXGyroEntry = NetworkTableInstance.getDefault().getTable(name).getEntry("NavX Gyro")
     val fieldObject = Field2d()
+    val radarObject = Field2d()
 
     val limitingFactor : Double
         get() = if (Climb.climbIsPrepped) 0.25 else 1.0
@@ -141,6 +142,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             SmartDashboard.setPersistent("Gyro Type")
             SmartDashboard.putData("Field", fieldObject)
             SmartDashboard.setPersistent("Field")
+            SmartDashboard.putData("Radar", radarObject)
+            SmartDashboard.setPersistent("Radar")
 
 
             useGyroEntry.setBoolean(true)
