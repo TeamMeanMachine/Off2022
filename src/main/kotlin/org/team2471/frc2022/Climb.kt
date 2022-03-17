@@ -35,11 +35,11 @@ object Climb : Subsystem("Climb") {
     var climbMode = false
     val height: Double
         get() = heightMotor.position
-    var heightSetpoint = 0.0
+    var heightSetpoint
         get() = heightSetpointEntry.getDouble(0.0)
         set(value) {
-            field = value.coerceIn(HEIGHT_BOTTOM, HEIGHT_TOP)
-            heightSetpointEntry.setDouble(field)
+//            field = value.coerceIn(HEIGHT_BOTTOM, HEIGHT_TOP)
+            heightSetpointEntry.setDouble(value)
         }
 
     val tuningMode = false
@@ -47,11 +47,11 @@ object Climb : Subsystem("Climb") {
     const val HOLDING_ANGLE = 1.0
 
     const val HEIGHT_TOP = 32.0
-    const val HEIGHT_VERTICAL_TOP = 26.0
+    const val HEIGHT_VERTICAL_TOP = 25.5
     const val HEIGHT_BOTTOM_DETACH = 8.0
     const val HEIGHT_BOTTOM = 0.0
 
-    const val ANGLE_TOP = 36.0
+    val ANGLE_TOP = if (isCompBot) 33.5 else 36.0
     const val ANGLE_BOTTOM = -4.0
 
     val roll : Double
@@ -90,7 +90,7 @@ object Climb : Subsystem("Climb") {
         angleMotor.config {
             coastMode()
             inverted(true)
-            feedbackCoefficient = 360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0 * 39.0 / 26.0
+            feedbackCoefficient = (360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0 * (if (isCompBot) 34.0 / 40.0 else 39.0 / 26.0))
             pid {
                 p(0.0000001)
             }
@@ -98,7 +98,7 @@ object Climb : Subsystem("Climb") {
         }
         heightSetpointEntry.setDouble(height)
         angleSetpointEntry.setDouble(angle)
-        setStatusFrames(true)
+        setStatusFrames(false)
         GlobalScope.launch {
 //            parallel ({
 //                periodic {
@@ -132,7 +132,7 @@ object Climb : Subsystem("Climb") {
 
     override fun postEnable() {
         heightSetpoint = height
-        climbMode = true
+        climbMode = false
     }
 
     fun setPower(power: Double) {
@@ -182,7 +182,7 @@ object Climb : Subsystem("Climb") {
 
     fun heightChangeTime(target: Double) : Double {
         val distance = (height - target).absoluteValue
-        val rate = 12.0 / 1.0  // degrees per sec
+        val rate = 15.0 / 1.0  // degrees per sec
         return distance / rate
     }
 
@@ -213,16 +213,15 @@ object Climb : Subsystem("Climb") {
     override suspend fun default() {
         periodic {
             if (tuningMode) {
+                println("is tuning mode")
                 updatePositions()
-            } else if (climbMode) {
+            } else if (OI.operatorLeftY.absoluteValue > 0.1 || OI.operatorRightY.absoluteValue > 0.1) {
                 heightSetpoint -= OI.operatorLeftY * 0.45
-                angleSetpoint += OI.operatorRightY * 0.5
+                angleSetpoint += OI.operatorRightY * 0.2
                 updatePositions()
             } else if (Shooter.pitch > 24.0) {
-                angleSetpoint = Shooter.pitch - 22.0
+                angleSetpoint = Shooter.pitch - 26.0
                 updatePositions()
-                println("$angleSetpoint")
-
             } else {
                 angleMotor.setPercentOutput(0.0)
             }
