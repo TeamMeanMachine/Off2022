@@ -65,6 +65,11 @@ object Shooter : Subsystem("Shooter") {
     val aimGoodEntry = table.getEntry("aimGood")
     val rpmGoodEntry = table.getEntry("rpmGood")
     val allGoodEntry = table.getEntry("allGood")
+    val frontRPMCurveEntry = table.getEntry("frontRPMCurve")
+    val backRPMCurveEntry = table.getEntry("backRPMCurve")
+    val frontPitchCurveEntry = table.getEntry("frontPitchCurve")
+    val backPitchCurveEntry = table.getEntry("backPitchCurve")
+    val distanceEntry = table.getEntry("fixedDistances")
     val colorAlignedEntry = table.getEntry("colorAligned")
     private val knownShotChooser = SendableChooser<String?>().apply {
         setDefaultOption("NOTSET", "notset")
@@ -72,6 +77,7 @@ object Shooter : Subsystem("Shooter") {
         addOption("WALL", "wall")
         addOption("SAFE", "safe")
     }
+
 
     val filter = LinearFilter.movingAverage(if (tuningMode) {10} else {2})
 
@@ -215,7 +221,7 @@ object Shooter : Subsystem("Shooter") {
 //        rpmCurve.storeValue(10.0, 3750.0)
 //        rpmCurve.storeValue(15.0, 4500.0)
 //        rpmCurve.storeValue(20.0, 5500.0)
-        //start of 3/11 comp with 520 offset at 5pm
+            //start of 3/11 comp with 520 offset at 5pm
 //        rpmCurve.storeValue(5.0, 3200.0)
 //        rpmCurve.storeValue(10.0, 3500.0)
 //        rpmCurve.storeValue(15.0, 4050.0)
@@ -230,9 +236,9 @@ object Shooter : Subsystem("Shooter") {
             coastMode()
             feedbackCoefficient = 1.0 / 2048.0 * 60.0
             pid {
-                p(1.3e-7)
+                p(7.0e-6)
                 i(0.0)//i(0.0)
-                d(0.0)//d(1.5e-3) //1.5e-3  -- we tried 1.5e9 and 1.5e-9, no notable difference  // we printed values at the MotorController and the wrapper
+                d(2.0e-5)//d(1.5e-3) //1.5e-3  -- we tried 1.5e9 and 1.5e-9, no notable difference  // we printed values at the MotorController and the wrapper
                 f(0.0149)
             }
         }
@@ -244,7 +250,7 @@ object Shooter : Subsystem("Shooter") {
         }
 
         rpmSetpointEntry.setDouble(rpmSetpoint)
-//        pitchSetpointEntry.setDouble(10.0)
+        pitchSetpointEntry.setDouble(pitch)
 
         GlobalScope.launch(MeanlibDispatcher) {
             var upPressed = false
@@ -253,8 +259,12 @@ object Shooter : Subsystem("Shooter") {
             var rightPressed = false
             frontRPMOffsetEntry.setDouble(frontLLRPMOffset)
             backRPMOffsetEntry.setDouble(backLLRPMOffset)
-            frontRPMOffsetEntry.setDouble(frontLLRPMOffset)
-            backRPMOffsetEntry.setDouble(backLLRPMOffset)
+            distanceEntry.setDoubleArray(doubleArrayOf(5.0, 10.0, 15.0, 20.0))
+            frontPitchCurveEntry.setDoubleArray(doubleArrayOf(frontPitchCurve.getValue(5.0), frontPitchCurve.getValue(10.0), frontPitchCurve.getValue(15.0), frontPitchCurve.getValue(20.0)))
+            backPitchCurveEntry.setDoubleArray(doubleArrayOf(backPitchCurve.getValue(5.0), backPitchCurve.getValue(10.0), backPitchCurve.getValue(15.0), backPitchCurve.getValue(20.0)))
+            frontRPMCurveEntry.setDoubleArray(doubleArrayOf(rpmCurve.getValue(5.0), rpmCurve.getValue(10.0), rpmCurve.getValue(15.0), rpmCurve.getValue(20.0)))
+            backRPMCurveEntry.setDoubleArray(doubleArrayOf(-rpmCurve.getValue(5.0), -rpmCurve.getValue(10.0), -rpmCurve.getValue(15.0), -rpmCurve.getValue(20.0)))
+
             pitchSetpoint = pitch
             filter.calculate(pitch)
             periodic {
@@ -271,7 +281,6 @@ object Shooter : Subsystem("Shooter") {
                 pitchErrorEntry.setDouble(pitchSetpoint-pitch)
                 aimMaxErrorEntry.setDouble(aimMaxError)
 
-                //   println("isKnownShot = ${isKnownShot.name}")
                 val aimGood = Limelight.aimError < aimMaxError
                 val rpmGood = rpmError < rpmMaxError
                 val pitchGood = pitchSetpoint - pitch < pitchMaxError
@@ -290,7 +299,7 @@ object Shooter : Subsystem("Shooter") {
                     OI.driverController.rumble = 0.0
                 }
 
-                //val detectedColor: Color = m_colorSensor.color
+                 //val detectedColor: Color = m_colorSensor.color
 
 //                println("Color = ${detectedColor.red} ${detectedColor.green} ${detectedColor.blue}")
 
@@ -333,7 +342,6 @@ object Shooter : Subsystem("Shooter") {
                     BLUE -> "blue"
                     else -> "notset"
                 }
-
                 val rpmBadShotAdjustment = if (isCargoAlignedWithAlliance) 1.0 else if (pitch > 0) 0.4 else 0.1
                 stagedColorString = "$stagedColorString $isCargoAlignedWithAlliance ${colorSensor.proximity}"
                 colorEntry.setString(stagedColorString)
@@ -342,11 +350,7 @@ object Shooter : Subsystem("Shooter") {
                 }
                 // set rpm for shot
                 rpm = if (shootMode || tuningMode) rpmSetpoint * rpmBadShotAdjustment else 0.0
-//
-//            frontRPMOffsetEntry.setDouble(frontLLRPMOffset)
-//            backRPMOffsetEntry.setDouble(backLLRPMOffset)
-//            frontRPMOffsetEntry.setDouble(frontLLRPMOffset)
-//            backRPMOffsetEntry.setDouble(backLLRPMOffset)
+
             }
         }
     }

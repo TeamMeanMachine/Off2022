@@ -59,6 +59,7 @@ object Feeder : Subsystem("Feeder") {
 
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
+//                println("feeder curr ${shooterFeedMotor.current}")
                 isAuto = DriverStation.isAutonomous()
 
                 currentFeedStatus = when {

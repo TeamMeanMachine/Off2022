@@ -219,8 +219,8 @@ object Climb : Subsystem("Climb") {
                 heightSetpoint -= OI.operatorLeftY * 0.45
                 angleSetpoint += OI.operatorRightY * 0.2
                 updatePositions()
-            } else if (Shooter.pitch > 24.0) {
-                angleSetpoint = Shooter.pitch - 26.0
+            } else if (Shooter.pitch > 19.0) {
+                angleSetpoint = Shooter.pitch - 21.0
                 updatePositions()
             } else {
                 angleMotor.setPercentOutput(0.0)
