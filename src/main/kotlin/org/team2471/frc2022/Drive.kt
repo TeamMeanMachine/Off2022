@@ -21,7 +21,6 @@ import org.team2471.frc.lib.motion.following.SwerveDrive
 import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
-import java.util.*
 import kotlin.math.absoluteValue
 
 @OptIn(DelicateCoroutinesApi::class)
