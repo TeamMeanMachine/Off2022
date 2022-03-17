@@ -11,12 +11,10 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.actuators.FalconID
 import org.team2471.frc.lib.actuators.MotorController
-import org.team2471.frc.lib.actuators.TalonID
 import org.team2471.frc.lib.control.PDConstantFController
 import org.team2471.frc.lib.control.PDController
 import org.team2471.frc.lib.coroutines.*
 import org.team2471.frc.lib.framework.Subsystem
-import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion.following.SwerveDrive
@@ -33,8 +31,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     val limitingFactor : Double
         get() = if (Climb.climbIsPrepped) 0.25 else 1.0
-    val fieldDimends = Vector2(26.9375.feet.asMeters,54.0.feet.asMeters)
-    val fieldOffset = fieldDimends/2.0
+    val fieldDimensions = Vector2(26.9375.feet.asMeters,54.0.feet.asMeters)
+    val fieldCenterOffset = fieldDimensions/2.0
     /**
      * Coordinates of modules
      * **/
@@ -135,6 +133,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             SmartDashboard.setPersistent("Use Gyro")
             SmartDashboard.setPersistent("Gyro Type")
             SmartDashboard.putData("Field", fieldObject)
+            SmartDashboard.setPersistent("Field")
 
 
             useGyroEntry.setBoolean(true)
@@ -159,7 +158,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 angleOneEntry.setDouble((modules[1] as Module).analogAngle.asDegrees)
                 angleTwoEntry.setDouble((modules[2] as Module).analogAngle.asDegrees)
                 angleThreeEntry.setDouble((modules[3] as Module).analogAngle.asDegrees)
-                fieldObject.robotPose = Pose2d(position.x.feet.asMeters+fieldOffset.x, position.y.feet.asMeters+fieldOffset.y, Rotation2d((heading+90.0.degrees).asRadians))
+//               println("XPos: ${position.x.feet} yPos: ${position.y.feet}")
+                fieldObject.robotPose = Pose2d(position.x.feet.asMeters+fieldCenterOffset.x, position.y.feet.asMeters+fieldCenterOffset.y, -Rotation2d((heading-90.0.degrees).asRadians))
                 autoAim = autoAimEntry.getBoolean(false) || OI.driverController.a
 
                // println(gyro.getNavX().pitch.degrees)

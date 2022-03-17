@@ -7,6 +7,8 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DutyCycleEncoder
 import edu.wpi.first.wpilibj.I2C
 import edu.wpi.first.wpilibj.Timer
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.team2471.frc.lib.actuators.FalconID
@@ -33,10 +35,17 @@ object Shooter : Subsystem("Shooter") {
     private val i2cPort: I2C.Port = I2C.Port.kMXP
     private val colorSensor = ColorSensorV3(i2cPort)
     val colorEntry = table.getEntry("Color")
-
+    val isKnownShot : knownShotType
+        get() {
+            return knownShotType.valueOf(SmartDashboard.getString("KnownShot/selected", "notset").uppercase())
+        }
     const val aimMaxError = 3.0
     const val rpmMaxError = 500.0
     const val pitchMaxError = 5.0
+
+    enum class knownShotType {
+        NOTSET, FENDER, WALL, SAFE
+    }
 
     val rpmEntry = table.getEntry("RPM")
     val rpmSetpointEntry = table.getEntry("RPM Setpoint")
@@ -57,8 +66,14 @@ object Shooter : Subsystem("Shooter") {
     val rpmGoodEntry = table.getEntry("rpmGood")
     val allGoodEntry = table.getEntry("allGood")
     val colorAlignedEntry = table.getEntry("colorAligned")
+    private val knownShotChooser = SendableChooser<String?>().apply {
+        setDefaultOption("NOTSET", "notset")
+        addOption("FENDER", "fender")
+        addOption("WALL", "wall")
+        addOption("SAFE", "safe")
+    }
 
-    val filter = LinearFilter.movingAverage(2)
+    val filter = LinearFilter.movingAverage(if (tuningMode) {10} else {2})
 
     const val PITCH_LOW = -31.0
     const val PITCH_HIGH = 35.0
@@ -78,6 +93,13 @@ object Shooter : Subsystem("Shooter") {
         get() {
             if (tuningMode) {
                 field = pitchSetpointEntry.getDouble(10.0)
+            } else if (isKnownShot != knownShotType.NOTSET) {
+                field = when (isKnownShot) {
+                    knownShotType.FENDER -> 15.0
+                    knownShotType.SAFE -> 25.0
+                    knownShotType.WALL -> 20.0
+                    else -> 15.0
+                }
             } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
                 val tempPitch = -backPitchCurve.getValue(Limelight.distance.asFeet + 3.0)
                 pitchSetpointEntry.setDouble(tempPitch)
@@ -86,9 +108,6 @@ object Shooter : Subsystem("Shooter") {
                 val tempPitch = backPitchCurve.getValue(Limelight.distance.asFeet)
                 pitchSetpointEntry.setDouble(tempPitch)
                 field = tempPitch
-            } else if (Drive.position.distance(Vector2(0.0,0.0)) < 5.0) {
-                // fender shot
-                field = 10.0
             } else {
                 field = pitchSetpointEntry.getDouble(10.0)
             }
@@ -122,6 +141,14 @@ object Shooter : Subsystem("Shooter") {
         get() {
             if (tuningMode) {
                 field = rpmSetpointEntry.getDouble(5000.0)
+            } else if (isKnownShot != knownShotType.NOTSET) {
+                field = when (isKnownShot) {
+                    knownShotType.FENDER -> 3200.0
+                    knownShotType.SAFE -> 4000.0
+                    knownShotType.WALL -> 3800.0
+                    else -> 3200.0
+                }
+                rpmSetpointEntry.setDouble(field)
             } else if (Limelight.hasValidTarget) {
                 field = rpmCurve.getValue(Limelight.distance.asFeet) + rpmOffset
                 rpmSetpointEntry.setDouble(field)
@@ -155,10 +182,12 @@ object Shooter : Subsystem("Shooter") {
     var stagedColorString = "notset"
 
     init {
+        SmartDashboard.putData("KnownShot", knownShotChooser)
         frontRPMOffsetEntry.setPersistent()
         backRPMOffsetEntry.setPersistent()
         frontPitchOffsetEntry.setPersistent()
         backPitchOffsetEntry.setPersistent()
+        rpmSetpointEntry.setPersistent()
 //        pitchMotor.setBounds(2.50, 1.55, 1.50, 1.45, 0.50)
         //right up against: 12.5
 //        pitchCurve.storeValue(5.0, 23.0)
@@ -227,6 +256,7 @@ object Shooter : Subsystem("Shooter") {
             frontRPMOffsetEntry.setDouble(frontLLRPMOffset)
             backRPMOffsetEntry.setDouble(backLLRPMOffset)
             pitchSetpoint = pitch
+            filter.calculate(pitch)
             periodic {
                 if (pitchIsReady) {
                     val power = pitchPDController.update(filter.calculate(pitchSetpoint) - pitch)
@@ -241,6 +271,7 @@ object Shooter : Subsystem("Shooter") {
                 pitchErrorEntry.setDouble(pitchSetpoint-pitch)
                 aimMaxErrorEntry.setDouble(aimMaxError)
 
+             //   println("isKnownShot = ${isKnownShot.name}")
                 val aimGood = Limelight.aimError < aimMaxError
                 val rpmGood = rpmError < rpmMaxError
                 val pitchGood = pitchSetpoint - pitch < pitchMaxError
