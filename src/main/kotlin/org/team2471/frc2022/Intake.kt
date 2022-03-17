@@ -126,25 +126,25 @@ object Intake : Subsystem("Intake") {
 //                    changeAngle(PIVOT_INTAKE)
 //                }
 
-                if (OI.driverController.dPad == Controller.Direction.UP) {
-                    upPressed = true
-                } else if (OI.driverController.dPad == Controller.Direction.DOWN) {
-                    downPressed = true
-                }
-                if (OI.operatorController.dPad == Controller.Direction.LEFT) {
-                    leftPressed = true
-                }
-                if (OI.driverController.dPad != Controller.Direction.UP && upPressed) {
-                    upPressed = false
-                    pivotDriverOffset += 2
-                    //incrementRpmOffset()
-                    println("up. hi.")
-                }
-                if (OI.driverController.dPad != Controller.Direction.DOWN && downPressed) {
-                    downPressed = false
-                    pivotDriverOffset -= 2
-                    println("down. hi.")
-                }
+//                if (OI.driverController.dPad == Controller.Direction.UP) {
+//                    upPressed = true
+//                } else if (OI.driverController.dPad == Controller.Direction.DOWN) {
+//                    downPressed = true
+//                }
+//                if (OI.operatorController.dPad == Controller.Direction.LEFT) {
+//                    leftPressed = true
+//                }
+//                if (OI.driverController.dPad != Controller.Direction.UP && upPressed) {
+//                    upPressed = false
+//                    pivotDriverOffset += 2
+//                    //incrementRpmOffset()
+//                    println("up. hi.")
+//                }
+//                if (OI.driverController.dPad != Controller.Direction.DOWN && downPressed) {
+//                    downPressed = false
+//                    pivotDriverOffset -= 2
+//                    println("down. hi.")
+//                }
             }})
         }
     }
