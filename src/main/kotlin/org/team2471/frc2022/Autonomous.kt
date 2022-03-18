@@ -165,6 +165,25 @@ object AutoChooser {
             Drive.driveAlongPath(path, true)
         }
     }
+    suspend fun newAuto() = use(Drive, Shooter, Intake, Feeder) {
+        val auto = autonomi["NewAuto"]
+        if (auto != null) {
+            autoShoot()
+            Limelight.backLedEnabled = true
+            parallel({
+                Intake.changeAngle(Intake.PIVOT_INTAKE)
+                Intake.setIntakePower(Intake.INTAKE_POWER)
+                }, {
+                Drive.driveAlongPath(auto ["1 - Shoot"], true)
+            })
+            delay(1.0)
+            autoShoot()
+            Drive.driveAlongPath(auto["2 - Grab balls"], false)
+            Drive.driveAlongPath(auto["3 - Move"], false)
+            delay(0.5)
+            autoShoot()
+        }
+    }
 
     suspend fun test8FtCircle() = use(Drive) {
         val auto = autonomi["Tests"]
@@ -173,6 +192,7 @@ object AutoChooser {
             Drive.driveAlongPath(path, true)
         }
     }
+
 
     suspend fun test90DegreeTurn() = use(Drive) {
         val auto = autonomi["Tests"]
