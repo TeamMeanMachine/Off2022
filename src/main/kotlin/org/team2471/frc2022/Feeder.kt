@@ -36,6 +36,8 @@ object Feeder : Subsystem("Feeder") {
 
     var isAuto = DriverStation.isAutonomous()
     var isClearing = false
+    var cargoWasStaged = cargoIsStaged
+    var autoCargoShot = 0
 
     enum class Status {
         EMPTY,
@@ -63,7 +65,7 @@ object Feeder : Subsystem("Feeder") {
                 isAuto = DriverStation.isAutonomous()
 
                 currentFeedStatus = when {
-                    Shooter.shootMode && isAuto -> Status.ACTIVELY_SHOOTING
+                    isAuto && Shooter.allGood -> Status.ACTIVELY_SHOOTING
                     Shooter.shootMode && OI.driveRightTrigger > 0.1 -> Status.ACTIVELY_SHOOTING
                     isClearing -> Status.CLEARING
                     Shooter.cargoIsStaged && Feeder.cargoIsStaged -> Status.DUAL_STAGED
@@ -78,9 +80,11 @@ object Feeder : Subsystem("Feeder") {
                     when (currentFeedStatus) {
                         Status.ACTIVELY_SHOOTING -> {
                             setBedFeedPower(BED_FEED_POWER)
-//                            setShooterFeedPower(SHOOTER_FEED_POWER)
+                            setShooterFeedPower(SHOOTER_FEED_POWER)
+                            detectShots()
                         }
                         Status.DUAL_STAGED -> {
+                            cargoWasStaged = true
                             setBedFeedPower(0.0)
                             if (Shooter.cargoStageProximity > Shooter.PROXMITY_STAGED_MAX_SAFE) {
                                 // back out shot staged while pushing out 2nd staged at half power
@@ -91,6 +95,7 @@ object Feeder : Subsystem("Feeder") {
                             }
                         }
                         Status.SINGLE_STAGED -> {
+                            cargoWasStaged = true
                             setBedFeedPower(BED_FEED_POWER)
                             if (Shooter.cargoStageProximity > Shooter.PROXMITY_STAGED_MAX_SAFE) {
                                 setShooterFeedPower(-0.2)
@@ -99,10 +104,12 @@ object Feeder : Subsystem("Feeder") {
                             }
                         }
                         Status.EMPTY -> {
+                            cargoWasStaged = false
                             setBedFeedPower(BED_FEED_POWER)
                             setShooterFeedPower(SHOOTER_STAGE_POWER)
                         }
                         Status.CLEARING -> {
+                            cargoWasStaged = false
                             setBedFeedPower(-BED_FEED_POWER)
                             setShooterFeedPower(-SHOOTER_FEED_POWER)
                         }
@@ -111,10 +118,13 @@ object Feeder : Subsystem("Feeder") {
                     if (Shooter.shootMode) {
                         setShooterFeedPower(OI.driveRightTrigger)
                         setBedFeedPower(0.0)
+                        detectShots()
                     } else if (isClearing) {
+                        cargoWasStaged = false
                         setBedFeedPower(-BED_FEED_POWER)
                         setShooterFeedPower(-SHOOTER_FEED_POWER)
                     } else  {
+                        cargoWasStaged = false
                         setShooterFeedPower(0.0)
                         setBedFeedPower(0.0)
                     }
@@ -125,6 +135,20 @@ object Feeder : Subsystem("Feeder") {
 
     override fun preEnable() {
         setShooterFeedPower(0.0)
+    }
+    fun detectShots() {
+        if (cargoWasStaged && !cargoIsStaged) {
+            // handle cargo no longer staged while actively shooting (e.g. cargo has been shot)
+            cargoWasStaged = false
+            shotDetected()
+        } else if (!cargoWasStaged && cargoIsStaged) {
+            // handle second ball feeding while actively shooting
+            cargoWasStaged = true
+        }
+    }
+    fun shotDetected(){
+        autoCargoShot += 1
+        println("Shot has been detected rpm: ${Shooter.rpm} rpmsetpoint: ${Shooter.rpmSetpoint} aimError: ${Limelight.aimError} angle: ${Shooter.pitch}")
     }
 
     val cargoIsStaged: Boolean

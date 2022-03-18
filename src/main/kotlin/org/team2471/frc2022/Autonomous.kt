@@ -235,6 +235,34 @@ object AutoChooser {
             Drive.driveAlongPath(auto["90 Degree Turn"], true, 2.0)
         }
     }
+    suspend fun right5v2() = use(Intake, Shooter, Feeder, Drive) {
+        println("In right5 auto.")
+        val auto = autonomi["Right Side 5 Auto"]
+        if (auto != null) {
+            Limelight.backLedEnabled = true
+            Feeder.autoFeedMode = true
+            parallel({
+                Intake.changeAngle(Intake.PIVOT_INTAKE)
+                Intake.setIntakePower(Intake.INTAKE_POWER)
+            }, {
+                Drive.driveAlongPath(auto["1- First Field Cargo"], true)
+            })
+            delay(0.5)
+            Intake.setIntakePower(0.0)
+            autoShootv2(2, 2.5)
+            Intake.setIntakePower(Intake.INTAKE_POWER)
+            Drive.driveAlongPath(auto["2- Field Cargo"], false)
+            Intake.setIntakePower(0.0)
+            autoShootv2(2, 2.5)
+            Intake.setIntakePower(Intake.INTAKE_POWER)
+            Drive.driveAlongPath(auto["3- Feeder Cargo"])
+            delay(0.5)
+            Drive.driveAlongPath(auto["5- Short Shoot"], false)
+            Intake.setIntakePower(0.0)
+            autoShootv2(2, 4.0)
+            Feeder.autoFeedMode = false
+        }
+    }
 
     suspend fun straightBackShootAuto() = use(Intake, Shooter, Feeder, Drive) {
         println("In straightBackShoot auto.")

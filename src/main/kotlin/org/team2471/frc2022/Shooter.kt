@@ -87,6 +87,7 @@ object Shooter : Subsystem("Shooter") {
     const val PROXIMITY_STAGED_MIN = 200.0
     const val PROXMITY_STAGED_MAX_SAFE = 350.0
 
+    var allGood = false
     var pitchOffset = if (isCompBot) 1.3 else - 76.0
     var curvepitchOffset = 0.0 //3.0
     var pitch: Double = 0.0
@@ -300,7 +301,7 @@ object Shooter : Subsystem("Shooter") {
                 val rpmGood = rpmError < rpmMaxError
                 val pitchGood = pitchSetpoint - pitch < pitchMaxError
                 val isCargoAlignedWithAlliance = (allianceColor == cargoColor || cargoColor == NOTSET)
-                val allGood = shootMode && aimGood && rpmGood && pitchGood
+                allGood = shootMode && aimGood && rpmGood && pitchGood
 
                 aimGoodEntry.setBoolean(aimGood)
                 rpmGoodEntry.setBoolean(rpmGood)
