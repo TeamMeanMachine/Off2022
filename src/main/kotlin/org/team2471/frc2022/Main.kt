@@ -71,6 +71,7 @@ object Robot : MeanlibRobot() {
         println("autonomous starting")
 //        Drive.zeroGyro()
         Drive.brakeMode()
+        Drive.aimPDController = Drive.autoPDController
         Feeder.autoFeedMode = true
         println("autonomous Drive brakeMode ${totalTimeTaken()}")
         AutoChooser.autonomous()
@@ -80,6 +81,7 @@ object Robot : MeanlibRobot() {
 
     override suspend fun teleop() {
         println("telop begin")
+        Drive.aimPDController = Drive.teleopPDController
         Drive.headingSetpoint = Drive.heading
     }
 

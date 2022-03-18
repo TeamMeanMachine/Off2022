@@ -31,6 +31,7 @@ object Shooter : Subsystem("Shooter") {
     val pitchMotor = MotorController(TalonID(Talons.PITCH))
     private val table = NetworkTableInstance.getDefault().getTable(name)
     val pitchEncoder = DutyCycleEncoder(DigitalSensors.SHOOTER_PITCH)
+    val rpmErrorFilter = LinearFilter.movingAverage(4)
 
     private val i2cPort: I2C.Port = I2C.Port.kMXP
     private val colorSensor = ColorSensorV3(i2cPort)
@@ -297,8 +298,9 @@ object Shooter : Subsystem("Shooter") {
                 pitchErrorEntry.setDouble(pitchSetpoint-pitch)
                 aimMaxErrorEntry.setDouble(aimMaxError)
 
+                val filteredError = rpmErrorFilter.calculate(rpmError)
                 val aimGood = Limelight.aimError < aimMaxError
-                val rpmGood = rpmError < rpmMaxError
+                val rpmGood = filteredError < rpmMaxError
                 val pitchGood = pitchSetpoint - pitch < pitchMaxError
                 val isCargoAlignedWithAlliance = (allianceColor == cargoColor || cargoColor == NOTSET)
                 allGood = shootMode && aimGood && rpmGood && pitchGood
@@ -362,7 +364,7 @@ object Shooter : Subsystem("Shooter") {
                 stagedColorString = "$stagedColorString $isCargoAlignedWithAlliance ${colorSensor.proximity}"
                 colorEntry.setString(stagedColorString)
                 if (rpmBadShotAdjustment < 1.0) {
-                    println("intentional bad shot")
+                    println("intentional bad shot for $stagedColorString ${DriverStation.getAlliance()}")
                 }
                 // set rpm for shot
                 rpm = if (shootMode || tuningMode) rpmSetpoint * rpmBadShotAdjustment else 0.0

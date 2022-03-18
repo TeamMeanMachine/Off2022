@@ -89,7 +89,6 @@ suspend fun autoShootv2(shotCount : Int = 2, maxWait: Double = 2.5) = use(Shoote
         suspendUntil { Limelight.aimError.absoluteValue < 2.0 && Shooter.rpmError.absoluteValue < 300.0 || doneShooting }
         suspendUntil { doneShooting }
         Shooter.shootMode = false
-        Feeder.autoFeedMode = true
     }, {
         periodic {
             Drive.autoSteer()
@@ -104,7 +103,7 @@ suspend fun autoShootv2(shotCount : Int = 2, maxWait: Double = 2.5) = use(Shoote
         suspendUntil {Feeder.autoCargoShot >= shotCount || doneShooting}
         delay(0.1)
         if (!doneShooting) {
-            println("doneShooting after 2 cargo")
+            println("doneShooting after ${Feeder.autoCargoShot} cargo in ${t.get()} seconds")
         }
         doneShooting = true
     }, {
@@ -118,7 +117,6 @@ suspend fun autoShootv2(shotCount : Int = 2, maxWait: Double = 2.5) = use(Shoote
         }
     })
     Shooter.shootMode = false
-    Feeder.autoFeedMode = false
 }
 
 suspend fun autoShoot() = use(Shooter, Feeder, Drive) {

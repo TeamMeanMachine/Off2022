@@ -34,9 +34,10 @@ object Feeder : Subsystem("Feeder") {
 
     const val BED_FEED_POWER = 0.8
 
-    var isAuto = DriverStation.isAutonomous()
+    val isAuto : Boolean
+        get() = DriverStation.isAutonomous()
     var isClearing = false
-    var cargoWasStaged = cargoIsStaged
+    var cargoWasStaged = Shooter.cargoIsStaged
     var autoCargoShot = 0
 
     enum class Status {
@@ -62,7 +63,6 @@ object Feeder : Subsystem("Feeder") {
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
 //                println("feeder curr ${shooterFeedMotor.current}")
-                isAuto = DriverStation.isAutonomous()
 
                 currentFeedStatus = when {
                     isAuto && Shooter.allGood -> Status.ACTIVELY_SHOOTING
@@ -81,7 +81,7 @@ object Feeder : Subsystem("Feeder") {
                         Status.ACTIVELY_SHOOTING -> {
                             setBedFeedPower(BED_FEED_POWER)
                             setShooterFeedPower(SHOOTER_FEED_POWER)
-                            detectShots()
+                            detectShots("autoFeed")
                         }
                         Status.DUAL_STAGED -> {
                             cargoWasStaged = true
@@ -118,7 +118,7 @@ object Feeder : Subsystem("Feeder") {
                     if (Shooter.shootMode) {
                         setShooterFeedPower(OI.driveRightTrigger)
                         setBedFeedPower(0.0)
-                        detectShots()
+                        detectShots("notautofeed")
                     } else if (isClearing) {
                         cargoWasStaged = false
                         setBedFeedPower(-BED_FEED_POWER)
@@ -136,12 +136,13 @@ object Feeder : Subsystem("Feeder") {
     override fun preEnable() {
         setShooterFeedPower(0.0)
     }
-    fun detectShots() {
-        if (cargoWasStaged && !cargoIsStaged) {
+    fun detectShots(note : String = "") {
+        if (cargoWasStaged && !Shooter.cargoIsStaged) {
             // handle cargo no longer staged while actively shooting (e.g. cargo has been shot)
             cargoWasStaged = false
+            println("shot detected from $note ${Shooter.cargoStageProximity}")
             shotDetected()
-        } else if (!cargoWasStaged && cargoIsStaged) {
+        } else if (!cargoWasStaged && Shooter.cargoIsStaged) {
             // handle second ball feeding while actively shooting
             cargoWasStaged = true
         }
