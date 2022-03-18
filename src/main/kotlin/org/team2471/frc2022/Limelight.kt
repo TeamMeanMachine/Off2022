@@ -51,11 +51,11 @@ object Limelight : Subsystem("Front Limelight") {
 
     val useFrontLimelight: Boolean
     get() {
-//        var angleFromCenter = Drive.position.angle.radians
-//        var isFacingShooter = (angleFromCenter - heading).wrap().asDegrees.absoluteValue >= 90.0  //if the robot is facing toward (angleFromCenter opposite from heading), don't use front
+        var angleFromCenter = Drive.position.angle.radians
+        var isFacingShooter = (angleFromCenter - heading).wrap().asDegrees.absoluteValue >= 90.0  //if the robot is facing toward (angleFromCenter opposite from heading), don't use front
 //        println("isFacingShooter: $isFacingShooter   heading: ${heading.asDegrees.roundToInt()}    angleFromCenter: ${angleFromCenter.asDegrees.roundToInt()}     x: ${Drive.position.x.roundToInt()}     y: ${Drive.position.y.roundToInt()}")
-//        return isFacingShooter
-        return false
+        return isFacingShooter
+//        return false
     }
 
     val distance: Length

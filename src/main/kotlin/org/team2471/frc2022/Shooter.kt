@@ -28,7 +28,7 @@ import kotlin.math.absoluteValue
 object Shooter : Subsystem("Shooter") {
     val tuningMode = false
     val shootingMotor = MotorController(FalconID(Falcons.SHOOTER), FalconID(Falcons.SHOOTER_TWO)) //private
-    private val pitchMotor = MotorController(TalonID(Talons.PITCH))
+    val pitchMotor = MotorController(TalonID(Talons.PITCH))
     private val table = NetworkTableInstance.getDefault().getTable(name)
     val pitchEncoder = DutyCycleEncoder(DigitalSensors.SHOOTER_PITCH)
 
@@ -79,7 +79,7 @@ object Shooter : Subsystem("Shooter") {
     }
 
 
-    val filter = LinearFilter.movingAverage(if (tuningMode) {10} else {2})
+    val filter = LinearFilter.movingAverage(2) //if (tuningMode) {10} else {2})
 
     const val PITCH_LOW = -31.0
     const val PITCH_HIGH = 35.0
@@ -88,7 +88,7 @@ object Shooter : Subsystem("Shooter") {
     const val PROXMITY_STAGED_MAX_SAFE = 350.0
 
     var pitchOffset = if (isCompBot) 1.3 else - 76.0
-    var curvepitchOffset = 3.0
+    var curvepitchOffset = 0.0 //3.0
     var pitch: Double = 0.0
         get() = (pitchEncoder.absolutePosition - 0.218) * 33.0 / 0.182 + pitchOffset
         set(value) {
@@ -107,11 +107,11 @@ object Shooter : Subsystem("Shooter") {
                     else -> 15.0
                 }
             } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
-                val tempPitch = -backPitchCurve.getValue(Limelight.distance.asFeet + 3.0)
+                val tempPitch = backPitchCurve.getValue(Limelight.distance.asFeet)
                 pitchSetpointEntry.setDouble(tempPitch)
                 field = tempPitch
             } else if (Limelight.useFrontLimelight && Limelight.hasValidFrontTarget) {
-                val tempPitch = backPitchCurve.getValue(Limelight.distance.asFeet)
+                val tempPitch = frontPitchCurve.getValue(Limelight.distance.asFeet)
                 pitchSetpointEntry.setDouble(tempPitch)
                 field = tempPitch
             } else {
@@ -136,7 +136,8 @@ object Shooter : Subsystem("Shooter") {
         }
     val backPitchCurve: MotionCurve = MotionCurve()
     val frontPitchCurve: MotionCurve = MotionCurve()
-    val rpmCurve: MotionCurve = MotionCurve()
+    val frontRPMCurve:MotionCurve = MotionCurve()
+    val backRPMCurve: MotionCurve = MotionCurve()
 
 //    val facingCenter : Boolean
 //        get() {
@@ -155,8 +156,11 @@ object Shooter : Subsystem("Shooter") {
                     else -> 3200.0
                 }
                 rpmSetpointEntry.setDouble(field)
-            } else if (Limelight.hasValidTarget) {
-                field = rpmCurve.getValue(Limelight.distance.asFeet) + rpmOffset
+            } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
+                field = backRPMCurve.getValue(Limelight.distance.asFeet)
+                rpmSetpointEntry.setDouble(field)
+            } else if (Limelight.useFrontLimelight && Limelight.hasValidFrontTarget) {
+                frontRPMCurve.getValue(Limelight.distance.asFeet)
                 rpmSetpointEntry.setDouble(field)
             } else {
                 field = rpmSetpointEntry.getDouble(5000.0)
@@ -203,20 +207,26 @@ object Shooter : Subsystem("Shooter") {
 
         // 03/05 tuned
         backPitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+        frontPitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
 //        // start of 3/11 comp with no offset
 //        backPitchCurve.storeValue(5.0, 12.0)
 //        backPitchCurve.storeValue(10.0, 20.0)
 //        backPitchCurve.storeValue(15.0, 31.0)
 //        backPitchCurve.storeValue(20.0, 31.0)
 
-        backPitchCurve.storeValue(5.0, 14.0)
-        backPitchCurve.storeValue(10.0, 20.0)
-        backPitchCurve.storeValue(15.0, 31.0)
-        backPitchCurve.storeValue(20.0, 31.0)
+        backPitchCurve.storeValue(5.0, -8.0)
+        backPitchCurve.storeValue(10.0, -19.0)
+        backPitchCurve.storeValue(15.0, -27.0)
+        backPitchCurve.storeValue(20.0, -30.0)
 
+        frontPitchCurve.storeValue(5.0, 24.8)
+        frontPitchCurve.storeValue(10.0, 31.8)
+        frontPitchCurve.storeValue(15.0, 33.0)
+        frontPitchCurve.storeValue(20.0, 33.0)
 
+        backRPMCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+        frontRPMCurve.setMarkBeginOrEndKeysToZeroSlope(false)
 
-        rpmCurve.setMarkBeginOrEndKeysToZeroSlope(false)
 //        rpmCurve.storeValue(5.0, 3500.0)
 //        rpmCurve.storeValue(10.0, 3750.0)
 //        rpmCurve.storeValue(15.0, 4500.0)
@@ -226,19 +236,24 @@ object Shooter : Subsystem("Shooter") {
 //        rpmCurve.storeValue(10.0, 3500.0)
 //        rpmCurve.storeValue(15.0, 4050.0)
 //        rpmCurve.storeValue(20.0, 5000.0)
-        rpmCurve.storeValue(5.0, 3100.0)
-        rpmCurve.storeValue(10.0, 3450.0)
-        rpmCurve.storeValue(15.0, 4100.0)
-        rpmCurve.storeValue(20.0, 5200.0)
+        backRPMCurve.storeValue(5.0, 2800.0)
+        backRPMCurve.storeValue(10.0, 3200.0)
+        backRPMCurve.storeValue(15.0, 4000.0)
+        backRPMCurve.storeValue(20.0, 5100.0)
+
+        frontRPMCurve.storeValue(5.0, 3200.0)
+        frontRPMCurve.storeValue(10.0, 3900.0)
+        frontRPMCurve.storeValue(15.0, 4700.0)
+        frontRPMCurve.storeValue(20.0, 6000.0)
 
         shootingMotor.config {
             followersInverted(true)
             coastMode()
             feedbackCoefficient = 1.0 / 2048.0 * 60.0
             pid {
-                p(7.0e-6)
+                p(7.5e-6)
                 i(0.0)//i(0.0)
-                d(2.0e-5)//d(1.5e-3) //1.5e-3  -- we tried 1.5e9 and 1.5e-9, no notable difference  // we printed values at the MotorController and the wrapper
+                d(2.0e-4)//d(1.5e-3) //1.5e-3  -- we tried 1.5e9 and 1.5e-9, no notable difference  // we printed values at the MotorController and the wrapper
                 f(0.0149)
             }
         }
@@ -262,8 +277,8 @@ object Shooter : Subsystem("Shooter") {
             distanceEntry.setDoubleArray(doubleArrayOf(5.0, 10.0, 15.0, 20.0))
             frontPitchCurveEntry.setDoubleArray(doubleArrayOf(frontPitchCurve.getValue(5.0), frontPitchCurve.getValue(10.0), frontPitchCurve.getValue(15.0), frontPitchCurve.getValue(20.0)))
             backPitchCurveEntry.setDoubleArray(doubleArrayOf(backPitchCurve.getValue(5.0), backPitchCurve.getValue(10.0), backPitchCurve.getValue(15.0), backPitchCurve.getValue(20.0)))
-            frontRPMCurveEntry.setDoubleArray(doubleArrayOf(rpmCurve.getValue(5.0), rpmCurve.getValue(10.0), rpmCurve.getValue(15.0), rpmCurve.getValue(20.0)))
-            backRPMCurveEntry.setDoubleArray(doubleArrayOf(-rpmCurve.getValue(5.0), -rpmCurve.getValue(10.0), -rpmCurve.getValue(15.0), -rpmCurve.getValue(20.0)))
+            frontRPMCurveEntry.setDoubleArray(doubleArrayOf(frontRPMCurve.getValue(5.0), frontRPMCurve.getValue(10.0), frontRPMCurve.getValue(15.0), frontRPMCurve.getValue(20.0)))
+            backRPMCurveEntry.setDoubleArray(doubleArrayOf(backRPMCurve.getValue(5.0), backRPMCurve.getValue(10.0), backRPMCurve.getValue(15.0), backRPMCurve.getValue(20.0)))
 
             pitchSetpoint = pitch
             filter.calculate(pitch)

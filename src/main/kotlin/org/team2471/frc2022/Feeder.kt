@@ -78,7 +78,7 @@ object Feeder : Subsystem("Feeder") {
                     when (currentFeedStatus) {
                         Status.ACTIVELY_SHOOTING -> {
                             setBedFeedPower(BED_FEED_POWER)
-                            setShooterFeedPower(SHOOTER_FEED_POWER)
+//                            setShooterFeedPower(SHOOTER_FEED_POWER)
                         }
                         Status.DUAL_STAGED -> {
                             setBedFeedPower(0.0)

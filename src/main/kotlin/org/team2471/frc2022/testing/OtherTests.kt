@@ -20,7 +20,7 @@ suspend fun Feeder.motorTest() = use(this) {
 }
 suspend fun Shooter.pitchTest() = use(this) {
     periodic {
-        println("${(org.team2471.frc2022.OI.operatorRightTrigger - org.team2471.frc2022.OI.operatorLeftTrigger) * 0.5}")
+//        println("${(org.team2471.frc2022.OI.operatorRightTrigger - org.team2471.frc2022.OI.operatorLeftTrigger) * 0.5}")
         pitchSetPower((OI.operatorRightTrigger - OI.operatorLeftTrigger) * 0.5)
     }
 }

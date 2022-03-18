@@ -81,6 +81,7 @@ suspend fun shootMode() = use(Shooter) {
 }
 
 suspend fun autoShoot() = use(Shooter, Feeder, Drive) {
+    Feeder.setShooterFeedPower(0.0)
     Shooter.shootMode = true
     var doneShooting = false
     var t = Timer()
@@ -89,7 +90,9 @@ suspend fun autoShoot() = use(Shooter, Feeder, Drive) {
         println("autoshooting   usingFrontLL ${Limelight.useFrontLimelight} distance ${Limelight.distance}")
         Feeder.autoFeedMode = true
         Feeder.setBedFeedPower(Feeder.BED_FEED_POWER)
-        suspendUntil { Limelight.aimError.absoluteValue < 2.0 || doneShooting }
+        delay(1.0)
+        suspendUntil { Limelight.aimError.absoluteValue < 4.0 || doneShooting }
+        println("aimError: ${Limelight.aimError}      doneShooting? $doneShooting")
         Feeder.setShooterFeedPower(0.8)
         suspendUntil { doneShooting }
         Feeder.setShooterFeedPower(0.0)

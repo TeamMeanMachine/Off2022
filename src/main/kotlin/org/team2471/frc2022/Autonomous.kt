@@ -169,25 +169,56 @@ object AutoChooser {
             Drive.driveAlongPath(path, true)
         }
     }
-    suspend fun newAuto() = use(Drive, Shooter, Intake, Feeder) {
+    suspend fun right5() = use(Drive, Shooter, Intake, Feeder) {
+        Limelight.backLedEnabled = true
         val auto = autonomi["NewAuto"]
         if (auto != null) {
             autoShoot()
-            Limelight.backLedEnabled = true
             parallel({
                 Intake.changeAngle(Intake.PIVOT_INTAKE)
                 Intake.setIntakePower(Intake.INTAKE_POWER)
-                }, {
-                Drive.driveAlongPath(auto ["1 - Shoot"], true)
+             }, {
+                Drive.driveAlongPath(auto ["4 - 1st Ball"], true)
             })
-            delay(1.0)
+            delay(0.5)
+            Drive.driveAlongPath(auto["5 - 2nd Ball"], false)
             autoShoot()
             Drive.driveAlongPath(auto["2 - Grab balls"], false)
-            Drive.driveAlongPath(auto["3 - Move"], false)
             delay(0.5)
+            Drive.driveAlongPath(auto["3 - Move"], false)
             autoShoot()
         }
     }
+
+//    suspend fun right5() = use(Intake, Shooter, Feeder, Drive) {
+//        println("In right5 auto.")
+//        val auto = autonomi["Right Side 5 Auto"]
+//        if (auto != null) {
+//            Limelight.backLedEnabled = true
+//            parallel({
+//                Intake.changeAngle(Intake.PIVOT_INTAKE)
+//                Intake.setIntakePower(Intake.INTAKE_POWER)
+//            }, {
+//                Drive.driveAlongPath(auto["1- First Field Cargo"], true)
+//            })
+//            delay(1.0)
+//            Shooter.rpmOffset = 300.0
+//            autoShoot()
+//            Drive.driveAlongPath(auto["2- Field Cargo"], false)
+//            autoShoot()
+//            Drive.driveAlongPath(auto["3- Feeder Cargo"])
+//            delay(0.5)
+////            parallel({
+////                delay(0.5)
+////                Intake.setIntakePower(0.0)
+////            }, {
+//                Drive.driveAlongPath(auto["5- Short Shoot"], false)
+////            })
+//            Shooter.rpmOffset = 200.0
+//            autoShoot()
+//        }
+//    }
+
 
     suspend fun test8FtCircle() = use(Drive) {
         val auto = autonomi["Tests"]
@@ -202,35 +233,6 @@ object AutoChooser {
         val auto = autonomi["Tests"]
         if (auto != null) {
             Drive.driveAlongPath(auto["90 Degree Turn"], true, 2.0)
-        }
-    }
-
-    suspend fun right5() = use(Intake, Shooter, Feeder, Drive) {
-        println("In right5 auto.")
-        val auto = autonomi["Right Side 5 Auto"]
-        if (auto != null) {
-            Limelight.backLedEnabled = true
-            parallel({
-                Intake.changeAngle(Intake.PIVOT_INTAKE)
-                Intake.setIntakePower(Intake.INTAKE_POWER)
-            }, {
-                Drive.driveAlongPath(auto["1- First Field Cargo"], true)
-            })
-            delay(1.0)
-            Shooter.rpmOffset = 300.0
-            autoShoot()
-            Drive.driveAlongPath(auto["2- Field Cargo"], false)
-            autoShoot()
-            Drive.driveAlongPath(auto["3- Feeder Cargo"])
-            delay(0.5)
-//            parallel({
-//                delay(0.5)
-//                Intake.setIntakePower(0.0)
-//            }, {
-                Drive.driveAlongPath(auto["5- Short Shoot"], false)
-//            })
-            Shooter.rpmOffset = 200.0
-            autoShoot()
         }
     }
 
