@@ -26,7 +26,8 @@ object DigitalSensors {
     const val FEEDER_DISTANCE = 0
     const val SHOOTER_PITCH = 1
     const val CLIMB_ANGLE = 2
-    const val INTAKE_PIVOT = 3
+    const val INTAKE_PIVOT_PRACTICE = 3
+    const val INTAKE_PIVOT = 9
     const val FEEDER_BUTTON = 4
 }
 

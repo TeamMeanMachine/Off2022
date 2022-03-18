@@ -1,7 +1,10 @@
 package org.team2471.frc2022
 
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.*
+import edu.wpi.first.wpilibj.smartdashboard.Field2d
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -24,8 +27,13 @@ import kotlin.math.absoluteValue
 object Drive : Subsystem("Drive"), SwerveDrive {
 
     val navXGyroEntry = NetworkTableInstance.getDefault().getTable(name).getEntry("NavX Gyro")
-    var limitingFactor = 1.0
+    val fieldObject = Field2d()
+    val radarObject = Field2d()
 
+    val limitingFactor : Double
+        get() = if (Climb.climbIsPrepped) 0.25 else 1.0
+    val fieldDimensions = Vector2(26.9375.feet.asMeters,54.0.feet.asMeters)
+    val fieldCenterOffset = fieldDimensions/2.0
     /**
      * Coordinates of modules
      * **/
@@ -35,28 +43,32 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             MotorController(FalconID(Falcons.STEER_FRONTLEFT)),
             Vector2(-11.5, 14.0),
             (45.0).degrees,
-            AnalogSensors.SWERVE_FRONT_LEFT
+            AnalogSensors.SWERVE_FRONT_LEFT,
+            1.0 //0.0 is totally worn out and 1.0 is fresh new tread
         ),
         Module(
             MotorController(FalconID(Falcons.DRIVE_FRONTRIGHT)),
             MotorController(FalconID(Falcons.STEER_FRONTRIGHT)),
             Vector2(11.5, 14.0),
             (135.0).degrees,
-            AnalogSensors.SWERVE_FRONT_RIGHT
+            AnalogSensors.SWERVE_FRONT_RIGHT,
+            1.0 //0.0 is totally worn out and 1.0 is fresh new tread
         ),
         Module(
             MotorController(FalconID(Falcons.DRIVE_BACKRIGHT)),
             MotorController(FalconID(Falcons.STEER_BACKRIGHT)),
             Vector2(11.5, -14.0),
             (-135.0).degrees,
-            AnalogSensors.SWERVE_BACK_RIGHT
+            AnalogSensors.SWERVE_BACK_RIGHT,
+            1.0 //0.0 is totally worn out and 1.0 is fresh new tread
         ),
         Module(
             MotorController(FalconID(Falcons.DRIVE_BACKLEFT)),
             MotorController(FalconID(Falcons.STEER_BACKLEFT)),
             Vector2(-11.5, -14.0),
             (-45.0).degrees,
-            AnalogSensors.SWERVE_BACK_LEFT
+            AnalogSensors.SWERVE_BACK_LEFT,
+            1.0 //0.0 is totally worn out and 1.0 is fresh new treadK
         )
 
     )
@@ -100,9 +112,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         kHeadingFeedForward = 0.001
     )
 
+    override val carpetFlow = Vector2(0.0, 1.0)
+    override val kCarpet = 1.0 / 40.0 //to take out, make 0.0
+    override val kTread = 0.0//5 //how much of an effect treadWear has
+
     val aimPDController = PDConstantFController(0.011, 0.032, 0.008) // 0.006, 0.032, 0.011  // 0.012, 0.03, 0.0
     var lastError = 0.0
-
 
     init {
         println("drive init")
@@ -125,6 +140,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
             SmartDashboard.setPersistent("Use Gyro")
             SmartDashboard.setPersistent("Gyro Type")
+            SmartDashboard.putData("Field", fieldObject)
+            SmartDashboard.setPersistent("Field")
+            SmartDashboard.putData("Radar", radarObject)
+            SmartDashboard.setPersistent("Radar")
+
 
             useGyroEntry.setBoolean(true)
             navXGyroEntry.setBoolean(false)
@@ -148,6 +168,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 angleOneEntry.setDouble((modules[1] as Module).analogAngle.asDegrees)
                 angleTwoEntry.setDouble((modules[2] as Module).analogAngle.asDegrees)
                 angleThreeEntry.setDouble((modules[3] as Module).analogAngle.asDegrees)
+//               println("XPos: ${position.x.feet} yPos: ${position.y.feet}")
+                fieldObject.robotPose = Pose2d(position.x.feet.asMeters+fieldCenterOffset.x, position.y.feet.asMeters+fieldCenterOffset.y, -Rotation2d((heading-90.0.degrees).asRadians))
                 autoAim = autoAimEntry.getBoolean(false) || OI.driverController.a
 
                // println(gyro.getNavX().pitch.degrees)
@@ -185,12 +207,14 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
             headingSetpoint = OI.driverController.povDirection
 
-            drive(
-                OI.driveTranslation * limitingFactor,
-                turn * limitingFactor,
-                SmartDashboard.getBoolean("Use Gyro", true) && !DriverStation.isAutonomous(),
-                false
-            )
+//            if (!Feeder.isAuto && !Shooter.shootMode) {
+                drive(
+                    OI.driveTranslation * limitingFactor,
+                    turn * limitingFactor,
+                    SmartDashboard.getBoolean("Use Gyro", true) && !DriverStation.isAutonomous(),
+                    false
+                )
+//            }
         }
     }
 
@@ -255,7 +279,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         val turnMotor: MotorController,
         override val modulePosition: Vector2,
         override val angleOffset: Angle,
-        private val analogAnglePort: Int
+        private val analogAnglePort: Int,
+        override val treadWear: Double
     ) : SwerveDrive.Module {
         companion object {
             private const val ANGLE_MAX = 983
@@ -321,11 +346,27 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 //                burnSettings()
             }
 
+            val moduleContLimit: Int = when ((driveMotor.motorID as FalconID).value) {
+                Falcons.DRIVE_FRONTLEFT -> 55
+                Falcons.DRIVE_FRONTRIGHT -> 55   //
+                Falcons.DRIVE_BACKRIGHT -> 65     //
+                Falcons.DRIVE_BACKLEFT -> 65
+                else -> 55
+            }
+
+            val modulePeakLimit: Int = when ((driveMotor.motorID as FalconID).value) {
+                Falcons.DRIVE_FRONTLEFT -> 60
+                Falcons.DRIVE_FRONTRIGHT -> 60    //
+                Falcons.DRIVE_BACKRIGHT -> 70        //
+                Falcons.DRIVE_BACKLEFT -> 70
+                else -> 60
+            }
+
             driveMotor.config {
                 brakeMode()
-                feedbackCoefficient = 1.0 / 2048.0 / 5.857 / 1.067 // spark max-neo 1.0 / 42.0/ 5.857 / fudge factor
-                currentLimit(33, 0, 0)
-                openLoopRamp(0.50)
+                feedbackCoefficient = 1.0 / 2048.0 / 5.857 / 1.09 * 6.25 / 8.0 // spark max-neo 1.0 / 42.0/ 5.857 / fudge factor * 8ft test 2022
+//                currentLimit(moduleContLimit, modulePeakLimit, 1)
+                openLoopRamp(1.0)
 //                burnSettings()
             }
 

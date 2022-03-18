@@ -48,7 +48,9 @@ object AutoChooser {
     private val testAutoChooser = SendableChooser<String?>().apply {
         addOption("None", null)
         addOption("20 Foot Test", "20 Foot Test")
-        addOption("8 Foot Straight", "8 Foot Straight")
+        addOption("8 Foot Straight Downfield", "8 Foot Straight Downfield")
+        addOption("8 Foot Straight Upfield", "8 Foot Straight Upfield")
+        addOption("8 Foot Straight Sidefield", "8 Foot Straight Sidefield")
         addOption("2 Foot Circle", "2 Foot Circle")
         addOption("4 Foot Circle", "4 Foot Circle")
         addOption("8 Foot Circle", "8 Foot Circle")
@@ -64,6 +66,7 @@ object AutoChooser {
         addOption("Right Side 5 Auto", "right5")
         addOption("Middle 4 Ball", "middle4")
         addOption("Left Side 2 Auto", "leftSideAuto")
+        addOption("Straight Back Shoot Auto", "straightBackShootAuto")
 
 
 
@@ -125,6 +128,7 @@ object AutoChooser {
             "Tests" -> testAuto()
             "Carpet Bias Test" -> carpetBiasTest()
             "Right Side 5 Auto" -> right5()
+            "Straight Back Shoot Auto" -> straightBackShootAuto()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -226,6 +230,23 @@ object AutoChooser {
                 Drive.driveAlongPath(auto["5- Short Shoot"], false)
 //            })
             Shooter.rpmOffset = 200.0
+            autoShoot()
+        }
+    }
+
+    suspend fun straightBackShootAuto() = use(Intake, Shooter, Feeder, Drive) {
+        println("In straightBackShoot auto.")
+        val auto = autonomi["Straight Back Shoot Auto"]
+        if (auto != null) {
+            Limelight.backLedEnabled = true
+            parallel({
+                Intake.changeAngle(Intake.PIVOT_INTAKE)
+                Intake.setIntakePower(Intake.INTAKE_POWER)
+            }, {
+                Drive.driveAlongPath(auto["1- First Field Cargo"], true)
+            })
+            delay(1.0)
+            Shooter.rpmOffset = 300.0
             autoShoot()
         }
     }
