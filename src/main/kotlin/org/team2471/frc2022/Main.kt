@@ -7,7 +7,6 @@ import edu.wpi.first.wpilibj.RobotBase
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.team2471.frc.lib.framework.MeanlibRobot
 import org.team2471.frc.lib.units.degrees
-import org.team2471.frc2022.testing.*
 import java.net.NetworkInterface
 
 var isCompBot = true
@@ -71,6 +70,7 @@ object Robot : MeanlibRobot() {
         println("autonomous starting")
 //        Drive.zeroGyro()
         Drive.brakeMode()
+        Drive.aimPDController = Drive.autoPDController
         Feeder.autoFeedMode = true
         println("autonomous Drive brakeMode ${totalTimeTaken()}")
         AutoChooser.autonomous()
@@ -80,13 +80,13 @@ object Robot : MeanlibRobot() {
 
     override suspend fun teleop() {
         println("telop begin")
+        Drive.aimPDController = Drive.teleopPDController
         Drive.headingSetpoint = Drive.heading
     }
 
     override suspend fun test()  {
         println("test mode begin. Hi.")
-        Drive.currentTest()
-//        Drive.rampTest()
+        Shooter.pitchPowerTest()
     }
 
 

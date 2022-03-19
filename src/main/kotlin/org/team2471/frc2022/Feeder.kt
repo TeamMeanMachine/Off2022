@@ -34,8 +34,11 @@ object Feeder : Subsystem("Feeder") {
 
     const val BED_FEED_POWER = 0.8
 
-    var isAuto = DriverStation.isAutonomous()
+    val isAuto : Boolean
+        get() = DriverStation.isAutonomous()
     var isClearing = false
+    var cargoWasStaged = Shooter.cargoIsStaged
+    var autoCargoShot = 0
 
     enum class Status {
         EMPTY,
@@ -60,10 +63,9 @@ object Feeder : Subsystem("Feeder") {
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
 //                println("feeder curr ${shooterFeedMotor.current}")
-                isAuto = DriverStation.isAutonomous()
 
                 currentFeedStatus = when {
-                    Shooter.shootMode && isAuto -> Status.ACTIVELY_SHOOTING
+                    isAuto && Shooter.allGood -> Status.ACTIVELY_SHOOTING
                     Shooter.shootMode && OI.driveRightTrigger > 0.1 -> Status.ACTIVELY_SHOOTING
                     isClearing -> Status.CLEARING
                     Shooter.cargoIsStaged && Feeder.cargoIsStaged -> Status.DUAL_STAGED
@@ -79,8 +81,10 @@ object Feeder : Subsystem("Feeder") {
                         Status.ACTIVELY_SHOOTING -> {
                             setBedFeedPower(BED_FEED_POWER)
                             setShooterFeedPower(SHOOTER_FEED_POWER)
+                            detectShots("autoFeed")
                         }
                         Status.DUAL_STAGED -> {
+                            cargoWasStaged = true
                             setBedFeedPower(0.0)
                             if (Shooter.cargoStageProximity > Shooter.PROXMITY_STAGED_MAX_SAFE) {
                                 // back out shot staged while pushing out 2nd staged at half power
@@ -91,6 +95,7 @@ object Feeder : Subsystem("Feeder") {
                             }
                         }
                         Status.SINGLE_STAGED -> {
+                            cargoWasStaged = true
                             setBedFeedPower(BED_FEED_POWER)
                             if (Shooter.cargoStageProximity > Shooter.PROXMITY_STAGED_MAX_SAFE) {
                                 setShooterFeedPower(-0.2)
@@ -99,10 +104,12 @@ object Feeder : Subsystem("Feeder") {
                             }
                         }
                         Status.EMPTY -> {
+                            cargoWasStaged = false
                             setBedFeedPower(BED_FEED_POWER)
                             setShooterFeedPower(SHOOTER_STAGE_POWER)
                         }
                         Status.CLEARING -> {
+                            cargoWasStaged = false
                             setBedFeedPower(-BED_FEED_POWER)
                             setShooterFeedPower(-SHOOTER_FEED_POWER)
                         }
@@ -111,10 +118,13 @@ object Feeder : Subsystem("Feeder") {
                     if (Shooter.shootMode) {
                         setShooterFeedPower(OI.driveRightTrigger)
                         setBedFeedPower(0.0)
+                        detectShots("notautofeed")
                     } else if (isClearing) {
+                        cargoWasStaged = false
                         setBedFeedPower(-BED_FEED_POWER)
                         setShooterFeedPower(-SHOOTER_FEED_POWER)
                     } else  {
+                        cargoWasStaged = false
                         setShooterFeedPower(0.0)
                         setBedFeedPower(0.0)
                     }
@@ -125,6 +135,21 @@ object Feeder : Subsystem("Feeder") {
 
     override fun preEnable() {
         setShooterFeedPower(0.0)
+    }
+    fun detectShots(note : String = "") {
+        if (cargoWasStaged && !Shooter.cargoIsStaged) {
+            // handle cargo no longer staged while actively shooting (e.g. cargo has been shot)
+            cargoWasStaged = false
+            println("shot detected from $note ${Shooter.cargoStageProximity}")
+            shotDetected()
+        } else if (!cargoWasStaged && Shooter.cargoIsStaged) {
+            // handle second ball feeding while actively shooting
+            cargoWasStaged = true
+        }
+    }
+    fun shotDetected(){
+        autoCargoShot += 1
+        println("Shot has been detected rpm: ${Shooter.rpm} rpmsetpoint: ${Shooter.rpmSetpoint} aimError: ${Limelight.aimError} angle: ${Shooter.pitch}")
     }
 
     val cargoIsStaged: Boolean

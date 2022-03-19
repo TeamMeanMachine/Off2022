@@ -1,6 +1,5 @@
 package org.team2471.frc2022
 
-import edu.wpi.first.wpilibj.DriverStation
 import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.periodic
@@ -8,7 +7,6 @@ import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.util.Timer
 import kotlin.math.absoluteValue
-import kotlin.math.roundToInt
 
 //Intake
 
@@ -80,7 +78,49 @@ suspend fun shootMode() = use(Shooter) {
     Limelight.frontLedEnabled = (Shooter.shootMode && Limelight.useFrontLimelight)
 }
 
+suspend fun autoShootv2(shotCount : Int = 2, maxWait: Double = 2.5) = use(Shooter, Feeder, Drive) {
+    var doneShooting = false
+    Feeder.autoFeedMode = true
+    Shooter.shootMode = true
+    val t = Timer()
+    t.start()
+    parallel ({
+        println("autoshooting   usingFrontLL ${Limelight.useFrontLimelight} distance ${Limelight.distance}")
+        suspendUntil { Limelight.aimError.absoluteValue < 2.0 && Shooter.rpmError.absoluteValue < 300.0 || doneShooting }
+        suspendUntil { doneShooting }
+        Shooter.shootMode = false
+    }, {
+        periodic {
+            Drive.autoSteer()
+//            println("rpm ${Shooter.rpm.roundToInt()}     rpmSetpoint ${Shooter.rpmSetpoint.roundToInt()}    pitch ${Shooter.pitch.roundToInt()}       pitchSetpoint ${Shooter.pitchSetpoint.roundToInt()}")
+            if (doneShooting) {
+                stop()
+            }
+        }
+        println("aimError = ${Limelight.aimError}")
+    }, {
+        Feeder.autoCargoShot = 0
+        suspendUntil {Feeder.autoCargoShot >= shotCount || doneShooting}
+        delay(0.1)
+        if (!doneShooting) {
+            println("doneShooting after ${Feeder.autoCargoShot} cargo in ${t.get()} seconds")
+        }
+        doneShooting = true
+    }, {
+        periodic {
+            if (!doneShooting && t.get() > maxWait) {
+                doneShooting = true
+                println("doneShooting after $maxWait sec")
+            } else if (doneShooting) {
+                stop()
+            }
+        }
+    })
+    Shooter.shootMode = false
+}
+
 suspend fun autoShoot() = use(Shooter, Feeder, Drive) {
+    Feeder.setShooterFeedPower(0.0)
     Shooter.shootMode = true
     var doneShooting = false
     var t = Timer()
@@ -89,7 +129,9 @@ suspend fun autoShoot() = use(Shooter, Feeder, Drive) {
         println("autoshooting   usingFrontLL ${Limelight.useFrontLimelight} distance ${Limelight.distance}")
         Feeder.autoFeedMode = true
         Feeder.setBedFeedPower(Feeder.BED_FEED_POWER)
-        suspendUntil { Limelight.aimError.absoluteValue < 2.0 || doneShooting }
+        delay(1.0)
+        suspendUntil { Limelight.aimError.absoluteValue < 4.0 || doneShooting }
+        println("aimError: ${Limelight.aimError}      doneShooting? $doneShooting")
         Feeder.setShooterFeedPower(0.8)
         suspendUntil { doneShooting }
         Feeder.setShooterFeedPower(0.0)

@@ -51,11 +51,11 @@ object Limelight : Subsystem("Front Limelight") {
 
     val useFrontLimelight: Boolean
     get() {
-//        var angleFromCenter = Drive.position.angle.radians
-//        var isFacingShooter = (angleFromCenter - heading).wrap().asDegrees.absoluteValue >= 90.0  //if the robot is facing toward (angleFromCenter opposite from heading), don't use front
+        var angleFromCenter = Drive.position.angle.radians
+        var isFacingShooter = (angleFromCenter - heading).wrap().asDegrees.absoluteValue >= 90.0  //if the robot is facing toward (angleFromCenter opposite from heading), don't use front
 //        println("isFacingShooter: $isFacingShooter   heading: ${heading.asDegrees.roundToInt()}    angleFromCenter: ${angleFromCenter.asDegrees.roundToInt()}     x: ${Drive.position.x.roundToInt()}     y: ${Drive.position.y.roundToInt()}")
-//        return isFacingShooter
-        return false
+        return isFacingShooter
+//        return false
     }
 
     val distance: Length
@@ -88,9 +88,10 @@ object Limelight : Subsystem("Front Limelight") {
     val position: Vector2
         get() {
             var headingLimelight = if (useFrontLimelight) heading else heading + 180.0.degrees
+            var addOrSubtract = if (useFrontLimelight) 1.0 else -1.0
             return Vector2(0.0, 0.0) - Vector2(
-                (distance.asFeet * (headingLimelight - xTranslation.degrees).sin()),
-                (distance.asFeet * (headingLimelight - xTranslation.degrees).cos())
+                (distance.asFeet * (headingLimelight + (addOrSubtract * xTranslation).degrees).sin()),
+                (distance.asFeet * (headingLimelight + (addOrSubtract * xTranslation).degrees).cos())
             )
         }
 
@@ -195,6 +196,8 @@ object Limelight : Subsystem("Front Limelight") {
         //        }
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
+                backLedEnabled = Shooter.shootMode && !useFrontLimelight
+                frontLedEnabled = Shooter.shootMode && useFrontLimelight
                 distanceEntry.setDouble(distance.asFeet)
                 val savePosition = position
                 positionXEntry.setDouble(savePosition.x)
@@ -222,10 +225,14 @@ object Limelight : Subsystem("Front Limelight") {
 //                    rightAngleOffset()
 //                }
 
-                if (Shooter.shootMode && hasValidTarget) {
-                        val alpha = 0.0
-                        Drive.position = Drive.position * alpha + position * (1.0-alpha)
-//                        println("Reset odometry based on limelight. Hi.")
+                if (Shooter.shootMode && hasValidTarget && !Feeder.isAuto) {
+                    val alpha = 0.0
+                    val prev = Drive.position
+                    Drive.position = Drive.position * alpha + position * (1.0-alpha)
+                    //println("Reset odometry based on limelight to ${Drive.position} from ${prev}. Hi.")
+                    if (prev.distance(Drive.position) > 3.0) {
+                        println("Distance changed > 3.0....whoops .. that was probably an error. Might want to examine the logic for limelight distances?")
+                    }
                 }
             }
         }

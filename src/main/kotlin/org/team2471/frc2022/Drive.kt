@@ -116,7 +116,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override val kCarpet = 1.0 / 40.0 //to take out, make 0.0
     override val kTread = 0.0//5 //how much of an effect treadWear has
 
-    val aimPDController = PDConstantFController(0.011, 0.032, 0.008) // 0.006, 0.032, 0.011  // 0.012, 0.03, 0.0
+    val autoPDController = PDConstantFController(0.015, 0.012, 0.008)
+    val teleopPDController =  PDConstantFController(0.011, 0.032, 0.008)
+
+    var aimPDController = teleopPDController // 0.006, 0.032, 0.011  // 0.012, 0.03, 0.0
     var lastError = 0.0
 
     init {

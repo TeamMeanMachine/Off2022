@@ -5,11 +5,14 @@ import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import org.team2471.frc.lib.control.PDConstantFController
 import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion_profiling.Autonomi
+import org.team2471.frc.lib.units.degrees
+import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.measureTimeFPGA
 import java.io.File
 
@@ -48,9 +51,11 @@ object AutoChooser {
     private val testAutoChooser = SendableChooser<String?>().apply {
         addOption("None", null)
         addOption("20 Foot Test", "20 Foot Test")
-        addOption("8 Foot Straight Downfield", "8 Foot Straight Downfield")
-        addOption("8 Foot Straight Upfield", "8 Foot Straight Upfield")
-        addOption("8 Foot Straight Sidefield", "8 Foot Straight Sidefield")
+        addOption("8 Foot Straight", "8 Foot Straight")
+
+//        addOption("8 Foot Straight Downfield", "8 Foot Straight Downfield")
+//        addOption("8 Foot Straight Upfield", "8 Foot Straight Upfield")
+//        addOption("8 Foot Straight Sidefield", "8 Foot Straight Sidefield")
         addOption("2 Foot Circle", "2 Foot Circle")
         addOption("4 Foot Circle", "4 Foot Circle")
         addOption("8 Foot Circle", "8 Foot Circle")
@@ -127,7 +132,7 @@ object AutoChooser {
         when (selAuto) {
             "Tests" -> testAuto()
             "Carpet Bias Test" -> carpetBiasTest()
-            "Right Side 5 Auto" -> right5()
+            "Right Side 5 Auto" -> right5v3()
             "Straight Back Shoot Auto" -> straightBackShootAuto()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
         }
@@ -169,25 +174,113 @@ object AutoChooser {
             Drive.driveAlongPath(path, true)
         }
     }
-    suspend fun newAuto() = use(Drive, Shooter, Intake, Feeder) {
+    suspend fun right5() = use(Drive, Shooter, Intake, Feeder) {
+        Limelight.backLedEnabled = true
         val auto = autonomi["NewAuto"]
         if (auto != null) {
             autoShoot()
-            Limelight.backLedEnabled = true
             parallel({
                 Intake.changeAngle(Intake.PIVOT_INTAKE)
                 Intake.setIntakePower(Intake.INTAKE_POWER)
-                }, {
-                Drive.driveAlongPath(auto ["1 - Shoot"], true)
+             }, {
+                Drive.driveAlongPath(auto ["4 - 1st Ball"], true)
             })
-            delay(1.0)
+            delay(0.5)
+            Drive.driveAlongPath(auto["5 - 2nd Ball"], false)
             autoShoot()
             Drive.driveAlongPath(auto["2 - Grab balls"], false)
-            Drive.driveAlongPath(auto["3 - Move"], false)
             delay(0.5)
+            Drive.driveAlongPath(auto["3 - Move"], false)
             autoShoot()
         }
     }
+    suspend fun right5v3() = use(Drive, Shooter, Intake, Feeder) {
+        val t = Timer()
+        t.start()
+        Limelight.backLedEnabled = true
+        val auto = autonomi["NewAuto"]
+        if (auto != null) {
+            val firstAuto = auto["4 - 1st Ball"]
+            Drive.position = firstAuto.getPosition(0.0)
+            Drive.heading = firstAuto.headingCurve.getValue(0.0).degrees
+            println("auto started - shooting first ball from ${Drive.position} angle: ${Drive.heading}")
+            autoShootv2(1, 3.0)
+            println("lowering intake and getting 1st ball")
+            parallel({
+                Intake.changeAngle(Intake.PIVOT_INTAKE)
+                Intake.setIntakePower(Intake.INTAKE_POWER)
+            }, {
+                Drive.driveAlongPath(firstAuto, false)
+            })
+//            println("delaying 0.5")
+//            delay(0.5)
+            println("getting 2nd ball")
+            Drive.driveAlongPath(auto["5 - 2nd Ball"], false)
+            println("shooting 2nd batch")
+            parallel({
+                delay(0.25)
+                Intake.setIntakePower(0.0)
+                     },
+                {
+                    autoShootv2(2, 2.5)
+                }
+            )
+            println("getting 3rd batch")
+            Intake.setIntakePower(Intake.INTAKE_POWER)
+            Drive.driveAlongPath(auto["6 - Grab balls"], false)
+            delay(0.5)
+            println("current auto time is ${t.get()}")
+            // go for close shot if we have at least 1.5 seconds left to shoot after running path
+            if (t.get() > 15.0 - (1.5 + auto["7.2 - Move Extra Close"].duration)) {
+                Drive.driveAlongPath(auto["7.1 - Move"], false)
+            } else {
+                println("Going for close shot!!")
+                Drive.driveAlongPath(auto["7.2 - Move Extra Close"], false)
+            }
+            println("shooting 3rd batch")
+            parallel({
+                delay(0.25)
+                Intake.setIntakePower(0.0)
+            },
+                {
+                    autoShootv2(2, 2.5)
+                }
+            )
+            Drive.aimPDController = PDConstantFController (0.011, 0.032, 0.008)
+            println("auto complete in ${t.get()} seconds")
+            Feeder.autoFeedMode = false
+        }
+    }
+
+//    suspend fun right5() = use(Intake, Shooter, Feeder, Drive) {
+//        println("In right5 auto.")
+//        val auto = autonomi["Right Side 5 Auto"]
+//        if (auto != null) {
+//            Limelight.backLedEnabled = true
+//            parallel({
+//                Intake.changeAngle(Intake.PIVOT_INTAKE)
+//                Intake.setIntakePower(Intake.INTAKE_POWER)
+//            }, {
+//                Drive.driveAlongPath(auto["1- First Field Cargo"], true)
+//            })
+//            delay(1.0)
+//            Shooter.rpmOffset = 300.0
+//            autoShoot()
+//            Drive.driveAlongPath(auto["2- Field Cargo"], false)
+//            autoShoot()
+//            Drive.driveAlongPath(auto["3- Feeder Cargo"])
+//            delay(0.5)
+////            parallel({
+////                delay(0.5)
+////                Intake.setIntakePower(0.0)
+////            }, {
+//                Drive.driveAlongPath(auto["5- Short Shoot"], false)
+////            })
+//            Shooter.rpmOffset = 200.0
+//            autoShoot()
+//        }
+//    }
+
 
     suspend fun test8FtCircle() = use(Drive) {
         val auto = autonomi["Tests"]
@@ -204,33 +297,32 @@ object AutoChooser {
             Drive.driveAlongPath(auto["90 Degree Turn"], true, 2.0)
         }
     }
-
-    suspend fun right5() = use(Intake, Shooter, Feeder, Drive) {
+    suspend fun right5v2() = use(Intake, Shooter, Feeder, Drive) {
         println("In right5 auto.")
         val auto = autonomi["Right Side 5 Auto"]
         if (auto != null) {
             Limelight.backLedEnabled = true
+            Feeder.autoFeedMode = true
             parallel({
                 Intake.changeAngle(Intake.PIVOT_INTAKE)
                 Intake.setIntakePower(Intake.INTAKE_POWER)
             }, {
                 Drive.driveAlongPath(auto["1- First Field Cargo"], true)
             })
-            delay(1.0)
-            Shooter.rpmOffset = 300.0
-            autoShoot()
+            delay(0.5)
+            Intake.setIntakePower(0.0)
+            autoShootv2(2, 2.5)
+            Intake.setIntakePower(Intake.INTAKE_POWER)
             Drive.driveAlongPath(auto["2- Field Cargo"], false)
-            autoShoot()
+            Intake.setIntakePower(0.0)
+            autoShootv2(2, 2.5)
+            Intake.setIntakePower(Intake.INTAKE_POWER)
             Drive.driveAlongPath(auto["3- Feeder Cargo"])
             delay(0.5)
-//            parallel({
-//                delay(0.5)
-//                Intake.setIntakePower(0.0)
-//            }, {
-                Drive.driveAlongPath(auto["5- Short Shoot"], false)
-//            })
-            Shooter.rpmOffset = 200.0
-            autoShoot()
+            Drive.driveAlongPath(auto["5- Short Shoot"], false)
+            Intake.setIntakePower(0.0)
+            autoShootv2(2, 4.0)
+            Feeder.autoFeedMode = false
         }
     }
 
