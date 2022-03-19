@@ -7,7 +7,6 @@ import edu.wpi.first.wpilibj.RobotBase
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.team2471.frc.lib.framework.MeanlibRobot
 import org.team2471.frc.lib.units.degrees
-import org.team2471.frc2022.testing.*
 import java.net.NetworkInterface
 
 var isCompBot = true
@@ -87,7 +86,7 @@ object Robot : MeanlibRobot() {
 
     override suspend fun test()  {
         println("test mode begin. Hi.")
-        Shooter.pitchTest()
+        Shooter.pitchPowerTest()
     }
 
 

@@ -18,10 +18,13 @@ import org.team2471.frc.lib.control.PDController
 import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
+import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller
 import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.asFeet
+import org.team2471.frc.lib.units.degrees
 import kotlin.math.absoluteValue
 
 
@@ -131,6 +134,7 @@ object Shooter : Subsystem("Shooter") {
 
     var pitchPDEnable = true
     val pitchPDController = PDController(0.02, 0.0) //0.055, 0.03) //0.06, 0.0) // d 0.1
+    const val K_PITCH_FEED_FORWARD = -0.22
     val pitchIsReady : Boolean
         get() {
 //            println("${pitchPDEnable}     ${pitchSetpoint > PITCH_LOW}     ${pitchSetpoint < PITCH_HIGH}     ${pitchEncoder.isConnected}")
@@ -256,7 +260,7 @@ object Shooter : Subsystem("Shooter") {
                 p(7.5e-6)
                 i(0.0)//i(0.0)
                 d(2.0e-4)//d(1.5e-3) //1.5e-3  -- we tried 1.5e9 and 1.5e-9, no notable difference  // we printed values at the MotorController and the wrapper
-                f(0.0149)
+                f(0.0140)
             }
         }
 
@@ -285,8 +289,8 @@ object Shooter : Subsystem("Shooter") {
             pitchSetpoint = pitch
             filter.calculate(pitch)
             periodic {
-                if (pitchIsReady) {
-                    val power = pitchPDController.update(filter.calculate(pitchSetpoint) - pitch)
+                if (pitchIsReady && pitchPDEnable) {
+                    val power = pitchPDController.update(filter.calculate(pitchSetpoint) - pitch) + pitch.degrees.sin() * K_PITCH_FEED_FORWARD
                     pitchSetPower(power)
 //                    println("pitchPower $power")
                 }
@@ -428,8 +432,8 @@ object Shooter : Subsystem("Shooter") {
             field = value
             backRPMOffsetEntry.setDouble(value)
         }
-    var frontLLRPMOffset: Double = 1100.0
-        get() = frontRPMOffsetEntry.getDouble(1100.0)
+    var frontLLRPMOffset: Double = 0.0
+        get() = frontRPMOffsetEntry.getDouble(0.0)
         set(value) {
             field = value
             frontRPMOffsetEntry.setDouble(value)
@@ -471,3 +475,29 @@ object Shooter : Subsystem("Shooter") {
         }
     }
 }
+
+suspend fun Shooter.pitchPowerTest() = use(this) {
+    var power = 0.0
+    var upPressed = false
+    var downPressed = false
+    periodic {
+        if (OI.driverController.dPad == Controller.Direction.UP) {
+            upPressed = true
+        } else if (OI.driverController.dPad == Controller.Direction.DOWN) {
+            downPressed = true
+        }
+        if (OI.driverController.dPad != Controller.Direction.UP && upPressed) {
+            upPressed = false
+            power += 0.01
+            println("up power= ${power}")
+        }
+        if (OI.driverController.dPad != Controller.Direction.DOWN && downPressed) {
+            downPressed = false
+            power -= 0.01
+            println("down power= ${power}")
+        }
+        pitchMotor.setPercentOutput(power)
+        //println("power= ${power}")
+    }
+}
+
