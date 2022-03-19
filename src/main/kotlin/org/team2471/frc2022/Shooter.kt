@@ -92,6 +92,10 @@ object Shooter : Subsystem("Shooter") {
     const val PROXMITY_STAGED_MAX_SAFE = 350.0
 
     var allGood = false
+    var aimGood = false
+    var rpmGood = false
+    var pitchGood = false
+    var isCargoAlignedWithAlliance = true
     var pitchOffset = if (isCompBot) 1.3 else - 76.0
     var curvepitchOffset = 0.0 //3.0
     var pitch: Double = 0.0
@@ -303,10 +307,10 @@ object Shooter : Subsystem("Shooter") {
                 aimMaxErrorEntry.setDouble(aimMaxError)
 
                 val filteredError = rpmErrorFilter.calculate(rpmError)
-                val aimGood = Limelight.aimError < aimMaxError
-                val rpmGood = filteredError < rpmMaxError
-                val pitchGood = pitchSetpoint - pitch < pitchMaxError
-                val isCargoAlignedWithAlliance = (allianceColor == cargoColor || cargoColor == NOTSET)
+                aimGood = Limelight.aimError < aimMaxError
+                rpmGood = filteredError < rpmMaxError
+                pitchGood = pitchSetpoint - pitch < pitchMaxError
+                isCargoAlignedWithAlliance = (allianceColor == cargoColor || cargoColor == NOTSET)
                 allGood = shootMode && aimGood && rpmGood && pitchGood
 
                 aimGoodEntry.setBoolean(aimGood)

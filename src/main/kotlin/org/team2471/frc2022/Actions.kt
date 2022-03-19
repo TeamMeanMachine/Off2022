@@ -109,6 +109,7 @@ suspend fun autoShootv2(shotCount : Int = 2, maxWait: Double = 2.5) = use(Shoote
     }, {
         periodic {
             if (!doneShooting && t.get() > maxWait) {
+                println("failed shoot allGood: ${Shooter.allGood} rpmGood ${Shooter.rpmGood} pitchGood ${Shooter.pitchGood} aimGood ${Shooter.aimGood} ")
                 doneShooting = true
                 println("doneShooting after $maxWait sec")
             } else if (doneShooting) {

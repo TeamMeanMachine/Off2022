@@ -204,11 +204,16 @@ object AutoChooser {
             Drive.position = firstAuto.getPosition(0.0)
             Drive.heading = firstAuto.headingCurve.getValue(0.0).degrees
             println("auto started - shooting first ball from ${Drive.position} angle: ${Drive.heading}")
-            autoShootv2(1, 3.0)
+            parallel({
+                autoShootv2(1, 3.0)
+            }, {
+                powerSave()
+                Feeder.autoFeedMode = true
+            })
+
             println("lowering intake and getting 1st ball")
             parallel({
-                Intake.changeAngle(Intake.PIVOT_INTAKE)
-                Intake.setIntakePower(Intake.INTAKE_POWER)
+                intake()
             }, {
                 Drive.driveAlongPath(firstAuto, false)
             })

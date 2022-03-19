@@ -225,7 +225,7 @@ object Limelight : Subsystem("Front Limelight") {
 //                    rightAngleOffset()
 //                }
 
-                if (Shooter.shootMode && hasValidTarget && !Feeder.isAuto) {
+                if (Shooter.shootMode && hasValidTarget && !Feeder.isAuto && Shooter.aimGood) {
                     val alpha = 0.0
                     val prev = Drive.position
                     Drive.position = Drive.position * alpha + position * (1.0-alpha)
