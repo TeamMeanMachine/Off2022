@@ -87,11 +87,18 @@ object Limelight : Subsystem("Front Limelight") {
 
     val position: Vector2
         get() {
-            var headingLimelight = if (useFrontLimelight) heading else heading + 180.0.degrees
-            var addOrSubtract = if (useFrontLimelight) 1.0 else -1.0
-            return Vector2(0.0, 0.0) - Vector2(
-                (distance.asFeet * (headingLimelight + (addOrSubtract * xTranslation).degrees).sin()),
-                (distance.asFeet * (headingLimelight + (addOrSubtract * xTranslation).degrees).cos())
+            val x = Drive.position.x
+            val y = Drive.position.y
+            var headingLimelight = heading
+            if ((y < 0.0 && !useFrontLimelight) || (y > 0.0 && useFrontLimelight)) {
+                headingLimelight += 180.0.degrees
+            }
+            if ((x > 0.0 && y < 0.0) || (x < 0.0 && y > 0.0)) headingLimelight *= -1.0
+            println("headingLimelight: ${headingLimelight.asDegrees.roundToInt()}     Drive heading: ${Drive.heading}")
+            var addOrSubtract = if ((x > 0.0 && y < 0.0) || (x < 0.0 && y > 0.0)) -1.0 else 1.0
+            return Vector2(             //Vector2(0.0, 0.0) - Vector2(
+                (distance.asFeet * (headingLimelight + (addOrSubtract * yTranslation).degrees).sin()),
+                (distance.asFeet * (headingLimelight + (addOrSubtract * yTranslation).degrees).cos())
             )
         }
 
@@ -225,13 +232,13 @@ object Limelight : Subsystem("Front Limelight") {
 //                    rightAngleOffset()
 //                }
 
-                if (Shooter.shootMode && hasValidTarget && !Feeder.isAuto && Shooter.aimGood) {
+                if (Shooter.shootMode && hasValidTarget && !Feeder.isAuto && Shooter.aimGood && Drive.position.x.absoluteValue > 1.0 && Drive.position.y.absoluteValue > 1.0) {
                     val alpha = 0.0
                     val prev = Drive.position
                     Drive.position = Drive.position * alpha + position * (1.0-alpha)
                     //println("Reset odometry based on limelight to ${Drive.position} from ${prev}. Hi.")
                     if (prev.distance(Drive.position) > 3.0) {
-                        println("Distance changed > 3.0....whoops .. that was probably an error. Might want to examine the logic for limelight distances?")
+//                        println("Distance changed > 3.0....whoops .. that was probably an error. Might want to examine the logic for limelight distances?")
                     }
                 }
             }

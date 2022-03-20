@@ -83,7 +83,7 @@ object Shooter : Subsystem("Shooter") {
     }
 
 
-    val filter = LinearFilter.movingAverage(2) //if (tuningMode) {10} else {2})
+    val filter = LinearFilter.movingAverage(3) //if (tuningMode) {10} else {2})
 
     const val PITCH_LOW = -31.0
     const val PITCH_HIGH = 35.0
@@ -137,7 +137,7 @@ object Shooter : Subsystem("Shooter") {
         }
 
     var pitchPDEnable = true
-    val pitchPDController = PDController(0.02, 0.0) //0.055, 0.03) //0.06, 0.0) // d 0.1
+    val pitchPDController = PDController(0.05, 0.095) //0.06, 0.095) //0.055, 0.03) //0.06, 0.0) // d 0.1
     const val K_PITCH_FEED_FORWARD = -0.22
     val pitchIsReady : Boolean
         get() {
@@ -170,7 +170,7 @@ object Shooter : Subsystem("Shooter") {
                 field = backRPMCurve.getValue(Limelight.distance.asFeet)
                 rpmSetpointEntry.setDouble(field)
             } else if (Limelight.useFrontLimelight && Limelight.hasValidFrontTarget) {
-                frontRPMCurve.getValue(Limelight.distance.asFeet)
+                field = frontRPMCurve.getValue(Limelight.distance.asFeet)
                 rpmSetpointEntry.setDouble(field)
             } else {
                 field = rpmSetpointEntry.getDouble(5000.0)
@@ -228,11 +228,12 @@ object Shooter : Subsystem("Shooter") {
         backPitchCurve.storeValue(10.0, -19.0)
         backPitchCurve.storeValue(15.0, -27.0)
         backPitchCurve.storeValue(20.0, -30.0)
+        backPitchCurve.storeValue(25.0, -32.0) //lower than min
 
         frontPitchCurve.storeValue(5.0, 24.8)
         frontPitchCurve.storeValue(10.0, 31.8)
-        frontPitchCurve.storeValue(15.0, 33.0)
-        frontPitchCurve.storeValue(20.0, 33.0)
+        frontPitchCurve.storeValue(15.0, 33.0) //higher than max
+        frontPitchCurve.storeValue(20.0, 33.0) //higher than max
 
         backRPMCurve.setMarkBeginOrEndKeysToZeroSlope(false)
         frontRPMCurve.setMarkBeginOrEndKeysToZeroSlope(false)
@@ -249,7 +250,8 @@ object Shooter : Subsystem("Shooter") {
         backRPMCurve.storeValue(5.0, 2800.0)
         backRPMCurve.storeValue(10.0, 3200.0)
         backRPMCurve.storeValue(15.0, 4000.0)
-        backRPMCurve.storeValue(20.0, 5100.0)
+        backRPMCurve.storeValue(20.0, 5200.0) // 5100.0)
+        backRPMCurve.storeValue(25.0, 5650.0)
 
         frontRPMCurve.storeValue(5.0, 3200.0)
         frontRPMCurve.storeValue(10.0, 3900.0)
@@ -262,8 +264,8 @@ object Shooter : Subsystem("Shooter") {
             feedbackCoefficient = 1.0 / 2048.0 * 60.0
             pid {
                 p(7.5e-6)
-                i(0.0)//i(0.0)
-                d(2.0e-4)//d(1.5e-3) //1.5e-3  -- we tried 1.5e9 and 1.5e-9, no notable difference  // we printed values at the MotorController and the wrapper
+                i(0.0)
+                d(2.0e-4)
                 f(0.0140)
             }
         }
@@ -307,7 +309,7 @@ object Shooter : Subsystem("Shooter") {
                 aimMaxErrorEntry.setDouble(aimMaxError)
 
                 val filteredError = rpmErrorFilter.calculate(rpmError)
-                aimGood = Limelight.aimError < aimMaxError
+                aimGood = Limelight.aimError.absoluteValue < aimMaxError
                 rpmGood = filteredError < rpmMaxError
                 pitchGood = pitchSetpoint - pitch < pitchMaxError
                 isCargoAlignedWithAlliance = (allianceColor == cargoColor || cargoColor == NOTSET)
@@ -368,7 +370,7 @@ object Shooter : Subsystem("Shooter") {
                     BLUE -> "blue"
                     else -> "notset"
                 }
-                val rpmBadShotAdjustment = if (isCargoAlignedWithAlliance) 1.0 else if (pitch > 0) 0.4 else 0.1
+                val rpmBadShotAdjustment = 1.0 //if (isCargoAlignedWithAlliance) 1.0 else if (pitch > 0) 0.4 else 0.1
                 stagedColorString = "$stagedColorString $isCargoAlignedWithAlliance ${colorSensor.proximity}"
                 colorEntry.setString(stagedColorString)
                 if (rpmBadShotAdjustment < 1.0) {
