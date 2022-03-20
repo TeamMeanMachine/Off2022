@@ -6,6 +6,7 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.util.Timer
+import kotlin.concurrent.timer
 import kotlin.math.absoluteValue
 
 //Intake
@@ -227,32 +228,75 @@ suspend fun climbPrep() = use(Climb, Shooter, Intake) {
     goToPose(Pose.CLIMB_PREP)
     Climb.climbIsPrepped = true
     println("climb is prepped")
+    suspendUntil {OI.operatorRightTrigger > 0.1 || OI.operatorLeftTrigger > 0.1}
+    performClimb(OI.operatorLeftTrigger > 0.1)
 }
 
-suspend fun  startClimb() = use(Climb, Intake) {
+
+suspend fun performClimb(traverseClimb:Boolean = true) = use(Climb, Intake) {
     println("trying to start climb")
     if (Climb.climbIsPrepped) {
-        println("Climb stage executing: ${Climb.climbStage} roll: ${Climb.roll}")
+        //println("Climb stage executing: ${Climb.climbStage} roll: ${Climb.roll}")
         OI.operatorController.rumble = 0.5
-        Climb.climbStage = 0
-        while (Climb.climbStage < 5) {
-            when (Climb.climbStage) {
-                0 -> {
-                    Climb.angleMotor.brakeMode()
-                    goToPose(Pose.PULL_UP)
+        var loop = 0
+        var maxLoop = if (traverseClimb) 2 else 1
+        var lasTroll = Climb.roll
+        while (loop < 2) {
+            Climb.climbStage = 0
+            while (Climb.climbStage < 6) {
+                if (OI.operatorRightTrigger > 0.1 || OI.operatorLeftTrigger > 0.1) {
+                    println("Trigger climb stage ${Climb.climbStage}, roll is ${Climb.roll}")
+                    when (Climb.climbStage) {
+                        0 -> {
+                            Climb.angleMotor.brakeMode()
+                            goToPose(Pose.PULL_UP)
+                            delay(0.1)
+                        }
+                        1 -> {
+                            goToPose(Pose.PULL_UP_LATCH, true)
+                            goToPose(Pose.PULL_UP_LATCH_LIFT, false, 0.45)
+                            goToPose(Pose.PULL_UP_LATCH_RELEASE, true)
+                            if (loop == 0) {
+                                delay(0.1)
+                            } else {
+                                periodic {
+                                    if (lasTroll - Climb.roll < 0.0 && Climb.roll > 5.0)
+                                        stop()
+                                }
+                                lasTroll = Climb.roll
+                            }
+                        }
+                        2 -> {
+                            goToPose(Pose.EXTEND_HOOKS)
+                            if (loop == 0) {
+                                delay(0.5)
+                            } else {
+                                val angleTimer = Timer()
+                                var hit25 = false
+                                angleTimer.start()
+                                periodic {
+                                    if (!hit25 && Climb.roll > 25.0) {
+                                        hit25 = true
+                                        println("hit 30, angle ${Climb.angle}")
+                                    }
+                                    if (lasTroll - Climb.roll > 0.0 && (Climb.angle > 25.0 || Climb.roll < 15.0)) {
+                                        println("Angle ${angleTimer.get()} Roll ${Climb.roll}")
+                                        stop()
+                                    }
+                                    lasTroll = Climb.roll
+                                }
+                            }
+                        }
+                        3 -> goToPose(Pose.TRAVERSE_ENGAGE)
+                        4 -> goToPose(Pose.TRAVERSE_PULL_LITTLE)
+                        5 -> goToPose(Pose.TRAVERSE_PULL_UP)
+
+                        else -> println("Climb Stage Complete")
+                    }
                 }
-                1 -> {
-                    goToPose(Pose.PULL_UP_LATCH, true, 0.5)
-                    goToPose(Pose.PULL_UP_LATCH_LIFT, true)
-                    goToPose(Pose.PULL_UP_LATCH_RELEASE, true, 1.0)
-                }
-                2 -> goToPose(Pose.EXTEND_HOOKS)
-                3 -> goToPose(Pose.TRAVERSE_ENGAGE)
-                4 -> goToPose(Pose.TRAVERSE_PULL_UP)
-                //else -> Climb.climbStage = -1
+                Climb.climbStage += 1
             }
-            delay(0.5)
-            Climb.climbStage += 1
+            loop +=1
         }
         OI.operatorController.rumble = 0.0
         println("done with start climb")
