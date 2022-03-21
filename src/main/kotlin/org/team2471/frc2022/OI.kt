@@ -61,7 +61,6 @@ object OI {
         operatorController::y.whenTrue { armUp() }
         operatorController::x.whenTrue { powerSave() }
         operatorController::back.whenTrue { Climb.zeroClimb() }
-        operatorController::leftBumper.whenTrue { startClimb() }
         operatorController::rightBumper.whenTrue { clearFeeder() }
     }
 }

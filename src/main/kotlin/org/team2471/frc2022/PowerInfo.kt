@@ -14,6 +14,7 @@ object PowerInfo : Subsystem("PowerDistribution") {
     val totalPower = table.getEntry("Power")
     val totalCurrent = table.getEntry("Current")
     val totalEnergy = table.getEntry("Energy")
+    val batteryVoltage = table.getEntry("Battery")
     val enableDashboardOutput = false
     init {
         GlobalScope.launch {
@@ -25,6 +26,7 @@ object PowerInfo : Subsystem("PowerDistribution") {
                         totalCurrent.setDouble(PDH.totalCurrent)
                         totalPower.setDouble(PDH.totalPower)
                         totalEnergy.setDouble(PDH.totalEnergy)
+                        batteryVoltage.setDouble(PDH.voltage)
                     } catch (ex: Exception) {
                         println("Exception when reading power: ${ex.message}")
                     }

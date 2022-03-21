@@ -36,7 +36,7 @@ object Intake : Subsystem("Intake") {
     var pivotDriverOffset
         get() = pivotDriverOffsetEntry.getDouble(0.0)
         set(value) { pivotDriverOffsetEntry.setDouble(value) }
-    var pivotOffset = if (isCompBot) /*-59.0*/ 159.7 else 165.0
+    var pivotOffset = if (isCompBot) 159.7 else 185.0
     val pivotEncoder = DutyCycleEncoder(if (isCompBot) DigitalSensors.INTAKE_PIVOT else DigitalSensors.INTAKE_PIVOT_PRACTICE)  // this encoder seems to give randomly changing answers - very naughty encoder
     var pivotAngle : Double = 0.0
         get() = (if (isCompBot) -1.0 else 1.0) * (pivotEncoder.absolutePosition * 360.0 / 0.944 + pivotOffset).degrees.wrap().asDegrees
@@ -59,7 +59,7 @@ object Intake : Subsystem("Intake") {
     const val INTAKE_POWER = 0.9
     const val PIVOT_BOTTOM = 0.0
     const val PIVOT_CATCH = 0.0
-    val PIVOT_INTAKE = if (isCompBot) 22.0 else 20.0
+    val PIVOT_INTAKE = if (isCompBot) 26.0 else 16.0
     val PIVOT_TOP = if (isCompBot) 103.0 else 98.0
 
 

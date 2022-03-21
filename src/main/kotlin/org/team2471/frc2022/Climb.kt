@@ -15,6 +15,7 @@ import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.radians
+import javax.swing.Action
 import kotlin.math.absoluteValue
 
 object Climb : Subsystem("Climb") {
@@ -29,6 +30,8 @@ object Climb : Subsystem("Climb") {
     val angleMotorEntry = table.getEntry("Angle Motor")
     val angleSetpointEntry = table.getEntry("Angle Setpoint")
     val robotRollEntry = table.getEntry("Roll")
+    val heightMotorOutput = table.getEntry("Height Output")
+    val angleMotorOutput = table.getEntry("Angle Output")
 
     var climbIsPrepped = false
     var climbStage = 0
@@ -73,8 +76,8 @@ object Climb : Subsystem("Climb") {
             field = value.coerceIn(ANGLE_BOTTOM, ANGLE_TOP)
             angleSetpointEntry.setDouble(field)
         }
-    val anglePDController = PDController(0.006, 0.002) //0.03, 0.0)
-    val angleFeedForward = if (climbIsPrepped || tuningMode) 0.06 else 0.0
+    val anglePDController = if (isCompBot) PDController(0.006, 0.002) else PDController(0.01, 0.002)//0.03, 0.0)
+    val angleFeedForward = if (climbIsPrepped || tuningMode) if (isCompBot) 0.06 else 0.2 else 0.0
     var isAngleMotorControlled = true
 
     init {
@@ -82,7 +85,9 @@ object Climb : Subsystem("Climb") {
             brakeMode()
             inverted(true)
             followersInverted(true)
-            feedbackCoefficient = if (isCompBot) {3.14 / 2048.0 / 9.38 * 30.0 / 25.0} else {3.14 / 2048.0 / 9.38 * 30.0 / 27.0}
+            feedbackCoefficient = if (isCompBot) {3.14 / 2048.0 / 9.38 * 30.0 / 25.0} else {
+                println("this is setting practive bot")
+                3.14 / 2048.0 / 9.38 * 30.0 / 26.0}
             pid {
                 p(0.00000002)
             }
@@ -116,6 +121,8 @@ object Climb : Subsystem("Climb") {
                     angleEntry.setDouble(angle)
                     angleMotorEntry.setDouble(angleMotor.position)
                     robotRollEntry.setDouble(roll)
+                    heightMotorOutput.setDouble(heightMotor.output)
+                    angleMotorOutput.setDouble(angleMotor.output)
                 }
         }
     }
@@ -149,7 +156,7 @@ object Climb : Subsystem("Climb") {
     }
     fun angleChangeTime(target: Double) : Double {
         val distance = (angle - target).absoluteValue
-        val rate = 30.0 / 1.0  // degrees per sec
+        val rate = 45.0 / 1.0  // degrees per sec
         return distance / rate
     }
 
@@ -181,9 +188,9 @@ object Climb : Subsystem("Climb") {
     }
 
     fun heightChangeTime(target: Double) : Double {
-        val distance = (height - target).absoluteValue
-        val rate = 15.0 / 1.0  // degrees per sec
-        return distance / rate
+        val distance = (height - target)
+        val rate = if (distance < 0.0) 40.0 else 20.0  // inches per sec
+        return distance.absoluteValue / rate
     }
 
     suspend fun changeHeight(target: Double, minTime: Double = 0.0) {
@@ -225,7 +232,7 @@ object Climb : Subsystem("Climb") {
             } else {
                 angleMotor.setPercentOutput(0.0)
             }
-            if (OI.operatorLeftTrigger > 0.1 ||OI.operatorRightTrigger > 0.1) {
+            if (OI.operatorLeftTrigger > 0.1 || OI.operatorRightTrigger > 0.1) {
                 setPower((OI.operatorLeftTrigger - OI.operatorRightTrigger) * 0.5)
             }
         }
