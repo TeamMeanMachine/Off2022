@@ -236,7 +236,7 @@ object AutoChooser {
             delay(0.5)
             println("current auto time is ${t.get()}")
             // go for close shot if we have at least 1.5 seconds left to shoot after running path
-            if (t.get() > 15.0 - (1.5 + auto["7.2 - Move Extra Close"].duration)) {
+            if (t.get() > 15.0 - (2.5 + auto["7.2 - Move Extra Close"].duration)) {
                 Drive.driveAlongPath(auto["7.1 - Move"], false)
             } else {
                 println("Going for close shot!!")
@@ -343,7 +343,6 @@ object AutoChooser {
                 Drive.driveAlongPath(auto["1- First Field Cargo"], true)
             })
             delay(1.0)
-            Shooter.rpmOffset = 300.0
             autoShoot()
         }
     }

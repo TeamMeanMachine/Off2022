@@ -29,7 +29,7 @@ object Feeder : Subsystem("Feeder") {
     val stageStatusEntry = table.getEntry("Mode")
     val isClearingEntry = table.getEntry("Clearing")
 
-    val SHOOTER_FEED_POWER = if (isCompBot) 0.7 else 1.0
+    val SHOOTER_FEED_POWER = if (isCompBot) 0.6 else 1.0
     val SHOOTER_STAGE_POWER = if (isCompBot) 0.5 else 1.0
 
     const val BED_FEED_POWER = 0.8
@@ -116,7 +116,7 @@ object Feeder : Subsystem("Feeder") {
                     }
                 } else if (!isAuto) {
                     if (Shooter.shootMode) {
-                        setShooterFeedPower(OI.driveRightTrigger)
+                        setShooterFeedPower(OI.driveRightTrigger * 0.9)
                         setBedFeedPower(0.0)
                         detectShots("notautofeed")
                     } else if (isClearing) {

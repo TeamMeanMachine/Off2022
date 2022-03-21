@@ -2,6 +2,8 @@ package org.team2471.frc2022
 
 import edu.wpi.first.math.filter.LinearFilter
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -48,18 +50,29 @@ object Limelight : Subsystem("Front Limelight") {
 
     private var angleOffsetEntry = Limelight.frontTable.getEntry("Angle Offset Entry")
 
-
+    enum class LimelightEnum {
+        AUTO, BACK, FRONT
+    }
+    val LimelightSelected : LimelightEnum
+        get() {
+            return LimelightEnum.valueOf(SmartDashboard.getString("LimelightSelection/selected", "auto").uppercase())
+        }
+    private val LimelightChooser = SendableChooser<String?>().apply {
+        setDefaultOption("AUTO", "auto")
+        addOption("BACK", "back")
+        addOption("FRONT", "front")
+    }
     val useFrontLimelight: Boolean
     get() {
         var angleFromCenter = Drive.position.angle.radians
         var isFacingShooter = (angleFromCenter - heading).wrap().asDegrees.absoluteValue >= 90.0  //if the robot is facing toward (angleFromCenter opposite from heading), don't use front
 //        println("isFacingShooter: $isFacingShooter   heading: ${heading.asDegrees.roundToInt()}    angleFromCenter: ${angleFromCenter.asDegrees.roundToInt()}     x: ${Drive.position.x.roundToInt()}     y: ${Drive.position.y.roundToInt()}")
-        return isFacingShooter
+        return if (LimelightSelected == LimelightEnum.AUTO) isFacingShooter else LimelightSelected != LimelightEnum.BACK
 //        return false
     }
 
     val distance: Length
-        get() = (9.0.feet - 32.0.inches) / (34.0.degrees + xTranslation.degrees).tan()
+        get() = (9.0.feet - 30.5.inches) / (34.0.degrees + xTranslation.degrees).tan()
 
     private val tempPIDTable = NetworkTableInstance.getDefault().getTable("fklsdajklfjsadlk;")
 
@@ -87,18 +100,13 @@ object Limelight : Subsystem("Front Limelight") {
 
     val position: Vector2
         get() {
-            val x = Drive.position.x
-            val y = Drive.position.y
-            var headingLimelight = heading
-            if ((y < 0.0 && !useFrontLimelight) || (y > 0.0 && useFrontLimelight)) {
-                headingLimelight += 180.0.degrees
+            var theta = heading.asDegrees + yTranslation
+            if (useFrontLimelight) {
+                theta += 180.0
             }
-            if ((x > 0.0 && y < 0.0) || (x < 0.0 && y > 0.0)) headingLimelight *= -1.0
-            println("headingLimelight: ${headingLimelight.asDegrees.roundToInt()}     Drive heading: ${Drive.heading}")
-            var addOrSubtract = if ((x > 0.0 && y < 0.0) || (x < 0.0 && y > 0.0)) -1.0 else 1.0
-            return Vector2(             //Vector2(0.0, 0.0) - Vector2(
-                (distance.asFeet * (headingLimelight + (addOrSubtract * yTranslation).degrees).sin()),
-                (distance.asFeet * (headingLimelight + (addOrSubtract * yTranslation).degrees).cos())
+            return Vector2(
+                (distance.asFeet * theta.degrees.sin()),
+                (distance.asFeet * theta.degrees.cos())
             )
         }
 
@@ -194,6 +202,8 @@ object Limelight : Subsystem("Front Limelight") {
         distanceEntry = combinedTable.getEntry("Distance")
         positionXEntry = combinedTable.getEntry("PositionX")
         positionYEntry = combinedTable.getEntry("PositionY")
+        SmartDashboard.putData("LimelightSelection", LimelightChooser)
+
 
         //        var i = -4.1
         //        while (i < 22.5) {

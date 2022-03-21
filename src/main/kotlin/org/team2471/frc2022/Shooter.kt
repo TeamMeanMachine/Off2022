@@ -29,7 +29,7 @@ import kotlin.math.absoluteValue
 
 
 object Shooter : Subsystem("Shooter") {
-    val tuningMode = false
+    val tuningMode = true
     val shootingMotor = MotorController(FalconID(Falcons.SHOOTER), FalconID(Falcons.SHOOTER_TWO)) //private
     val pitchMotor = MotorController(TalonID(Talons.PITCH))
     private val table = NetworkTableInstance.getDefault().getTable(name)
@@ -111,8 +111,8 @@ object Shooter : Subsystem("Shooter") {
             } else if (isKnownShot != knownShotType.NOTSET) {
                 field = when (isKnownShot) {
                     knownShotType.FENDER -> 15.0
-                    knownShotType.SAFE -> 25.0
-                    knownShotType.WALL -> 20.0
+                    knownShotType.SAFE -> 35.0
+                    knownShotType.WALL -> 35.0
                     else -> 15.0
                 }
             } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
@@ -161,16 +161,16 @@ object Shooter : Subsystem("Shooter") {
             } else if (isKnownShot != knownShotType.NOTSET) {
                 field = when (isKnownShot) {
                     knownShotType.FENDER -> 3200.0
-                    knownShotType.SAFE -> 4000.0
-                    knownShotType.WALL -> 3800.0
+                    knownShotType.SAFE -> 4200.0
+                    knownShotType.WALL -> 3450.0
                     else -> 3200.0
                 }
                 rpmSetpointEntry.setDouble(field)
             } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
-                field = backRPMCurve.getValue(Limelight.distance.asFeet)
+                field = backRPMCurve.getValue(Limelight.distance.asFeet) * backLLRPMOffset
                 rpmSetpointEntry.setDouble(field)
             } else if (Limelight.useFrontLimelight && Limelight.hasValidFrontTarget) {
-                field = frontRPMCurve.getValue(Limelight.distance.asFeet)
+                field = frontRPMCurve.getValue(Limelight.distance.asFeet) * frontLLRPMOffset
                 rpmSetpointEntry.setDouble(field)
             } else {
                 field = rpmSetpointEntry.getDouble(5000.0)
@@ -203,26 +203,9 @@ object Shooter : Subsystem("Shooter") {
 
     init {
         SmartDashboard.putData("KnownShot", knownShotChooser)
-        frontRPMOffsetEntry.setPersistent()
-        backRPMOffsetEntry.setPersistent()
-        frontPitchOffsetEntry.setPersistent()
-        backPitchOffsetEntry.setPersistent()
-        rpmSetpointEntry.setPersistent()
-//        pitchMotor.setBounds(2.50, 1.55, 1.50, 1.45, 0.50)
-        //right up against: 12.5
-//        pitchCurve.storeValue(5.0, 23.0)
-//        pitchCurve.storeValue(10.0, 32.0)
-//        pitchCurve.storeValue(15.0, 35.0)
-//        pitchCurve.storeValue(20.0, 35.0)
 
-        // 03/05 tuned
         backPitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
         frontPitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
-//        // start of 3/11 comp with no offset
-//        backPitchCurve.storeValue(5.0, 12.0)
-//        backPitchCurve.storeValue(10.0, 20.0)
-//        backPitchCurve.storeValue(15.0, 31.0)
-//        backPitchCurve.storeValue(20.0, 31.0)
 
         backPitchCurve.storeValue(5.0, -8.0)
         backPitchCurve.storeValue(10.0, -19.0)
@@ -232,31 +215,22 @@ object Shooter : Subsystem("Shooter") {
 
         frontPitchCurve.storeValue(5.0, 24.8)
         frontPitchCurve.storeValue(10.0, 31.8)
-        frontPitchCurve.storeValue(15.0, 33.0) //higher than max
-        frontPitchCurve.storeValue(20.0, 33.0) //higher than max
+        frontPitchCurve.storeValue(15.0, 36.0) //higher than max
+        frontPitchCurve.storeValue(20.0, 36.0) //higher than max
 
         backRPMCurve.setMarkBeginOrEndKeysToZeroSlope(false)
         frontRPMCurve.setMarkBeginOrEndKeysToZeroSlope(false)
 
-//        rpmCurve.storeValue(5.0, 3500.0)
-//        rpmCurve.storeValue(10.0, 3750.0)
-//        rpmCurve.storeValue(15.0, 4500.0)
-//        rpmCurve.storeValue(20.0, 5500.0)
-            //start of 3/11 comp with 520 offset at 5pm
-//        rpmCurve.storeValue(5.0, 3200.0)
-//        rpmCurve.storeValue(10.0, 3500.0)
-//        rpmCurve.storeValue(15.0, 4050.0)
-//        rpmCurve.storeValue(20.0, 5000.0)
         backRPMCurve.storeValue(5.0, 2800.0)
-        backRPMCurve.storeValue(10.0, 3200.0)
+        backRPMCurve.storeValue(10.0, 3300.0) //3200.0)
         backRPMCurve.storeValue(15.0, 4000.0)
         backRPMCurve.storeValue(20.0, 5200.0) // 5100.0)
         backRPMCurve.storeValue(25.0, 5650.0)
 
         frontRPMCurve.storeValue(5.0, 3200.0)
-        frontRPMCurve.storeValue(10.0, 3900.0)
-        frontRPMCurve.storeValue(15.0, 4700.0)
-        frontRPMCurve.storeValue(20.0, 6000.0)
+        frontRPMCurve.storeValue(10.0, 3600.0) //3900.0)
+        frontRPMCurve.storeValue(15.0, 4550.0)
+        frontRPMCurve.storeValue(20.0, 5800.0)
 
         shootingMotor.config {
             followersInverted(true)
@@ -292,11 +266,18 @@ object Shooter : Subsystem("Shooter") {
             frontRPMCurveEntry.setDoubleArray(doubleArrayOf(frontRPMCurve.getValue(5.0), frontRPMCurve.getValue(10.0), frontRPMCurve.getValue(15.0), frontRPMCurve.getValue(20.0)))
             backRPMCurveEntry.setDoubleArray(doubleArrayOf(backRPMCurve.getValue(5.0), backRPMCurve.getValue(10.0), backRPMCurve.getValue(15.0), backRPMCurve.getValue(20.0)))
 
+
+            frontRPMOffsetEntry.setPersistent()
+            backRPMOffsetEntry.setPersistent()
+            frontPitchOffsetEntry.setPersistent()
+            backPitchOffsetEntry.setPersistent()
+            rpmSetpointEntry.setPersistent()
+
             pitchSetpoint = pitch
             filter.calculate(pitch)
             periodic {
                 if (pitchIsReady && pitchPDEnable) {
-                    val power = pitchPDController.update(filter.calculate(pitchSetpoint) - pitch) + pitch.degrees.sin() * K_PITCH_FEED_FORWARD
+                    val power = pitchPDController.update(filter.calculate(pitchSetpoint) - pitch) + (pitch + 30.0) / 60.0 * (-0.05) + 0.1 // mapping (-30.0, 30.0) to (0.1, 0.05)
                     pitchSetPower(power)
 //                    println("pitchPower $power")
                 }
@@ -338,29 +319,29 @@ object Shooter : Subsystem("Shooter") {
                 }
                 if (OI.operatorController.dPad != Controller.Direction.UP && upPressed) {
                     upPressed = false
-                    changeRPMOffset(20.0)
+                    backLLRPMOffset += 0.01
                     println("up. hi.")
                 }
                 if (OI.operatorController.dPad != Controller.Direction.DOWN && downPressed) {
                     downPressed = false
-                    changeRPMOffset(-20.0)
+                    backLLRPMOffset -= 0.01
                     println("down. hi.")
                 }
                 pitchEntry.setDouble(pitch)
 
                 if (OI.operatorController.dPad == Controller.Direction.LEFT) {
                     leftPressed = true
-                } else if (OI.operatorController.dPad == Controller.Direction.DOWN) {
+                } else if (OI.operatorController.dPad == Controller.Direction.RIGHT) {
                     rightPressed = true
                 }
                 if (OI.operatorController.dPad != Controller.Direction.LEFT && leftPressed) {
                     leftPressed = false
-                    changePitchDriverOffset(-2.0)
+                    frontLLRPMOffset -= 0.01
                     println("left. hi.")
                 }
                 if (OI.operatorController.dPad != Controller.Direction.RIGHT && rightPressed) {
                     rightPressed = false
-                    changePitchDriverOffset(2.0)
+                    frontLLRPMOffset += 0.01
                     println("right. hi.")
                 }
 
@@ -415,31 +396,15 @@ object Shooter : Subsystem("Shooter") {
         }
     }
 
-    var rpmOffset: Double
-        get() = if (Limelight.useFrontLimelight) frontLLRPMOffset else backLLRPMOffset
-        set(value) {
-            if (Limelight.useFrontLimelight) {
-                frontLLRPMOffset = value
-                println("set frontLL to $value")
-            } else {
-                backLLRPMOffset = value
-                println("set backLL to $value")
-            }
-        }
-
-    fun changeRPMOffset(change: Double) {
-        rpmOffset = rpmOffset + change
-        println("setting rpmOffset to ${rpmOffset}")
-    }
-
-    var backLLRPMOffset: Double = 0.0
-        get() = backRPMOffsetEntry.getDouble(0.0)
+    var backLLRPMOffset: Double = 1.0
+        get() = backRPMOffsetEntry.getDouble(1.0)
         set(value) {
             field = value
             backRPMOffsetEntry.setDouble(value)
         }
-    var frontLLRPMOffset: Double = 0.0
-        get() = frontRPMOffsetEntry.getDouble(0.0)
+
+    var frontLLRPMOffset: Double = 1.0
+        get() = frontRPMOffsetEntry.getDouble(1.0)
         set(value) {
             field = value
             frontRPMOffsetEntry.setDouble(value)
@@ -503,7 +468,7 @@ suspend fun Shooter.pitchPowerTest() = use(this) {
             println("down power= ${power}")
         }
         pitchMotor.setPercentOutput(power)
-        //println("power= ${power}")
+//        println("power= ${power}")
     }
 }
 

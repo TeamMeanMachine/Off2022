@@ -96,7 +96,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     override var velocity = Vector2(0.0, 0.0)
 
-    override var position = Vector2(0.0, 0.0)
+    override var position = Vector2(0.0, -12.0)
 
     override var robotPivot = Vector2(0.0, 0.0)
 
@@ -194,10 +194,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     override suspend fun default() {
-//        val limelightTable = NetworkTableInstance.getDefault().getTable("limelight-front")
-//        val xEntry = limelightTable.getEntry("tx")
-//        val angleEntry = limelightTable.getEntry("ts")
-//        val table = NetworkTableInstance.getDefault().getTable(name)
         periodic {
             var turn = 0.0
             if (OI.driveRotation.absoluteValue > 0.001) {
@@ -205,19 +201,21 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             } else if (Limelight.hasValidTarget && (Shooter.shootMode || autoAim)) {
                 turn = aimPDController.update(Limelight.aimError)
 //                println("LimeLightAimError=${Limelight.aimError}")
+            } else if ((Shooter.shootMode || autoAim)) {
+                var error = (position.angle.degrees - heading).wrap()
+                if (error.asDegrees.absoluteValue > 90.0) error = (error - 180.0.degrees).wrap()
+                turn = aimPDController.update(error.asDegrees)
             }
 //            printEncoderValues()
 
             headingSetpoint = OI.driverController.povDirection
 
-//            if (!Feeder.isAuto && !Shooter.shootMode) {
-                drive(
-                    OI.driveTranslation * limitingFactor,
-                    turn * limitingFactor,
-                    SmartDashboard.getBoolean("Use Gyro", true) && !DriverStation.isAutonomous(),
-                    false
-                )
-//            }
+            drive(
+                OI.driveTranslation * limitingFactor,
+                turn * limitingFactor,
+                SmartDashboard.getBoolean("Use Gyro", true) && !DriverStation.isAutonomous(),
+                false
+            )
         }
     }
 
