@@ -6,7 +6,6 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.util.Timer
-import kotlin.concurrent.timer
 import kotlin.math.absoluteValue
 
 //Intake
@@ -37,7 +36,7 @@ suspend fun armUp() = use(Intake) {
     Feeder.autoFeedMode = false
     Intake.setIntakePower(0.0)
     Intake.intakeState = Intake.Mode.STOW
-    Intake.changeAngle(Intake.PIVOT_TOP)
+    Intake.changeAngle(Intake.PIVOT_STORE)
     Climb.climbMode = false
     Climb.climbIsPrepped = false
 }

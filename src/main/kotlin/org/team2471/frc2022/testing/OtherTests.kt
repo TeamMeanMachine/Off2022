@@ -27,7 +27,7 @@ suspend fun Shooter.pitchTest() = use(this) {
 
 suspend fun Climb.pivotTest() = use(this) {
     periodic {
-        angleSetPower(0.2)
+        angleSetPower((OI.driveRightTrigger - OI.driveLeftTrigger) * 0.4)
     }
 }
 
@@ -50,8 +50,8 @@ suspend fun Climb.anglePIDTest() = use(this){
 
 suspend fun Intake.pivotTest() = use(this) {
     periodic {
-        intakePivotMotor.setPercentOutput((OI.operatorRightTrigger - OI.operatorLeftTrigger) * 0.5)
-        println("pivotTest active")
+        intakePivotMotor.setPercentOutput((OI.driveRightTrigger - OI.driveLeftTrigger) * 0.5)
+        println("pivotTest active    ${(OI.driveRightTrigger - OI.driveLeftTrigger) * 0.5}")
     }
 }
 

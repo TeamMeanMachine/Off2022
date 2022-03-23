@@ -13,6 +13,7 @@ import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
+import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.degrees
@@ -36,10 +37,10 @@ object Intake : Subsystem("Intake") {
     var pivotDriverOffset
         get() = pivotDriverOffsetEntry.getDouble(0.0)
         set(value) { pivotDriverOffsetEntry.setDouble(value) }
-    var pivotOffset = if (isCompBot) 159.7 else 185.0
+    var pivotOffset = if (isCompBot) 0.0 else 185.0  //comp: 159.7   .0145
     val pivotEncoder = DutyCycleEncoder(if (isCompBot) DigitalSensors.INTAKE_PIVOT else DigitalSensors.INTAKE_PIVOT_PRACTICE)  // this encoder seems to give randomly changing answers - very naughty encoder
     var pivotAngle : Double = 0.0
-        get() = (if (isCompBot) -1.0 else 1.0) * (pivotEncoder.absolutePosition * 360.0 / 0.944 + pivotOffset).degrees.wrap().asDegrees
+        get() = (if (isCompBot) -1.0 else 1.0) * (((pivotEncoder.absolutePosition - 0.334) * 360.0 * 90.0 / 86.0) + pivotOffset).degrees.wrap().asDegrees
 
 //        get() = intakePivotMotor.position
 //        set(value) {
@@ -57,10 +58,11 @@ object Intake : Subsystem("Intake") {
         }
 
     const val INTAKE_POWER = 0.9
-    const val PIVOT_BOTTOM = 0.0
+    const val PIVOT_BOTTOM = -3.0
     const val PIVOT_CATCH = 0.0
-    val PIVOT_INTAKE = if (isCompBot) 26.0 else 16.0
-    val PIVOT_TOP = if (isCompBot) 103.0 else 98.0
+    val PIVOT_INTAKE = if (isCompBot) 19.5 else 16.0
+    val PIVOT_STORE = if (isCompBot) 95.0 else 98.0
+    val PIVOT_TOP = if (isCompBot) 110.0 else 98.0
 
 
 //    val button = DigitalInput(9)
@@ -81,14 +83,15 @@ object Intake : Subsystem("Intake") {
         pivotDriverOffsetEntry.getDouble(0.0)
         intakePivotMotor.config(20) {
             feedbackCoefficient =
-                360.0 / 2048.0 / 92.3 / 84.22 * 100.5 // degrees in a rotation, ticks per rotation, gear reduction (44:1 reduction)
+                360.0 / 2048.0 * 90.0 / 24118.9// degrees in a rotation, ticks per rotation
             brakeMode()
 //            inverted(true)
             pid {
                 p(0.0000030)
 //                d(0.00000005)
+//                f(0.04)
             }
-            currentLimit(40, 60, 1)
+            currentLimit(20, 30, 1)//40, 60, 1)
         }
         intakeMotor.config {
             coastMode()
@@ -271,3 +274,29 @@ object Intake : Subsystem("Intake") {
 
 
 }
+
+suspend fun Intake.powerTest() = use(this) {
+    var power = 0.0
+    var upPressed = false
+    var downPressed = false
+    periodic {
+        if (OI.driverController.dPad == Controller.Direction.UP) {
+            upPressed = true
+        } else if (OI.driverController.dPad == Controller.Direction.DOWN) {
+            downPressed = true
+        }
+        if (OI.driverController.dPad != Controller.Direction.UP && upPressed) {
+            upPressed = false
+            power += 0.001
+            println("up power= ${power}")
+        }
+        if (OI.driverController.dPad != Controller.Direction.DOWN && downPressed) {
+            downPressed = false
+            power -= 0.001
+            println("down power= ${power}")
+        }
+        intakePivotMotor.setPositionSetpoint(0.0, power)
+        println("power= ${power}")
+    }
+}
+

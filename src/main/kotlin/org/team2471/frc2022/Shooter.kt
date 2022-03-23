@@ -29,7 +29,7 @@ import kotlin.math.absoluteValue
 
 
 object Shooter : Subsystem("Shooter") {
-    val tuningMode = true
+    val tuningMode = false
     val shootingMotor = MotorController(FalconID(Falcons.SHOOTER), FalconID(Falcons.SHOOTER_TWO)) //private
     val pitchMotor = MotorController(TalonID(Talons.PITCH))
     private val table = NetworkTableInstance.getDefault().getTable(name)
