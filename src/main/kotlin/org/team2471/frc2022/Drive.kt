@@ -32,6 +32,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val odometer1Entry = table.getEntry("Odometer 1")
     val odometer2Entry = table.getEntry("Odometer 2")
     val odometer3Entry = table.getEntry("Odometer 3")
+
     val fieldObject = Field2d()
     val radarObject = Field2d()
 
@@ -133,6 +134,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     init {
         println("drive init")
         initializeSteeringMotors()
+        odometer0Entry.setPersistent()
+        odometer1Entry.setPersistent()
+        odometer2Entry.setPersistent()
+        odometer3Entry.setPersistent()
 
         GlobalScope.launch(MeanlibDispatcher) {
             println("in drive global scope")

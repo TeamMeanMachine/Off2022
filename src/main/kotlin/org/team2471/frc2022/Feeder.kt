@@ -81,6 +81,7 @@ object Feeder : Subsystem("Feeder") {
                         Status.ACTIVELY_SHOOTING -> {
                             setBedFeedPower(BED_FEED_POWER)
                             setShooterFeedPower(SHOOTER_FEED_POWER)
+                            Intake.setIntakePower(0.0)
                             detectShots("autoFeed")
                         }
                         Status.DUAL_STAGED -> {
