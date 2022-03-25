@@ -54,13 +54,15 @@ object Climb : Subsystem("Climb") {
     const val HEIGHT_PARTIAL_PULL = 15.0
     const val HEIGHT_BOTTOM_DETACH = 8.0
     const val HEIGHT_BOTTOM = 0.0
+    const val ANGLE_MIN = -3.9
+    const val ANGLE_MAX = 28.0
 
     val ANGLE_TOP = if (isCompBot) 33.5 else 36.0
     const val ANGLE_BOTTOM = -4.0
 
     val roll : Double
         get() = Drive.gyro.getRoll()
-    val angleOffset = if (isCompBot) -39.0 else 28.0
+    val angleOffset = if (isCompBot) -46.0 else 28.0
     val angleEncoderModifier = if (isCompBot) 1.0 else -1.0
 //    val angleAbsoluteRaw : Double
 //        get() = angleEncoder.absolutePosition
@@ -69,17 +71,17 @@ object Climb : Subsystem("Climb") {
 //    val angleRelative: Double
 //        get() = ((((angleEncoder.get() * angleEncoderModifier) - 0.05) * 37.0 / 0.13) + angleOffset).degrees.wrap().asDegrees
     val angle: Double
-        get() = angleMotor.position
-        // get() = ((((angleEncoder.absolutePosition * angleEncoderModifier) - 0.05) * 37.0 / 0.13) + angleOffset).degrees.wrap().asDegrees
+//        get() = angleMotor.position
+         get() = ((((angleEncoder.absolutePosition * angleEncoderModifier) - 0.05) * 37.0 / 0.13) + angleOffset).degrees.wrap().asDegrees
     var angleSetpoint = 0.0
         get() = angleSetpointEntry.getDouble(0.0)
         set(value) {
             field = value.coerceIn(ANGLE_BOTTOM, ANGLE_TOP)
             angleSetpointEntry.setDouble(field)
         }
-    val anglePDController = if (isCompBot) PDController(0.006, 0.002) else PDController(0.01, 0.002)//0.03, 0.0)
-    val angleFeedForward = if (climbIsPrepped || tuningMode) if (isCompBot) 0.06 else 0.2 else 0.0
-    var isAngleMotorControlled = true
+    val anglePDController = if (isCompBot) PDController(0.04, 0.002) else PDController(0.01, 0.002)//0.03, 0.0)    //0.006
+    val angleFeedForward = /*if (climbIsPrepped || tuningMode) */if (isCompBot) 0.1 else 0.2/* else 0.0*/ //compbot 0.09
+    var isAngleMotorControlled = false
 
     init {
         heightMotor.config {
@@ -94,7 +96,7 @@ object Climb : Subsystem("Climb") {
         angleMotor.config {
             coastMode()
             inverted(true)
-            feedbackCoefficient = (360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0 * (if (isCompBot) 34.0 / 40.0 else 39.0 / 26.0))
+            feedbackCoefficient = (360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0 * (if (isCompBot) (34.0 / 40.0) /* (32.0 / 17.0)*/ else 39.0 / 26.0))  //added a / 2.0 to compbot after mechanical change with same gear ratio?
             pid {
                 p(0.0000001)
             }
@@ -122,6 +124,14 @@ object Climb : Subsystem("Climb") {
                     robotRollEntry.setDouble(roll)
                     heightMotorOutput.setDouble(heightMotor.output)
                     angleMotorOutput.setDouble(angleMotor.output)
+
+                    if (climbMode) {
+                        val power = anglePDController.update(angleSetpoint - angle)
+                        angleSetPower(power + angleFeedForward)
+//                        println("pdController setting angle power to ${power + angleFeedForward}")
+                    } else {
+                        angleSetPower(0.0)
+                    }
                 }
         }
     }
@@ -212,7 +222,7 @@ object Climb : Subsystem("Climb") {
         } else {
             val power = anglePDController.update(angleSetpoint - angle)
             angleSetPower(power + angleFeedForward)
-            println("pdController setting angle power to ${power + angleFeedForward}")
+//            println("pdController setting angle power to ${power + angleFeedForward}")
         }
     }
 
@@ -220,16 +230,11 @@ object Climb : Subsystem("Climb") {
         periodic {
             if (tuningMode) {
                 println("is tuning mode")
-                updatePositions()
+//                updatePositions()
             } else if (OI.operatorLeftY.absoluteValue > 0.1 || OI.operatorRightY.absoluteValue > 0.1) {
                 heightSetpoint -= OI.operatorLeftY * 0.45
                 angleSetpoint += OI.operatorRightY * 0.2
-                updatePositions()
-//            } else if (Shooter.pitch > 19.0) {
-//                angleSetpoint = Shooter.pitch - 21.0
-//                updatePositions()
-            } else {
-                angleMotor.setPercentOutput(0.0)
+                heightMotor.setPositionSetpoint(heightSetpoint)
             }
             if (OI.operatorLeftTrigger > 0.1 || OI.operatorRightTrigger > 0.1) {
                 setPower((OI.operatorLeftTrigger - OI.operatorRightTrigger) * 0.5)

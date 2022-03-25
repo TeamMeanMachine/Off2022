@@ -2,6 +2,8 @@ package org.team2471.frc2022
 
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Transform2d
+import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.*
 import edu.wpi.first.wpilibj.smartdashboard.Field2d
@@ -26,8 +28,14 @@ import kotlin.math.absoluteValue
 @OptIn(DelicateCoroutinesApi::class)
 object Drive : Subsystem("Drive"), SwerveDrive {
 
+
+    val redCargoEntry = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable("Radar").getEntry("RedCargo")
+    val redFieldCargoEntry = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable("Field").getEntry("RedCargo")
     val table = NetworkTableInstance.getDefault().getTable(name)
     val navXGyroEntry = table.getEntry("NavX Gyro")
+    val blueCargoEntry = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable("Radar").getEntry("BlueCargo")
+    val blueFieldCargoEntry = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable("Field").getEntry("BlueCargo")
+
     val odometer0Entry = table.getEntry("Odometer 0")
     val odometer1Entry = table.getEntry("Odometer 1")
     val odometer2Entry = table.getEntry("Odometer 2")
@@ -185,6 +193,22 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 angleThreeEntry.setDouble((modules[3] as Module).analogAngle.asDegrees)
 //               println("XPos: ${position.x.feet} yPos: ${position.y.feet}")
                 fieldObject.robotPose = Pose2d(position.x.feet.asMeters+fieldCenterOffset.x, position.y.feet.asMeters+fieldCenterOffset.y, -Rotation2d((heading-90.0.degrees).asRadians))
+
+                val redCargo = redCargoEntry.getDoubleArray(emptyArray())
+                var redCargoOnField = ArrayList<Double>()
+
+                for (i in 0..redCargo.size) {
+                    if ((i + 1) % 3 != 0)
+                        continue
+
+                    val cargoWithBot = fieldObject.robotPose + Transform2d(Translation2d(redCargo[i-2], redCargo[i-1]), Rotation2d(gyro.angle.degrees.asRadians))
+                    redCargoOnField.add(cargoWithBot.x)
+                    redCargoOnField.add(cargoWithBot.y)
+                    redCargoOnField.add(0.0)
+                }
+
+                redFieldCargoEntry.setDoubleArray(redCargoOnField.toDoubleArray())
+
                 autoAim = autoAimEntry.getBoolean(false) || OI.driverController.a
 
                // println(gyro.getNavX().pitch.degrees)
