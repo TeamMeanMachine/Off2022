@@ -355,7 +355,7 @@ object Shooter : Subsystem("Shooter") {
                 stagedColorString = "$stagedColorString $isCargoAlignedWithAlliance ${colorSensor.proximity}"
                 colorEntry.setString(stagedColorString)
                 if (rpmBadShotAdjustment < 1.0) {
-                    println("intentional bad shot for $stagedColorString ${DriverStation.getAlliance()}")
+                    //println("intentional bad shot for $stagedColorString ${DriverStation.getAlliance()}")
                 }
                 // set rpm for shot
                 rpm = if (shootMode || tuningMode) rpmSetpoint * rpmBadShotAdjustment else 0.0

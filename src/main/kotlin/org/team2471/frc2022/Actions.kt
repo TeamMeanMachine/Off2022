@@ -40,6 +40,7 @@ suspend fun armUp() = use(Intake) {
     Climb.climbMode = false
     Climb.climbIsPrepped = false
 }
+
 suspend fun powerSave() = use(Intake) {
     Feeder.autoFeedMode = false
     Intake.setIntakePower(0.0)
@@ -78,13 +79,13 @@ suspend fun shootMode() = use(Shooter) {
     Limelight.frontLedEnabled = (Shooter.shootMode && Limelight.useFrontLimelight)
 }
 
-suspend fun autoShootv2(shotCount : Int = 2, maxWait: Double = 2.5) = use(Shooter, Feeder, Drive) {
+suspend fun autoShootv2(shotCount: Int = 2, maxWait: Double = 2.5) = use(Shooter, Feeder, Drive) {
     var doneShooting = false
     Feeder.autoFeedMode = true
     Shooter.shootMode = true
     val t = Timer()
     t.start()
-    parallel ({
+    parallel({
         println("autoshooting   usingFrontLL ${Limelight.useFrontLimelight} distance ${Limelight.distance}")
         suspendUntil { Shooter.allGood || doneShooting }  // Limelight.aimError.absoluteValue < Shooter.aimMaxError && Shooter.rpmError.absoluteValue < Shooter.rpmMaxError || doneShooting }
         suspendUntil { doneShooting }
@@ -100,7 +101,7 @@ suspend fun autoShootv2(shotCount : Int = 2, maxWait: Double = 2.5) = use(Shoote
         println("aimError = ${Limelight.aimError}")
     }, {
         Feeder.autoCargoShot = 0
-        suspendUntil {Feeder.autoCargoShot >= shotCount || doneShooting}
+        suspendUntil { Feeder.autoCargoShot >= shotCount || doneShooting }
         delay(0.1)
         if (!doneShooting) {
             println("doneShooting after ${Feeder.autoCargoShot} cargo in ${t.get()} seconds")
@@ -126,7 +127,7 @@ suspend fun autoShoot() = use(Shooter, Feeder, Drive) {
     var doneShooting = false
     var t = Timer()
     t.start()
-    parallel ({
+    parallel({
         println("autoshooting   usingFrontLL ${Limelight.useFrontLimelight} distance ${Limelight.distance}")
         Feeder.autoFeedMode = true
         Feeder.setBedFeedPower(Feeder.BED_FEED_POWER)
@@ -182,7 +183,7 @@ fun zeroIntakePivot() {
 //    }
 //    finally {
 //        println("finally has been reached")
-        Intake.setIntakePivotPower(0.0)
+    Intake.setIntakePivotPower(0.0)
 //        Intake.pivotAngle = 95.0
 //    }
 }
@@ -197,8 +198,12 @@ suspend fun shootTest2() = use(Shooter, Feeder) {
     }
 }
 
-suspend fun goToPose(targetPose: Pose, fullCurve : Boolean = false, minTime: Double = 0.0) = use(Climb, Intake) {
-    val time = if (fullCurve) {maxOf(minTime, Climb.angleChangeTime(targetPose.angle), Climb.heightChangeTime(targetPose.height))} else {minTime}
+suspend fun goToPose(targetPose: Pose, fullCurve: Boolean = false, minTime: Double = 0.0) = use(Climb, Intake) {
+    val time = if (fullCurve) {
+        maxOf(minTime, Climb.angleChangeTime(targetPose.angle), Climb.heightChangeTime(targetPose.height))
+    } else {
+        minTime
+    }
     println("Pose Values: $time ${targetPose.height} ${targetPose.angle}")
     parallel({
         Climb.changeHeight(targetPose.height, time)
@@ -212,7 +217,7 @@ suspend fun climbPrep() = use(Climb, Shooter, Intake) {
     Climb.climbMode = true
     Climb.setStatusFrames(forClimb = true)
     Climb.changeAngle(8.0, 0.3)
-    parallel ({
+    parallel({
         Intake.changeAngle(Intake.PIVOT_BOTTOM)
     }, {
         Shooter.changeAngle(Shooter.PITCH_LOW)
@@ -220,12 +225,12 @@ suspend fun climbPrep() = use(Climb, Shooter, Intake) {
     goToPose(Pose.CLIMB_PREP)
     Climb.climbIsPrepped = true
     println("climb is prepped")
-    suspendUntil {OI.operatorRightTrigger > 0.1 || OI.operatorLeftTrigger > 0.1}
+    suspendUntil { OI.operatorRightTrigger > 0.1 || OI.operatorLeftTrigger > 0.1 }
     performClimb(OI.operatorLeftTrigger > 0.1)
 }
 
 
-suspend fun performClimb(traverseClimb:Boolean = true) = use(Climb, Intake) {
+suspend fun performClimb(traverseClimb: Boolean = true) = use(Climb, Intake) {
     println("trying to start climb")
     if (Climb.climbIsPrepped) {
         //println("Climb stage executing: ${Climb.climbStage} roll: ${Climb.roll}")
@@ -246,6 +251,7 @@ suspend fun performClimb(traverseClimb:Boolean = true) = use(Climb, Intake) {
                         }
                         1 -> {
                             goToPose(Pose.PULL_UP_LATCH, true)
+                            delay(0.1)
                             goToPose(Pose.PULL_UP_LATCH_LIFT, false, 0.45)
                             goToPose(Pose.PULL_UP_LATCH_RELEASE, true)
                             if (loop == 0) {
@@ -263,45 +269,48 @@ suspend fun performClimb(traverseClimb:Boolean = true) = use(Climb, Intake) {
 //                            if (loop == 0) {
 //                                delay(0.5)
 //                            } else {
-//                                val angleTimer = Timer()
-//                                var hit25 = false
-//                                angleTimer.start()
-//                                periodic {
-//                                    if (!hit25 && Climb.roll > 25.0) {
-//                                        hit25 = true
-//                                        println("hit 30, angle ${Climb.angle}")
-//                                    }
-//                                    if (lasTroll - Climb.roll > 0.0 && (Climb.angle > 25.0 || Climb.roll < 15.0)) {
-//                                        println("Angle ${angleTimer.get()} Roll ${Climb.roll}")
-//                                        stop()
-//                                    }
-//                                    lasTroll = Climb.roll
-//                                }
+                                val angleTimer = Timer()
+                                var hit25 = false
+                                angleTimer.start()
+                                periodic {
+                                    if (!hit25 && Climb.roll > 25.0) {
+                                        hit25 = true
+                                        println("hit 30, angle ${Climb.angle}")
+                                    }
+                                    if (lasTroll - Climb.roll > 0.0 && (Climb.angle > 25.0 || Climb.roll < 15.0)) {
+                                        println("Angle ${angleTimer.get()} Roll ${Climb.roll}")
+                                        stop()
+                                    }
+                                    lasTroll = Climb.roll
+                                }
 //                            }
-//                        }
-//                        3 -> goToPose(Pose.TRAVERSE_ENGAGE)
-//                        4 -> goToPose(Pose.TRAVERSE_PULL_MID)
-//                        5 -> goToPose(Pose.TRAVERSE_PULL_UP)
-
-//                        else -> println("Climb Stage Complete")
                         }
+                        3 -> {
+                            goToPose(Pose.TRAVERSE_ENGAGE)
+                            delay(0.1)
+                        }
+                        4 -> goToPose(Pose.TRAVERSE_PULL_MID)
+                        5 -> goToPose(Pose.TRAVERSE_PULL_UP)
+
+                        else -> println("Climb Stage Complete")
                     }
                 }
                 Climb.climbStage += 1
             }
-            loop +=1
         }
-        OI.operatorController.rumble = 0.0
-        println("done with start climb")
+        loop += 1
     }
+    OI.operatorController.rumble = 0.0
+    println("done with start climb")
 }
+
 
 //suspend fun midClimb()
 
 suspend fun clearFeeder() = use(Feeder) {
     println("clearing out feeder and Intake")
     //val currFeedMode = Feeder.autoFeedMode
-   // Feeder.autoFeedMode = false
+    // Feeder.autoFeedMode = false
     Feeder.isClearing = true
 //    Feeder.setBedFeedPower(-Feeder.BED_FEED_POWER)
 //    Feeder.setShooterFeedPower(-Feeder.SHOOTER_FEED_POWER)
