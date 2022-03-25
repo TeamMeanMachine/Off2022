@@ -12,7 +12,7 @@ import kotlin.math.absoluteValue
 
 
 suspend fun intake() = use(Intake) {
-    Intake.resetPivotOffset()
+//    Intake.resetPivotOffset()
     Feeder.autoFeedMode = true
     Intake.setIntakePower(Intake.INTAKE_POWER)
     Intake.intakeState = Intake.Mode.INTAKE
@@ -22,7 +22,7 @@ suspend fun intake() = use(Intake) {
 }
 
 suspend fun catch() = use(Intake) {
-    Intake.resetPivotOffset()
+//    Intake.resetPivotOffset()
     Feeder.autoFeedMode = true
     Intake.setIntakePower(0.0)
     Intake.intakeState = Intake.Mode.CATCH
@@ -32,7 +32,7 @@ suspend fun catch() = use(Intake) {
 }
 
 suspend fun armUp() = use(Intake) {
-    Intake.resetPivotOffset()
+//    Intake.resetPivotOffset()
     Feeder.autoFeedMode = false
     Intake.setIntakePower(0.0)
     Intake.intakeState = Intake.Mode.STOW
@@ -41,7 +41,6 @@ suspend fun armUp() = use(Intake) {
     Climb.climbIsPrepped = false
 }
 suspend fun powerSave() = use(Intake) {
-    Intake.resetPivotOffset()
     Feeder.autoFeedMode = false
     Intake.setIntakePower(0.0)
     Intake.intakeState = Intake.Mode.POWERSAVE
@@ -49,6 +48,7 @@ suspend fun powerSave() = use(Intake) {
     Intake.changeAngle(Intake.PIVOT_BOTTOM)
     Climb.climbMode = false
     Climb.climbIsPrepped = false
+    Intake.resetPivotOffset()
 }
 
 suspend fun feedUntilCargo() = use(Intake, Feeder) {
@@ -86,7 +86,7 @@ suspend fun autoShootv2(shotCount : Int = 2, maxWait: Double = 2.5) = use(Shoote
     t.start()
     parallel ({
         println("autoshooting   usingFrontLL ${Limelight.useFrontLimelight} distance ${Limelight.distance}")
-        suspendUntil { Limelight.aimError.absoluteValue < 2.0 && Shooter.rpmError.absoluteValue < 300.0 || doneShooting }
+        suspendUntil { Shooter.allGood || doneShooting }  // Limelight.aimError.absoluteValue < Shooter.aimMaxError && Shooter.rpmError.absoluteValue < Shooter.rpmMaxError || doneShooting }
         suspendUntil { doneShooting }
         Shooter.shootMode = false
     }, {
@@ -169,13 +169,6 @@ suspend fun autoShoot() = use(Shooter, Feeder, Drive) {
     })
 }
 
-suspend fun intakePivotTest() = use(Intake) {
-//    zeroIntakePivot()
-    periodic {
-        Intake.setIntakePivotPower(OI.driveLeftTrigger - OI.driveRightTrigger)
-    }
-}
-
 fun zeroIntakePivot() {
 //    try {
 //        println("reinitializing pivot motor position")
@@ -240,7 +233,7 @@ suspend fun performClimb(traverseClimb:Boolean = true) = use(Climb, Intake) {
         var loop = 0
         var maxLoop = if (traverseClimb) 2 else 1
         var lasTroll = Climb.roll
-        while (loop < 2) {
+        while (loop < maxLoop) {
             Climb.climbStage = 0
             while (Climb.climbStage < 6) {
                 if (OI.operatorRightTrigger > 0.1 || OI.operatorLeftTrigger > 0.1) {
@@ -267,30 +260,31 @@ suspend fun performClimb(traverseClimb:Boolean = true) = use(Climb, Intake) {
                         }
                         2 -> {
                             goToPose(Pose.EXTEND_HOOKS)
-                            if (loop == 0) {
-                                delay(0.5)
-                            } else {
-                                val angleTimer = Timer()
-                                var hit25 = false
-                                angleTimer.start()
-                                periodic {
-                                    if (!hit25 && Climb.roll > 25.0) {
-                                        hit25 = true
-                                        println("hit 30, angle ${Climb.angle}")
-                                    }
-                                    if (lasTroll - Climb.roll > 0.0 && (Climb.angle > 25.0 || Climb.roll < 15.0)) {
-                                        println("Angle ${angleTimer.get()} Roll ${Climb.roll}")
-                                        stop()
-                                    }
-                                    lasTroll = Climb.roll
-                                }
-                            }
-                        }
-                        3 -> goToPose(Pose.TRAVERSE_ENGAGE)
-                        4 -> goToPose(Pose.TRAVERSE_PULL_LITTLE)
-                        5 -> goToPose(Pose.TRAVERSE_PULL_UP)
+//                            if (loop == 0) {
+//                                delay(0.5)
+//                            } else {
+//                                val angleTimer = Timer()
+//                                var hit25 = false
+//                                angleTimer.start()
+//                                periodic {
+//                                    if (!hit25 && Climb.roll > 25.0) {
+//                                        hit25 = true
+//                                        println("hit 30, angle ${Climb.angle}")
+//                                    }
+//                                    if (lasTroll - Climb.roll > 0.0 && (Climb.angle > 25.0 || Climb.roll < 15.0)) {
+//                                        println("Angle ${angleTimer.get()} Roll ${Climb.roll}")
+//                                        stop()
+//                                    }
+//                                    lasTroll = Climb.roll
+//                                }
+//                            }
+//                        }
+//                        3 -> goToPose(Pose.TRAVERSE_ENGAGE)
+//                        4 -> goToPose(Pose.TRAVERSE_PULL_MID)
+//                        5 -> goToPose(Pose.TRAVERSE_PULL_UP)
 
-                        else -> println("Climb Stage Complete")
+//                        else -> println("Climb Stage Complete")
+                        }
                     }
                 }
                 Climb.climbStage += 1

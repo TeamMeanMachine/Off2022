@@ -225,11 +225,9 @@ object AutoChooser {
             parallel({
                 delay(0.25)
                 Intake.setIntakePower(0.0)
-                     },
-                {
-                    autoShootv2(2, 2.5)
-                }
-            )
+            }, {
+                autoShootv2(2, 2.5)
+            })
             println("getting 3rd batch")
             Intake.setIntakePower(Intake.INTAKE_POWER)
             Drive.driveAlongPath(auto["6 - Grab balls"], false)

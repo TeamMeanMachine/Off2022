@@ -51,6 +51,7 @@ object Climb : Subsystem("Climb") {
 
     const val HEIGHT_TOP = 32.0
     const val HEIGHT_VERTICAL_TOP = 25.5
+    const val HEIGHT_PARTIAL_PULL = 15.0
     const val HEIGHT_BOTTOM_DETACH = 8.0
     const val HEIGHT_BOTTOM = 0.0
 
@@ -85,9 +86,7 @@ object Climb : Subsystem("Climb") {
             brakeMode()
             inverted(true)
             followersInverted(true)
-            feedbackCoefficient = if (isCompBot) {3.14 / 2048.0 / 9.38 * 30.0 / 25.0} else {
-                println("this is setting practive bot")
-                3.14 / 2048.0 / 9.38 * 30.0 / 26.0}
+            feedbackCoefficient = 3.14 / 2048.0 / 9.38 * 30.0 / 25.0  //3.14 / 2048.0 / 9.38 * 30.0 / 26.0
             pid {
                 p(0.00000002)
             }

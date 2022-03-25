@@ -26,7 +26,12 @@ import kotlin.math.absoluteValue
 @OptIn(DelicateCoroutinesApi::class)
 object Drive : Subsystem("Drive"), SwerveDrive {
 
-    val navXGyroEntry = NetworkTableInstance.getDefault().getTable(name).getEntry("NavX Gyro")
+    val table = NetworkTableInstance.getDefault().getTable(name)
+    val navXGyroEntry = table.getEntry("NavX Gyro")
+    val odometer0Entry = table.getEntry("Odometer 0")
+    val odometer1Entry = table.getEntry("Odometer 1")
+    val odometer2Entry = table.getEntry("Odometer 2")
+    val odometer3Entry = table.getEntry("Odometer 3")
     val fieldObject = Field2d()
     val radarObject = Field2d()
 
@@ -44,7 +49,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             Vector2(-11.5, 14.0),
             (45.0).degrees,
             AnalogSensors.SWERVE_FRONT_LEFT,
-            1.0 //0.0 is totally worn out and 1.0 is fresh new tread
+            1.0, //0.0 is totally worn out and 1.0 is fresh new tread
+            odometer0Entry.getDouble(0.0)
         ),
         Module(
             MotorController(FalconID(Falcons.DRIVE_FRONTRIGHT)),
@@ -52,7 +58,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             Vector2(11.5, 14.0),
             (135.0).degrees,
             AnalogSensors.SWERVE_FRONT_RIGHT,
-            1.0 //0.0 is totally worn out and 1.0 is fresh new tread
+            1.0, //0.0 is totally worn out and 1.0 is fresh new tread
+            odometer1Entry.getDouble(0.0)
         ),
         Module(
             MotorController(FalconID(Falcons.DRIVE_BACKRIGHT)),
@@ -60,7 +67,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             Vector2(11.5, -14.0),
             (-135.0).degrees,
             AnalogSensors.SWERVE_BACK_RIGHT,
-            1.0 //0.0 is totally worn out and 1.0 is fresh new tread
+            1.0, //0.0 is totally worn out and 1.0 is fresh new tread
+            odometer2Entry.getDouble(0.0)
         ),
         Module(
             MotorController(FalconID(Falcons.DRIVE_BACKLEFT)),
@@ -68,9 +76,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             Vector2(-11.5, -14.0),
             (-45.0).degrees,
             AnalogSensors.SWERVE_BACK_LEFT,
-            1.0 //0.0 is totally worn out and 1.0 is fresh new treadK
+            1.0, //0.0 is totally worn out and 1.0 is fresh new treadK
+            odometer3Entry.getDouble(0.0)
         )
-
     )
 
     //    val gyro: Gyro? = null
@@ -112,7 +120,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         kHeadingFeedForward = 0.001
     )
 
-    override val carpetFlow = Vector2(0.0, 1.0)
+    override val carpetFlow = if (DriverStation.getAlliance() == DriverStation.Alliance.Red) Vector2(0.0, 1.0) else Vector2(0.0, -1.0)
     override val kCarpet = 1.0 / 40.0 //to take out, make 0.0
     override val kTread = 0.0//5 //how much of an effect treadWear has
 
@@ -128,7 +136,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
         GlobalScope.launch(MeanlibDispatcher) {
             println("in drive global scope")
-            val table = NetworkTableInstance.getDefault().getTable(name)
 
             val headingEntry = table.getEntry("Heading")
             val xEntry = table.getEntry("X")
@@ -281,7 +288,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         override val modulePosition: Vector2,
         override val angleOffset: Angle,
         private val analogAnglePort: Int,
-        override val treadWear: Double
+        override val treadWear: Double,
+        override var odometer: Double
     ) : SwerveDrive.Module {
         companion object {
             private const val ANGLE_MAX = 983

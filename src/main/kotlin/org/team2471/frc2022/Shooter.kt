@@ -44,8 +44,8 @@ object Shooter : Subsystem("Shooter") {
             return knownShotType.valueOf(SmartDashboard.getString("KnownShot/selected", "notset").uppercase())
         }
     const val aimMaxError = 3.0
-    const val rpmMaxError = 500.0
-    const val pitchMaxError = 5.0
+    const val rpmMaxError = 300.0
+    const val pitchMaxError = 3.0
 
     enum class knownShotType {
         NOTSET, FENDER, WALL, SAFE
@@ -159,7 +159,7 @@ object Shooter : Subsystem("Shooter") {
             if (tuningMode) {
                 field = rpmSetpointEntry.getDouble(5000.0)
             } else if (isKnownShot != knownShotType.NOTSET) {
-                field = when (isKnownShot) {
+                field =  frontLLRPMOffset * when (isKnownShot) {
                     knownShotType.FENDER -> 3200.0
                     knownShotType.SAFE -> 4200.0
                     knownShotType.WALL -> 3450.0
@@ -351,7 +351,7 @@ object Shooter : Subsystem("Shooter") {
                     BLUE -> "blue"
                     else -> "notset"
                 }
-                val rpmBadShotAdjustment = 1.0 //if (isCargoAlignedWithAlliance) 1.0 else if (pitch > 0) 0.4 else 0.1
+                val rpmBadShotAdjustment = if (isCargoAlignedWithAlliance) 1.0 else if (pitch > 0) 0.4 else 0.1
                 stagedColorString = "$stagedColorString $isCargoAlignedWithAlliance ${colorSensor.proximity}"
                 colorEntry.setString(stagedColorString)
                 if (rpmBadShotAdjustment < 1.0) {

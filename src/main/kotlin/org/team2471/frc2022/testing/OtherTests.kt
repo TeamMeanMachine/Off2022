@@ -1,15 +1,10 @@
 package org.team2471.frc2022.testing
 
-import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.periodic
+import org.team2471.frc.lib.coroutines.suspendUntil
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller
-import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.round
-import org.team2471.frc.lib.motion.following.SwerveDrive
-import org.team2471.frc.lib.motion.following.drive
-import org.team2471.frc.lib.motion.following.steerToAngle
-import org.team2471.frc.lib.units.degrees
 import org.team2471.frc2022.*
 
 suspend fun Feeder.motorTest() = use(this) {
@@ -105,4 +100,11 @@ suspend fun Drive.currentTest() = use(this) {
 }
 
 suspend fun systemsCheck() = use(Intake, Feeder, Shooter, Climb, Limelight) {
+}
+
+suspend fun climbPoseTest() = use(Climb) {
+    println("in climbPoseTest")
+    goToPose(Pose.TRAVERSE_PULL_MID)
+    suspendUntil{ OI.operatorController.x }
+    println("x pressed")
 }

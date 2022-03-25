@@ -7,6 +7,8 @@ import edu.wpi.first.wpilibj.RobotBase
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.team2471.frc.lib.framework.MeanlibRobot
 import org.team2471.frc.lib.units.degrees
+import org.team2471.frc2022.testing.climbPoseTest
+import org.team2471.frc2022.testing.motorTest
 import org.team2471.frc2022.testing.pivotTest
 import java.net.NetworkInterface
 
@@ -87,7 +89,7 @@ object Robot : MeanlibRobot() {
 
     override suspend fun test()  {
         println("test mode begin. Hi.")
-        Intake.powerTest()
+        Climb.motorTest()
     }
 
 
