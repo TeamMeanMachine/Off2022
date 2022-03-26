@@ -12,6 +12,7 @@ import org.team2471.frc.lib.actuators.TalonID
 import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
+import kotlin.math.roundToInt
 
 
 object Feeder : Subsystem("Feeder") {
@@ -71,6 +72,9 @@ object Feeder : Subsystem("Feeder") {
                     Shooter.cargoIsStaged && Feeder.cargoIsStaged -> Status.DUAL_STAGED
                     Shooter.cargoIsStaged -> Status.SINGLE_STAGED
                     else -> Status.EMPTY
+                }
+                if (currentFeedStatus == Status.ACTIVELY_SHOOTING) {
+                    println("autoshot! allGood rpmError: ${Shooter.rpmError.roundToInt()}")
                 }
                 stageStatusEntry.setString(currentFeedStatus.name)
                 feedUseFrontLimelightEntry.setBoolean(Limelight.useFrontLimelight)

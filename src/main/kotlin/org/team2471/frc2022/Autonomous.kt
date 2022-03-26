@@ -205,7 +205,7 @@ object AutoChooser {
             Drive.heading = firstAuto.headingCurve.getValue(0.0).degrees
             println("auto started - shooting first ball from ${Drive.position} angle: ${Drive.heading}")
             parallel({
-                autoShootv2(1, 3.0)
+                autoShootv2(1, 3.5)
             }, {
                 powerSave()
                 Feeder.autoFeedMode = true
@@ -335,13 +335,22 @@ object AutoChooser {
         if (auto != null) {
             Limelight.backLedEnabled = true
             parallel({
-                Intake.changeAngle(Intake.PIVOT_INTAKE)
-                Intake.setIntakePower(Intake.INTAKE_POWER)
+                autoShootv2(1, 4.0)
+            }, {
+                powerSave()
+                Feeder.autoFeedMode = true
+            })
+            parallel({
+                intake()
             }, {
                 Drive.driveAlongPath(auto["1- First Field Cargo"], true)
             })
             delay(1.0)
-            autoShoot()
+            parallel({
+                autoShootv2(1, 4.0)
+            }, {
+                Intake.setIntakePower(0.0)
+            })
         }
     }
 //
