@@ -7,11 +7,14 @@ import edu.wpi.first.wpilibj.DutyCycleEncoder
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.com.google.common.math.DoubleMath.roundToInt
 import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.actuators.TalonID
 import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
+import org.team2471.frc.lib.math.round
+import kotlin.math.roundToInt
 
 
 object Feeder : Subsystem("Feeder") {
@@ -39,6 +42,7 @@ object Feeder : Subsystem("Feeder") {
     var isClearing = false
     var cargoWasStaged = Shooter.cargoIsStaged
     var autoCargoShot = 0
+    var waitASecond = false
 
     enum class Status {
         EMPTY,
@@ -65,12 +69,15 @@ object Feeder : Subsystem("Feeder") {
 //                println("feeder curr ${shooterFeedMotor.current}")
 
                 currentFeedStatus = when {
-                    isAuto && Shooter.allGood -> Status.ACTIVELY_SHOOTING
+                    isAuto && Shooter.allGood && !waitASecond -> Status.ACTIVELY_SHOOTING
                     Shooter.shootMode && OI.driveRightTrigger > 0.1 -> Status.ACTIVELY_SHOOTING
                     isClearing -> Status.CLEARING
                     Shooter.cargoIsStaged && Feeder.cargoIsStaged -> Status.DUAL_STAGED
                     Shooter.cargoIsStaged -> Status.SINGLE_STAGED
                     else -> Status.EMPTY
+                }
+                if (currentFeedStatus == Status.ACTIVELY_SHOOTING) {
+                    println("autoshot! allGood rpmError: ${Shooter.rpmError.roundToInt()}    pitch: ${round(Shooter.pitchSetpoint - Shooter.pitch, 2)} aim: ${round(Limelight.aimError, 2)}")
                 }
                 stageStatusEntry.setString(currentFeedStatus.name)
                 feedUseFrontLimelightEntry.setBoolean(Limelight.useFrontLimelight)
