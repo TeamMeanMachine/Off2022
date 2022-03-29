@@ -335,13 +335,18 @@ object AutoChooser {
         if (auto != null) {
             Limelight.backLedEnabled = true
             parallel({
-                Intake.changeAngle(Intake.PIVOT_INTAKE)
-                Intake.setIntakePower(Intake.INTAKE_POWER)
+                autoShootv2()
+            }, {
+                powerSave()
+                Feeder.autoFeedMode = true
+            })
+            parallel({
+                intake()
             }, {
                 Drive.driveAlongPath(auto["1- First Field Cargo"], true)
             })
             delay(1.0)
-            autoShoot()
+            autoShootv2()
         }
     }
 //
