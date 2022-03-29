@@ -61,8 +61,9 @@ object Intake : Subsystem("Intake") {
     const val INTAKE_POWER = 0.9
     const val PIVOT_BOTTOM = -3.0
     const val PIVOT_CATCH = 0.0
-  
-    val PIVOT_INTAKE = if (isCompBot) 26.5 else 16.0
+
+    val PIVOT_INTAKE
+        get() = if (isCompBot) intakePresetEntry.getDouble(26.5) else 16.0
     val PIVOT_STORE = if (isCompBot) 95.0 else 98.0
     val PIVOT_TOP = if (isCompBot) 110.0 else 98.0
 
@@ -84,8 +85,8 @@ object Intake : Subsystem("Intake") {
     var intakeState = Mode.STOW
     init {
         pivotDriverOffsetEntry.getDouble(0.0)
-        intakePresetEntry.setDouble(25.0)
-        intakePresetEntry.getDouble(PIVOT_INTAKE)
+        intakePresetEntry.setDouble(26.5)
+        intakePresetEntry.getDouble(26.5)
         intakePivotMotor.config(20) {
             feedbackCoefficient =
                 360.0 / 2048.0 * 90.0 / 24118.9// degrees in a rotation, ticks per rotation
@@ -104,7 +105,7 @@ object Intake : Subsystem("Intake") {
         }
 
         GlobalScope.launch(MeanlibDispatcher) {
-//            intakePresetEntry.setPersistent()
+            intakePresetEntry.setPersistent()
             parallel({
             periodic {
                 if (pivotEncoder.isConnected && pivotAngle > (PIVOT_BOTTOM - 1.0) && pivotAngle < (PIVOT_TOP + 1.0)) {

@@ -361,7 +361,8 @@ object AutoChooser {
         if (auto != null) {
             Limelight.backLedEnabled = true
             parallel({
-                autoShootv2()
+                autoShootv2(1, 4.0)
+
             }, {
                 powerSave()
                 Feeder.autoFeedMode = true
@@ -372,7 +373,11 @@ object AutoChooser {
                 Drive.driveAlongPath(auto["1- First Field Cargo"], true)
             })
             delay(1.0)
-            autoShootv2()
+            parallel({
+                autoShootv2(1, 4.0)
+            }, {
+                Intake.setIntakePower(0.0)
+            })
         }
     }
 

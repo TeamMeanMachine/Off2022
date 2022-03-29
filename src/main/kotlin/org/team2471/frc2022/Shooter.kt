@@ -45,10 +45,12 @@ object Shooter : Subsystem("Shooter") {
     const val aimMaxError = 3.0
     const val rpmMaxError = 200.0
     const val pitchMaxError = 2.5
-    var autoOdomPitch = 0.0
-        get() = backPitchCurve.getValue(sqrt(square(Drive.position.x) + square(Drive.position.y)))
-    var autoOdomRPM = 0.0
-        get() = backRPMCurve.getValue(sqrt(square(Drive.position.x) + square(Drive.position.y)))
+
+//    var autoOdomPitch = 0.0
+//        get() = backPitchCurve.getValue(sqrt(square(Drive.position.x) + square(Drive.position.y)))
+//    var autoOdomRPM = 0.0
+//        get() = backRPMCurve.getValue(sqrt(square(Drive.position.x) + square(Drive.position.y)))
+
     enum class knownShotType {
         NOTSET, FENDER, WALL, SAFE
     }

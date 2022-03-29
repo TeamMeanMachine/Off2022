@@ -14,6 +14,7 @@ import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.round
+
 import kotlin.math.roundToInt
 
 
@@ -38,7 +39,9 @@ object Feeder : Subsystem("Feeder") {
     const val BED_FEED_POWER = 0.8
 
     val isAuto : Boolean
-        get() = DriverStation.isAutonomous()
+        get() {
+            return DriverStation.isAutonomous()
+        }
     var isClearing = false
     var cargoWasStaged = Shooter.cargoIsStaged
     var autoCargoShot = 0
