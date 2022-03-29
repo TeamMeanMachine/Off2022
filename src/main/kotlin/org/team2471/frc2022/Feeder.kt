@@ -36,7 +36,9 @@ object Feeder : Subsystem("Feeder") {
     const val BED_FEED_POWER = 0.8
 
     val isAuto : Boolean
-        get() = DriverStation.isAutonomous()
+        get() {
+            return DriverStation.isAutonomous()
+        }
     var isClearing = false
     var cargoWasStaged = Shooter.cargoIsStaged
     var autoCargoShot = 0

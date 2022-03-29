@@ -2,6 +2,7 @@ package org.team2471.frc2022
 
 import edu.wpi.first.math.filter.LinearFilter
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -67,8 +68,15 @@ object Limelight : Subsystem("Front Limelight") {
         var angleFromCenter = Drive.position.angle.radians
         var isFacingShooter = (angleFromCenter - heading).wrap().asDegrees.absoluteValue >= 90.0  //if the robot is facing toward (angleFromCenter opposite from heading), don't use front
 //        println("isFacingShooter: $isFacingShooter   heading: ${heading.asDegrees.roundToInt()}    angleFromCenter: ${angleFromCenter.asDegrees.roundToInt()}     x: ${Drive.position.x.roundToInt()}     y: ${Drive.position.y.roundToInt()}")
-        return if (LimelightSelected == LimelightEnum.AUTO) isFacingShooter else LimelightSelected != LimelightEnum.BACK
-//        return false
+        var returnThis = false
+        if (DriverStation.isAutonomous()) {
+            returnThis = false
+        } else if (LimelightSelected == LimelightEnum.AUTO) {
+            returnThis = isFacingShooter
+        } else {
+            LimelightSelected != LimelightEnum.BACK
+        }
+        return returnThis
     }
 
     val distance: Length
