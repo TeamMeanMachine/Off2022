@@ -96,7 +96,7 @@ object Climb : Subsystem("Climb") {
         angleMotor.config {
             coastMode()
             inverted(true)
-            feedbackCoefficient = (360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0 * (if (isCompBot) (34.0 / 40.0) /* (32.0 / 17.0)*/ else 39.0 / 26.0))  //added a / 2.0 to compbot after mechanical change with same gear ratio?
+            feedbackCoefficient = (360.0 / 2048.0 / 75.0) * (32.4 / 28.1) // Circle over ticks over gear ratio //(360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0 * (34.0 / 40.0)/*(if (isCompBot) (34.0 / 40.0) /* (32.0 / 17.0)*/ else 39.0 / 26.0)*/)  //added a / 2.0 to compbot after mechanical change with same gear ratio?
             pid {
                 p(0.0000001)
             }

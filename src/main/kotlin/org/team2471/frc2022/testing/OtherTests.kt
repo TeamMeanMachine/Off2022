@@ -27,8 +27,11 @@ suspend fun Climb.pivotTest() = use(this) {
 }
 
 suspend fun Climb.motorTest() = use(this) {
+    var power = OI.driveLeftTrigger - OI.driveRightTrigger
     periodic {
-        angleSetPower(OI.driveLeftTrigger - OI.driveRightTrigger)
+        power = OI.driveLeftTrigger - OI.driveRightTrigger
+        angleSetPower(power)
+        println("angle power: $power")
         setPower((OI.operatorRightTrigger - OI.operatorLeftTrigger) * 0.5)
     }
 }
