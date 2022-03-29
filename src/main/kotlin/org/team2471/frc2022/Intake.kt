@@ -33,6 +33,7 @@ object Intake : Subsystem("Intake") {
     val pivotMotorEntry = table.getEntry("Pivot Motor")
     val pivotDriverOffsetEntry = table.getEntry("Pivot Controller")
     val intakeStateEntry = table.getEntry("Mode")
+    val intakePresetEntry = table.getEntry("Intake Preset")
 
     var pivotDriverOffset
         get() = pivotDriverOffsetEntry.getDouble(0.0)
@@ -60,6 +61,7 @@ object Intake : Subsystem("Intake") {
     const val INTAKE_POWER = 0.9
     const val PIVOT_BOTTOM = -3.0
     const val PIVOT_CATCH = 0.0
+  
     val PIVOT_INTAKE = if (isCompBot) 26.5 else 16.0
     val PIVOT_STORE = if (isCompBot) 95.0 else 98.0
     val PIVOT_TOP = if (isCompBot) 110.0 else 98.0
@@ -78,9 +80,12 @@ object Intake : Subsystem("Intake") {
     enum class Mode {
         CATCH, INTAKE, STOW, POWERSAVE
     }
+
     var intakeState = Mode.STOW
     init {
         pivotDriverOffsetEntry.getDouble(0.0)
+        intakePresetEntry.setDouble(25.0)
+        intakePresetEntry.getDouble(PIVOT_INTAKE)
         intakePivotMotor.config(20) {
             feedbackCoefficient =
                 360.0 / 2048.0 * 90.0 / 24118.9// degrees in a rotation, ticks per rotation
@@ -91,6 +96,7 @@ object Intake : Subsystem("Intake") {
 //                d(0.00000005)
 //                f(0.04)
             }
+
             currentLimit(20, 30, 1)//40, 60, 1)
         }
         intakeMotor.config {
@@ -98,6 +104,7 @@ object Intake : Subsystem("Intake") {
         }
 
         GlobalScope.launch(MeanlibDispatcher) {
+//            intakePresetEntry.setPersistent()
             parallel({
             periodic {
                 if (pivotEncoder.isConnected && pivotAngle > (PIVOT_BOTTOM - 1.0) && pivotAngle < (PIVOT_TOP + 1.0)) {
@@ -202,7 +209,7 @@ object Intake : Subsystem("Intake") {
 //        get() = !button.get()
 
     fun resetPivotOffset(){
-        println("resetting intake pivot")
+        println("resetting intake pivot rawOffset ${pivotAngle.degrees}")
         intakePivotMotor.setRawOffset(pivotAngle.degrees)
         pivotDriverOffset = 0.0
         pivotSetpoint = pivotAngle
