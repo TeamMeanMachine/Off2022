@@ -257,7 +257,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     fun autoSteer() {
         var turn = 0.0
-        if (Limelight.hasValidTarget) {
+        if (Limelight.hasValidTarget && (!Feeder.isAuto || !Shooter.useAutoOdomEntry.getBoolean(false))) {
             turn = aimPDController.update(Limelight.aimError)
         }
         Drive.drive(

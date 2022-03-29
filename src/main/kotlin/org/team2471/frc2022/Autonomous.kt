@@ -11,6 +11,7 @@ import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion_profiling.Autonomi
+import org.team2471.frc.lib.units.asFeet
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.measureTimeFPGA
@@ -151,49 +152,6 @@ object AutoChooser {
         }
     }
 
-
-    suspend fun carpetBiasTest() = use(Drive) {
-        val auto = autonomi["Carpet Bias Test"]
-        if (auto != null) {
-            var path = auto["01- Forward"]
-            Drive.driveAlongPath(path, false)
-            path = auto["02- Backward"]
-            Drive.driveAlongPath(path, false)
-            path = auto["03- Left"]
-            Drive.driveAlongPath(path, false)
-            path = auto["04- Forward"]
-            Drive.driveAlongPath(path, false)
-            //path = auto["05- Backward"]
-        }
-    }
-
-    suspend fun test8FtStraight() = use(Drive) {
-        val auto = autonomi["Tests"]
-        if (auto != null) {
-            val path = auto["8 Foot Straight"]
-            Drive.driveAlongPath(path, true)
-        }
-    }
-    suspend fun right5() = use(Drive, Shooter, Intake, Feeder) {
-        Limelight.backLedEnabled = true
-        val auto = autonomi["NewAuto"]
-        if (auto != null) {
-            autoShoot()
-            parallel({
-                Intake.changeAngle(Intake.PIVOT_INTAKE)
-                Intake.setIntakePower(Intake.INTAKE_POWER)
-             }, {
-                Drive.driveAlongPath(auto ["4 - 1st Ball"], true)
-            })
-            delay(0.5)
-            Drive.driveAlongPath(auto["5 - 2nd Ball"], false)
-            autoShoot()
-            Drive.driveAlongPath(auto["2 - Grab balls"], false)
-            delay(0.5)
-            Drive.driveAlongPath(auto["3 - Move"], false)
-            autoShoot()
-        }
-    }
     suspend fun right5v3() = use(Drive, Shooter, Intake, Feeder) {
         val t = Timer()
         t.start()
@@ -210,7 +168,6 @@ object AutoChooser {
                 powerSave()
                 Feeder.autoFeedMode = true
             })
-
             println("lowering intake and getting 1st ball")
             parallel({
                 intake()
@@ -252,6 +209,74 @@ object AutoChooser {
             Drive.aimPDController = PDConstantFController (0.011, 0.032, 0.008)
             println("auto complete in ${t.get()} seconds")
             Feeder.autoFeedMode = false
+        }
+    }
+
+    suspend fun straightBackShootAuto() = use(Intake, Shooter, Feeder, Drive) {
+        println("In straightBackShoot auto.")
+        val auto = autonomi["Straight Back Shoot Auto"]
+        if (auto != null) {
+            Limelight.backLedEnabled = true
+            parallel({
+                autoShootv2(1, 4.0)
+            }, {
+                powerSave()
+                Feeder.autoFeedMode = true
+            })
+            parallel({
+                intake()
+            }, {
+                Drive.driveAlongPath(auto["1- First Field Cargo"], true)
+            })
+            delay(1.0)
+            parallel({
+                autoShootv2(1, 4.0)
+            }, {
+                Intake.setIntakePower(0.0)
+            })
+        }
+    }
+
+    suspend fun carpetBiasTest() = use(Drive) {
+        val auto = autonomi["Carpet Bias Test"]
+        if (auto != null) {
+            var path = auto["01- Forward"]
+            Drive.driveAlongPath(path, false)
+            path = auto["02- Backward"]
+            Drive.driveAlongPath(path, false)
+            path = auto["03- Left"]
+            Drive.driveAlongPath(path, false)
+            path = auto["04- Forward"]
+            Drive.driveAlongPath(path, false)
+            //path = auto["05- Backward"]
+        }
+    }
+
+    suspend fun test8FtStraight() = use(Drive) {
+        val auto = autonomi["Tests"]
+        if (auto != null) {
+            val path = auto["8 Foot Straight"]
+            Drive.driveAlongPath(path, true)
+        }
+    }
+    suspend fun right5() = use(Drive, Shooter, Intake, Feeder) {
+        Limelight.backLedEnabled = true
+        val auto = autonomi["NewAuto"]
+        if (auto != null) {
+            autoShoot()
+            parallel({
+                Intake.changeAngle(Intake.PIVOT_INTAKE)
+                Intake.setIntakePower(Intake.INTAKE_POWER)
+             }, {
+                Drive.driveAlongPath(auto ["4 - 1st Ball"], true)
+            })
+            delay(0.5)
+            Drive.driveAlongPath(auto["5 - 2nd Ball"], false)
+            autoShoot()
+            Drive.driveAlongPath(auto["2 - Grab balls"], false)
+            delay(0.5)
+            Drive.driveAlongPath(auto["3 - Move"], false)
+            autoShoot()
         }
     }
 
@@ -329,6 +354,7 @@ object AutoChooser {
         }
     }
 
+
     suspend fun straightBackShootAuto() = use(Intake, Shooter, Feeder, Drive) {
         println("In straightBackShoot auto.")
         val auto = autonomi["Straight Back Shoot Auto"]
@@ -336,6 +362,7 @@ object AutoChooser {
             Limelight.backLedEnabled = true
             parallel({
                 autoShootv2(1, 4.0)
+
             }, {
                 powerSave()
                 Feeder.autoFeedMode = true
@@ -353,6 +380,7 @@ object AutoChooser {
             })
         }
     }
+
 //
 //    suspend fun leftSideAuto() = use(Drive, Shooter, Intake) {
 //        val auto = autonomi["Left Side 2 Auto"]

@@ -20,12 +20,11 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller
-import org.team2471.frc.lib.math.Vector2
-import org.team2471.frc.lib.math.round
+import org.team2471.frc.lib.math.square
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.asFeet
-import org.team2471.frc.lib.units.degrees
 import kotlin.math.absoluteValue
+import kotlin.math.sqrt
 
 
 object Shooter : Subsystem("Shooter") {
@@ -46,6 +45,11 @@ object Shooter : Subsystem("Shooter") {
     const val aimMaxError = 3.0
     const val rpmMaxError = 200.0
     const val pitchMaxError = 2.5
+
+//    var autoOdomPitch = 0.0
+//        get() = backPitchCurve.getValue(sqrt(square(Drive.position.x) + square(Drive.position.y)))
+//    var autoOdomRPM = 0.0
+//        get() = backRPMCurve.getValue(sqrt(square(Drive.position.x) + square(Drive.position.y)))
 
     enum class knownShotType {
         NOTSET, FENDER, WALL, SAFE
@@ -75,6 +79,7 @@ object Shooter : Subsystem("Shooter") {
     val backPitchCurveEntry = table.getEntry("backPitchCurve")
     val distanceEntry = table.getEntry("fixedDistances")
     val colorAlignedEntry = table.getEntry("colorAligned")
+    val useAutoOdomEntry = table.getEntry("useAutoPreset")
     private val knownShotChooser = SendableChooser<String?>().apply {
         setDefaultOption("NOTSET", "notset")
         addOption("FENDER", "fender")
@@ -97,7 +102,7 @@ object Shooter : Subsystem("Shooter") {
     var pitchGood = false
     var isCargoAlignedWithAlliance = true
     var pitchOffset = if (isCompBot) 1.3 else - 76.0
-    var curvepitchOffset = 0.0 //3.0
+    var curvepitchOffset = 0.0
     var pitch: Double = 0.0
         get() = (pitchEncoder.absolutePosition - 0.218) * 33.0 / 0.182 + pitchOffset
         set(value) {
@@ -115,6 +120,9 @@ object Shooter : Subsystem("Shooter") {
                     knownShotType.WALL -> 35.0
                     else -> 15.0
                 }
+            } else if (Feeder.isAuto && useAutoOdomEntry.getBoolean(false)) {
+                field = autoOdomPitch
+                pitchSetpointEntry.setDouble(field)
             } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
                 val tempPitch = backPitchCurve.getValue(Limelight.distance.asFeet)
                 pitchSetpointEntry.setDouble(tempPitch)
@@ -158,6 +166,9 @@ object Shooter : Subsystem("Shooter") {
         get() {
             if (tuningMode) {
                 field = rpmSetpointEntry.getDouble(5000.0)
+            } else if (Feeder.isAuto && useAutoOdomEntry.getBoolean(false)) {
+                field = autoOdomRPM
+                rpmSetpointEntry.setDouble(field)
             } else if (isKnownShot != knownShotType.NOTSET) {
                 field =  frontLLRPMOffset * when (isKnownShot) {
                     knownShotType.FENDER -> 3200.0
@@ -272,6 +283,7 @@ object Shooter : Subsystem("Shooter") {
             frontPitchOffsetEntry.setPersistent()
             backPitchOffsetEntry.setPersistent()
             rpmSetpointEntry.setPersistent()
+            useAutoOdomEntry.setPersistent()
 
             pitchSetpoint = pitch
             filter.calculate(pitch)
