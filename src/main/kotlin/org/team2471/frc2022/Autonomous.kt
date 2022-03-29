@@ -354,33 +354,6 @@ object AutoChooser {
         }
     }
 
-
-    suspend fun straightBackShootAuto() = use(Intake, Shooter, Feeder, Drive) {
-        println("In straightBackShoot auto.")
-        val auto = autonomi["Straight Back Shoot Auto"]
-        if (auto != null) {
-            Limelight.backLedEnabled = true
-            parallel({
-                autoShootv2(1, 4.0)
-
-            }, {
-                powerSave()
-                Feeder.autoFeedMode = true
-            })
-            parallel({
-                intake()
-            }, {
-                Drive.driveAlongPath(auto["1- First Field Cargo"], true)
-            })
-            delay(1.0)
-            parallel({
-                autoShootv2(1, 4.0)
-            }, {
-                Intake.setIntakePower(0.0)
-            })
-        }
-    }
-
 //
 //    suspend fun leftSideAuto() = use(Drive, Shooter, Intake) {
 //        val auto = autonomi["Left Side 2 Auto"]
