@@ -38,7 +38,7 @@ object Intake : Subsystem("Intake") {
     var pivotDriverOffset
         get() = pivotDriverOffsetEntry.getDouble(0.0)
         set(value) { pivotDriverOffsetEntry.setDouble(value) }
-    var pivotOffset = if (isCompBot) -6.5 else 185.0  //comp: 159.7   .0145
+    var pivotOffset = if (isCompBot) -6.5 else -55.0  //comp: 159.7   .0145
     val pivotEncoder = DutyCycleEncoder(if (isCompBot) DigitalSensors.INTAKE_PIVOT else DigitalSensors.INTAKE_PIVOT_PRACTICE)  // this encoder seems to give randomly changing answers - very naughty encoder
     var pivotAngle : Double = 0.0
         get() = (if (isCompBot) -1.0 else 1.0) * (((pivotEncoder.absolutePosition - 0.334) * 360.0 * 90.0 / 86.0) + pivotOffset).degrees.wrap().asDegrees
@@ -215,6 +215,7 @@ object Intake : Subsystem("Intake") {
         pivotDriverOffset = 0.0
         pivotSetpoint = pivotAngle
     }
+
     fun setIntakePower(power: Double) {
         intakeMotor.setPercentOutput(power)
     }
@@ -270,7 +271,7 @@ object Intake : Subsystem("Intake") {
 
     override suspend fun default() {
         periodic {
-            currentEntry.setDouble(Shooter.shootingMotor.current)
+            currentEntry.setDouble(Climb.angleMotor.current)
         }
     //    print(":)")
 //        if (ballIsStaged) {
