@@ -118,7 +118,7 @@ object Climb : Subsystem("Climb") {
                 p(0.0000001)
             }
             setRawOffsetConfig(angle.degrees) //(-4.5).degrees)
-//            currentLimit(16, 18, 1)      //not tested yet but these values after looking at current graph 3/30
+            currentLimit(16, 18, 1)      //not tested yet but these values after looking at current graph 3/30
         }
         heightSetpointEntry.setDouble(height)
         angleSetpointEntry.setDouble(angle)
