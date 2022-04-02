@@ -104,7 +104,7 @@ object Climb : Subsystem("Climb") {
         }
         heightSetpointEntry.setDouble(height)
         angleSetpointEntry.setDouble(angle)
-        setStatusFrames(false)
+        setStatusFrames(true)
         GlobalScope.launch {
 //            parallel ({
 //                periodic {

@@ -4,6 +4,7 @@ import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Translation2d
+import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.*
 import edu.wpi.first.wpilibj.smartdashboard.Field2d
@@ -59,7 +60,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             (45.0).degrees,
             AnalogSensors.SWERVE_FRONT_LEFT,
             1.0, //0.0 is totally worn out and 1.0 is fresh new tread
-            odometer0Entry.getDouble(0.0)
+            odometer0Entry
         ),
         Module(
             MotorController(FalconID(Falcons.DRIVE_FRONTRIGHT)),
@@ -68,7 +69,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             (135.0).degrees,
             AnalogSensors.SWERVE_FRONT_RIGHT,
             1.0, //0.0 is totally worn out and 1.0 is fresh new tread
-            odometer1Entry.getDouble(0.0)
+            odometer1Entry
         ),
         Module(
             MotorController(FalconID(Falcons.DRIVE_BACKRIGHT)),
@@ -77,7 +78,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             (-135.0).degrees,
             AnalogSensors.SWERVE_BACK_RIGHT,
             1.0, //0.0 is totally worn out and 1.0 is fresh new tread
-            odometer2Entry.getDouble(0.0)
+            odometer2Entry
         ),
         Module(
             MotorController(FalconID(Falcons.DRIVE_BACKLEFT)),
@@ -86,7 +87,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             (-45.0).degrees,
             AnalogSensors.SWERVE_BACK_LEFT,
             1.0, //0.0 is totally worn out and 1.0 is fresh new treadK
-            odometer3Entry.getDouble(0.0)
+            odometer3Entry
         )
     )
 
@@ -142,12 +143,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     init {
         println("drive init")
         initializeSteeringMotors()
-        odometer0Entry.setPersistent()
-        odometer1Entry.setPersistent()
-        odometer2Entry.setPersistent()
-        odometer3Entry.setPersistent()
 
         GlobalScope.launch(MeanlibDispatcher) {
+//            odometer0Entry.setPersistent()
+//            odometer1Entry.setPersistent()
+//            odometer2Entry.setPersistent()
+//            odometer3Entry.setPersistent()
             println("in drive global scope")
 
             val headingEntry = table.getEntry("Heading")
@@ -209,9 +210,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
                 redFieldCargoEntry.setDoubleArray(redCargoOnField.toDoubleArray())
 
-                autoAim = autoAimEntry.getBoolean(false) || OI.driverController.a
-
-               // println(gyro.getNavX().pitch.degrees)
+                autoAim = Shooter.shootMode && Shooter.isKnownShot == Shooter.knownShotType.NOTSET
+                // println(gyro.getNavX().pitch.degrees)
 
 //                for (moduleCount in 0..3) {
 //                    val module = (modules[moduleCount] as Module)
@@ -224,6 +224,23 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         }
     }
 
+    override fun preEnable() {
+        super.preEnable()
+        odometer0Entry.setDouble(Preferences.getDouble("odometer 0",0.0))
+        odometer1Entry.setDouble(Preferences.getDouble("odometer 1",0.0))
+        odometer2Entry.setDouble(Preferences.getDouble("odometer 2",0.0))
+        odometer3Entry.setDouble(Preferences.getDouble("odometer 3",0.0))
+        println("prefs at enable=${Preferences.getDouble("odometer 0",0.0)}")
+    }
+
+    override fun onDisable() {
+        if (odometer0Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 0", odometer0Entry.getDouble(0.0))
+        if (odometer1Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 1", odometer1Entry.getDouble(0.0))
+        if (odometer2Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 2", odometer2Entry.getDouble(0.0))
+        if (odometer3Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 3", odometer3Entry.getDouble(0.0))
+        super.onDisable()
+    }
+
     fun zeroGyro() {
         heading = 0.0.degrees
         //gyro.reset()
@@ -234,10 +251,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             var turn = 0.0
             if (OI.driveRotation.absoluteValue > 0.001) {
                 turn = OI.driveRotation
-            } else if (Limelight.hasValidTarget && (Shooter.shootMode || autoAim)) {
+            } else if (Limelight.hasValidTarget && autoAim) {
                 turn = aimPDController.update(Limelight.aimError)
 //                println("LimeLightAimError=${Limelight.aimError}")
-            } else if ((Shooter.shootMode || autoAim)) {
+            } else if (autoAim) {
                 var error = (position.angle.degrees - heading).wrap()
                 if (error.asDegrees.absoluteValue > 90.0) error = (error - 180.0.degrees).wrap()
                 turn = aimPDController.update(error.asDegrees)
@@ -318,7 +335,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         override val angleOffset: Angle,
         private val analogAnglePort: Int,
         override val treadWear: Double,
-        override var odometer: Double
+        private val odometerEntry: NetworkTableEntry
     ) : SwerveDrive.Module {
         companion object {
             private const val ANGLE_MAX = 983
@@ -355,6 +372,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             get() = driveMotor.position
 
         override var prevDistance: Double = 0.0
+
+        override var odometer: Double
+            get() = odometerEntry.getDouble(0.0)
+            set(value) { odometerEntry.setDouble(value) }
 
         override fun zeroEncoder() {
             driveMotor.position = 0.0

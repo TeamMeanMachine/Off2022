@@ -42,6 +42,7 @@ object Shooter : Subsystem("Shooter") {
         get() {
             return knownShotType.valueOf(SmartDashboard.getString("KnownShot/selected", "notset").uppercase())
         }
+
     const val aimMaxError = 3.0
     const val rpmMaxError = 200.0
     const val pitchMaxError = 2.5
@@ -122,14 +123,11 @@ object Shooter : Subsystem("Shooter") {
                 }
             } else if (Feeder.isAuto && useAutoOdomEntry.getBoolean(false)) {
                 field = autoOdomPitch
-                pitchSetpointEntry.setDouble(field)
             } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
                 val tempPitch = backPitchCurve.getValue(Limelight.distance.asFeet)
-                pitchSetpointEntry.setDouble(tempPitch)
                 field = tempPitch
             } else if (Limelight.useFrontLimelight && Limelight.hasValidFrontTarget) {
                 val tempPitch = frontPitchCurve.getValue(Limelight.distance.asFeet)
-                pitchSetpointEntry.setDouble(tempPitch)
                 field = tempPitch
             } else {
                 field = pitchSetpointEntry.getDouble(10.0)
@@ -137,6 +135,7 @@ object Shooter : Subsystem("Shooter") {
             // don't allow values outside of range even with offset
             field = field.coerceIn(PITCH_LOW-curvepitchOffset, PITCH_HIGH-curvepitchOffset)
 //            println("tuningMode $tuningMode     useFrontLL ${Limelight.useFrontLimelight}     frontTarget ${Limelight.hasValidFrontTarget}        backTarget ${Limelight.hasValidBackTarget}")
+            pitchSetpointEntry.setDouble(field + curvepitchOffset)
             return field + curvepitchOffset
         }
         set(value) {
@@ -168,7 +167,6 @@ object Shooter : Subsystem("Shooter") {
                 field = rpmSetpointEntry.getDouble(5000.0)
             } else if (Feeder.isAuto && useAutoOdomEntry.getBoolean(false)) {
                 field = autoOdomRPM
-                rpmSetpointEntry.setDouble(field)
             } else if (isKnownShot != knownShotType.NOTSET) {
                 field =  frontLLRPMOffset * when (isKnownShot) {
                     knownShotType.FENDER -> 3200.0
@@ -176,16 +174,14 @@ object Shooter : Subsystem("Shooter") {
                     knownShotType.WALL -> 3450.0
                     else -> 3200.0
                 }
-                rpmSetpointEntry.setDouble(field)
             } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
                 field = backRPMCurve.getValue(Limelight.distance.asFeet) * backLLRPMOffset
-                rpmSetpointEntry.setDouble(field)
             } else if (Limelight.useFrontLimelight && Limelight.hasValidFrontTarget) {
                 field = frontRPMCurve.getValue(Limelight.distance.asFeet) * frontLLRPMOffset
-                rpmSetpointEntry.setDouble(field)
             } else {
                 field = rpmSetpointEntry.getDouble(5000.0)
             }
+            rpmSetpointEntry.setDouble(field)
             return field
         }
     var rpm: Double
@@ -305,7 +301,7 @@ object Shooter : Subsystem("Shooter") {
                 aimGood = Limelight.aimError.absoluteValue < aimMaxError
                 rpmGood = filteredError < rpmMaxError
                 pitchGood = pitchSetpoint - pitch < pitchMaxError
-                isCargoAlignedWithAlliance = (allianceColor == cargoColor || cargoColor == NOTSET)
+                //isCargoAlignedWithAlliance = (allianceColor == cargoColor || cargoColor == NOTSET)
                 allGood = shootMode && aimGood && rpmGood && pitchGood
 
                 aimGoodEntry.setBoolean(aimGood)
@@ -386,7 +382,7 @@ object Shooter : Subsystem("Shooter") {
     val cargoIsStaged : Boolean
         get() = colorSensor.proximity > PROXIMITY_STAGED_MIN
     val cargoColor : Char
-        get() =  if (colorSensor.proximity < 180) NOTSET else if (colorSensor.color.red >= colorSensor.color.blue) RED else BLUE
+        get() =  if (colorSensor.proximity < PROXIMITY_STAGED_MIN) NOTSET else if (colorSensor.color.red >= colorSensor.color.blue) RED else BLUE
 
     fun pitchSetPower(power: Double) {
         pitchMotor.setPercentOutput(power)

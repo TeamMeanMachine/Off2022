@@ -17,6 +17,7 @@ suspend fun intake() = use(Intake) {
     Intake.setIntakePower(Intake.INTAKE_POWER)
     Intake.intakeState = Intake.Mode.INTAKE
     Intake.changeAngle(Intake.PIVOT_INTAKE)
+    Intake.changeAngle(Intake.PIVOT_INTAKE)
     Climb.climbMode = false
     Climb.climbIsPrepped = false
 }
@@ -101,11 +102,11 @@ suspend fun autoShootv2(shotCount: Int = 2, maxWait: Double = 2.5) = use(Shooter
         println("aimError = ${Limelight.aimError}")
     }, {
         Feeder.autoCargoShot = 0
-        suspendUntil { Feeder.autoCargoShot > 0 }
-        var startWait = t.get()
-        Feeder.waitASecond = true
-        suspendUntil { t.get() - startWait > 0.5 }
-        Feeder.waitASecond = false
+//        suspendUntil { Feeder.autoCargoShot > 0 || doneShooting}
+//        var startWait = t.get()
+//        Feeder.waitASecond = true
+//        suspendUntil { t.get() - startWait > 0.5 }
+//        Feeder.waitASecond = false
         suspendUntil { Feeder.autoCargoShot >= shotCount || doneShooting }
         delay(0.1)
         if (!doneShooting) {

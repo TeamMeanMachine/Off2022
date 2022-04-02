@@ -7,13 +7,13 @@ import edu.wpi.first.wpilibj.DutyCycleEncoder
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.com.google.common.math.DoubleMath.roundToInt
 import org.team2471.frc.lib.actuators.MotorController
 import org.team2471.frc.lib.actuators.TalonID
 import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.round
+import org.team2471.frc.lib.util.Timer
 
 import kotlin.math.roundToInt
 
@@ -26,6 +26,8 @@ object Feeder : Subsystem("Feeder") {
     val button = DigitalInput(DigitalSensors.FEEDER_BUTTON)
     val feedDistanceEncoder = DutyCycleEncoder(DigitalSensors.FEEDER_DISTANCE)
 
+    val secondShotDelayTimer = Timer()
+
     private val table = NetworkTableInstance.getDefault().getTable(Feeder.name)
 
     val feedUseFrontLimelightEntry = table.getEntry("useFrontLimelight")
@@ -33,7 +35,7 @@ object Feeder : Subsystem("Feeder") {
     val stageStatusEntry = table.getEntry("Mode")
     val isClearingEntry = table.getEntry("Clearing")
 
-    val SHOOTER_FEED_POWER = if (isCompBot) 0.6 else 1.0
+    val SHOOTER_FEED_POWER = 0.6
     val SHOOTER_STAGE_POWER = if (isCompBot) 0.5 else 1.0
 
     const val BED_FEED_POWER = 0.8
@@ -46,6 +48,7 @@ object Feeder : Subsystem("Feeder") {
     var cargoWasStaged = Shooter.cargoIsStaged
     var autoCargoShot = 0
     var waitASecond = false
+    var secondShotDelay = false
 
     enum class Status {
         EMPTY,
@@ -55,7 +58,15 @@ object Feeder : Subsystem("Feeder") {
         CLEARING
     }
 
+    enum class Timer_Status {
+        STOPPED,
+        QUEUED,
+        RUNNING,
+        IGNORE
+    }
+
     var currentFeedStatus : Status = Status.EMPTY
+    var currentTimerStatus : Timer_Status = Timer_Status.STOPPED
     var autoFeedMode = false
 
     init {
@@ -72,16 +83,27 @@ object Feeder : Subsystem("Feeder") {
 //                println("feeder curr ${shooterFeedMotor.current}")
 
                 currentFeedStatus = when {
-                    isAuto && Shooter.allGood && !waitASecond -> Status.ACTIVELY_SHOOTING
+//                    isAuto && (Shooter.allGood && !waitASecond) -> Status.ACTIVELY_SHOOTING
                     Shooter.shootMode && OI.driveRightTrigger > 0.1 -> Status.ACTIVELY_SHOOTING
                     isClearing -> Status.CLEARING
                     Shooter.cargoIsStaged && Feeder.cargoIsStaged -> Status.DUAL_STAGED
                     Shooter.cargoIsStaged -> Status.SINGLE_STAGED
                     else -> Status.EMPTY
                 }
-                if (currentFeedStatus == Status.ACTIVELY_SHOOTING) {
-                    println("autoshot! allGood rpmError: ${Shooter.rpmError.roundToInt()}    pitch: ${round(Shooter.pitchSetpoint - Shooter.pitch, 2)} aim: ${round(Limelight.aimError, 2)}")
+
+                if (currentTimerStatus == Timer_Status.QUEUED && Shooter.cargoIsStaged) {
+                    secondShotDelayTimer.start()
+                    println("Second cargo detected. Wheeeeeee")
+                    currentTimerStatus = Timer_Status.RUNNING
                 }
+
+//                if (currentFeedStatus == Status.ACTIVELY_SHOOTING) {
+//                    println("autoshot! allGood rpmError: ${Shooter.rpmError.roundToInt()}    pitch: ${round(Shooter.pitchSetpoint - Shooter.pitch, 2)} aim: ${round(Limelight.aimError, 2)}")
+//                }
+//
+//                if (currentFeedStatus != Status.ACTIVELY_SHOOTING)
+//                    currentTimerStatus = Timer_Status.STOPPED
+
                 stageStatusEntry.setString(currentFeedStatus.name)
                 feedUseFrontLimelightEntry.setBoolean(Limelight.useFrontLimelight)
                 distanceEntry.setDouble(feedDistance)
@@ -90,7 +112,17 @@ object Feeder : Subsystem("Feeder") {
                     when (currentFeedStatus) {
                         Status.ACTIVELY_SHOOTING -> {
                             setBedFeedPower(BED_FEED_POWER)
-                            setShooterFeedPower(SHOOTER_FEED_POWER)
+                            //setShooterFeedPower(SHOOTER_FEED_POWER)
+                            if (currentTimerStatus != Timer_Status.RUNNING) {
+                                setShooterFeedPower(SHOOTER_FEED_POWER)
+                            } else if (currentTimerStatus == Timer_Status.RUNNING && Shooter.cargoIsStaged &&  (secondShotDelayTimer.get()  < 0.015)) {
+                                setShooterFeedPower(0.0)
+                                println("Timer less than 100 mil. sec")
+                            } else if (currentTimerStatus == Timer_Status.RUNNING && (secondShotDelayTimer.get() > 0.015)) {
+                                setShooterFeedPower(SHOOTER_FEED_POWER)
+                                println("Timer greater than 100 mil. sec.")
+                                currentTimerStatus = Timer_Status.STOPPED
+                            }
                             Intake.setIntakePower(0.0)
                             detectShots("autoFeed")
                         }
@@ -125,6 +157,7 @@ object Feeder : Subsystem("Feeder") {
                             setShooterFeedPower(-SHOOTER_FEED_POWER)
                         }
                     }
+                    if (currentFeedStatus != Status.ACTIVELY_SHOOTING) currentTimerStatus = Timer_Status.STOPPED
                 } else if (!isAuto) {
                     if (Shooter.shootMode) {
                         setShooterFeedPower(OI.driveRightTrigger * 0.9)
@@ -158,9 +191,13 @@ object Feeder : Subsystem("Feeder") {
             cargoWasStaged = true
         }
     }
-    fun shotDetected(){
+    fun shotDetected() {
+        if (currentTimerStatus != Timer_Status.IGNORE){
+            currentTimerStatus = Timer_Status.QUEUED
+            println("Shot is detected. Timer status is queued")
+        }
         autoCargoShot += 1
-        println("Shot has been detected rpm: ${Shooter.rpm} rpmsetpoint: ${Shooter.rpmSetpoint} aimError: ${Limelight.aimError} angle: ${Shooter.pitch}")
+        println("Shot has been detected rpm: ${Shooter.rpm} rpmError: ${Shooter.rpmError} aimError: ${Limelight.aimError} angle: ${Shooter.pitch}")
     }
 
     val cargoIsStaged: Boolean
