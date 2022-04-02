@@ -34,7 +34,6 @@ object Intake : Subsystem("Intake") {
     val pivotDriverOffsetEntry = table.getEntry("Pivot Controller")
     val intakeStateEntry = table.getEntry("Mode")
     val intakePresetEntry = table.getEntry("Intake Preset")
-    val errorDiffEntry = table.getEntry("Encoder Error Difference")
 
     var pivotDriverOffset
         get() = pivotDriverOffsetEntry.getDouble(0.0)
@@ -51,7 +50,7 @@ object Intake : Subsystem("Intake") {
 //        }
 
     val pivotPDController = PDController(0.05, 0.0)
-    var pivotPDEnable = false
+    var pivotPDEnable = true
     var pivotSetpoint = pivotAngle
         get() = pivotSetpointEntry.getDouble(94.0)
         set(value) {
@@ -99,7 +98,7 @@ object Intake : Subsystem("Intake") {
 //                f(0.04)
             }
 
-            //currentLimit(20, 30, 1)//40, 60, 1)
+            currentLimit(20, 30, 1)//40, 60, 1)
         }
         intakeMotor.config {
             coastMode()
@@ -115,9 +114,7 @@ object Intake : Subsystem("Intake") {
                     println("setpoints pivotAngle")
                     this.stop()
                 } else {
-                    if (isCompBot) {
-                        println("Intake not reset")
-                    }
+                    println("Intake not reset")
                 }
 //                else {
 //                    intakePivotMotor.setRawOffset(PIVOT_BOTTOM.degrees)
@@ -134,7 +131,6 @@ object Intake : Subsystem("Intake") {
                 pivotEntry.setDouble(pivotAngle) // intakePivotMotor.position)
                 pivotMotorEntry.setDouble(intakePivotMotor.position)
                 intakeStateEntry.setString(intakeState.name)
-                errorDiffEntry.setDouble(pivotAngle - intakePivotMotor.angle)
                 //println("$isCompBot intake angle: $pivotAngle ${pivotEncoder.absolutePosition}")
 //                if (OI.operatorController.b) {
 //                    setIntakePower(INTAKE_POWER)
@@ -224,7 +220,7 @@ object Intake : Subsystem("Intake") {
     }
 
     fun setIntakePivotPower(power: Double) {
-        intakePivotMotor.setPercentOutput(0.0)
+        intakePivotMotor.setPercentOutput(power)
     }
 
     suspend fun changeAngle(angle: Double) {
@@ -248,6 +244,7 @@ object Intake : Subsystem("Intake") {
                 stop()
             }
         }
+//                changeAnglePeriodic()
     }
 
 //    fun changeAngleSetUp(angle: Double) {

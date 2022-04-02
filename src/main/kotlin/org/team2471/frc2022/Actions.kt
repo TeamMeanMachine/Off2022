@@ -223,6 +223,7 @@ suspend fun climbPrep() = use(Climb, Shooter, Intake) {
     Climb.climbMode = true
     Climb.setStatusFrames(forClimb = true)
     Climb.changeAngle(8.0, 0.3)
+
     parallel({
         Intake.changeAngle(Intake.PIVOT_BOTTOM)
     }, {
