@@ -180,10 +180,18 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
             val autoAimEntry = table.getEntry("Auto Aim")
 
+            val reducedField = Vector2(fieldCenterOffset.x.meters.asFeet - (35.0/12)/2, fieldCenterOffset.y.meters.asFeet - (35.0/12)/2)
+
 //            aimPEntry.setDouble(0.015)
 //            aimDEntry.setDouble(0.005)
             periodic {
-                val (x, y) = position
+                var (x, y) = position
+                if (x.absoluteValue > reducedField.x || y.absoluteValue > reducedField.y ){
+                    println("Coercing x inside field dimensions")
+                    x = x.coerceIn(-reducedField.x, reducedField.x)
+                    y = y.coerceIn(-reducedField.y, reducedField.y)
+                    position = Vector2(x, y)
+                }
                 xEntry.setDouble(x)
                 yEntry.setDouble(y)
                 headingEntry.setDouble(heading.asDegrees)
