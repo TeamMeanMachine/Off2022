@@ -115,10 +115,10 @@ object Feeder : Subsystem("Feeder") {
                             //setShooterFeedPower(SHOOTER_FEED_POWER)
                             if (currentTimerStatus != Timer_Status.RUNNING) {
                                 setShooterFeedPower(SHOOTER_FEED_POWER)
-                            } else if (currentTimerStatus == Timer_Status.RUNNING && Shooter.cargoIsStaged &&  (secondShotDelayTimer.get()  < 0.015)) {
+                            } else if (currentTimerStatus == Timer_Status.RUNNING && Shooter.cargoIsStaged &&  (secondShotDelayTimer.get()  < 0.025)) {
                                 setShooterFeedPower(0.0)
                                 println("Timer less than 100 mil. sec")
-                            } else if (currentTimerStatus == Timer_Status.RUNNING && (secondShotDelayTimer.get() > 0.015)) {
+                            } else if (currentTimerStatus == Timer_Status.RUNNING && (secondShotDelayTimer.get() >= 0.025)) {
                                 setShooterFeedPower(SHOOTER_FEED_POWER)
                                 println("Timer greater than 100 mil. sec.")
                                 currentTimerStatus = Timer_Status.STOPPED

@@ -80,7 +80,13 @@ object Limelight : Subsystem("Front Limelight") {
     }
 
     val distance: Length
-        get() = (9.0.feet - 30.5.inches) / (34.0.degrees + xTranslation.degrees).tan()
+        get() {
+            return if ((hasValidBackTarget && backLedEnabled) || (hasValidFrontTarget && frontLedEnabled)) {
+                (9.0.feet - 30.5.inches) / (34.0.degrees + xTranslation.degrees).tan()
+            } else {
+                Drive.position.length.feet
+            }
+        }
 
     private val tempPIDTable = NetworkTableInstance.getDefault().getTable("fklsdajklfjsadlk;")
 

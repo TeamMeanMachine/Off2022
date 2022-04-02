@@ -38,7 +38,7 @@ object Intake : Subsystem("Intake") {
     var pivotDriverOffset
         get() = pivotDriverOffsetEntry.getDouble(0.0)
         set(value) { pivotDriverOffsetEntry.setDouble(value) }
-    var pivotOffset = if (isCompBot) -6.5 else -56.0  //comp: 159.7   .0145
+    var pivotOffset = if (isCompBot) -90.0 else -56.0  //comp: if angle too high, increase offset 159.7   .0145
     val pivotEncoder = DutyCycleEncoder(if (isCompBot) DigitalSensors.INTAKE_PIVOT else DigitalSensors.INTAKE_PIVOT_PRACTICE)  // this encoder seems to give randomly changing answers - very naughty encoder
     var pivotAngle : Double = 0.0
         get() = (if (isCompBot) -1.0 else 1.0) * (((pivotEncoder.absolutePosition - 0.334) * 360.0 * 90.0 / 86.0) + pivotOffset).degrees.wrap().asDegrees
@@ -89,7 +89,7 @@ object Intake : Subsystem("Intake") {
         intakePresetEntry.getDouble(26.5)
         intakePivotMotor.config(20) {
             feedbackCoefficient =
-                360.0 / 2048.0 * 90.0 / 24118.9// degrees in a rotation, ticks per rotation
+                360.0 / 2048.0 / 135.0 * 111.0 / 103.0 // degrees in a rotation, ticks per rotation
             brakeMode()
 //            inverted(true)
             pid {
@@ -102,6 +102,7 @@ object Intake : Subsystem("Intake") {
         }
         intakeMotor.config {
             coastMode()
+            currentLimit(20, 25, 1)
         }
 
         GlobalScope.launch(MeanlibDispatcher) {
@@ -127,9 +128,10 @@ object Intake : Subsystem("Intake") {
 //                }
             }},{
             periodic {
-                currentEntry.setDouble(intakePivotMotor.current)  // intakeMotor.current)
+                currentEntry.setDouble(intakePivotMotor.current)
                 pivotEntry.setDouble(pivotAngle) // intakePivotMotor.position)
                 pivotMotorEntry.setDouble(intakePivotMotor.position)
+//                println("pivotMotor ${intakePivotMotor.position}")
                 intakeStateEntry.setString(intakeState.name)
                 //println("$isCompBot intake angle: $pivotAngle ${pivotEncoder.absolutePosition}")
 //                if (OI.operatorController.b) {
@@ -215,6 +217,7 @@ object Intake : Subsystem("Intake") {
         pivotDriverOffset = 0.0
         pivotSetpoint = pivotAngle
     }
+
     fun setIntakePower(power: Double) {
         intakeMotor.setPercentOutput(power)
     }
@@ -270,7 +273,8 @@ object Intake : Subsystem("Intake") {
 
     override suspend fun default() {
         periodic {
-            currentEntry.setDouble(Shooter.shootingMotor.current)
+            pivotMotorEntry.setDouble(intakePivotMotor.position)
+            //currentEntry.setDouble(Shooter.shootingMotor.current)
         }
     //    print(":)")
 //        if (ballIsStaged) {

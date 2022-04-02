@@ -59,15 +59,13 @@ object Climb : Subsystem("Climb") {
     const val HEIGHT_PARTIAL_PULL = 15.0
     const val HEIGHT_BOTTOM_DETACH = 8.0
     const val HEIGHT_BOTTOM = 0.0
-    const val ANGLE_MIN = -1.7
-    const val ANGLE_MAX = 33.8
 
-    val ANGLE_TOP = if (isCompBot) 33.5 else 36.0
-    const val ANGLE_BOTTOM = -4.0
+    val ANGLE_TOP = if (isCompBot) 32.7 else 36.0 //comp: 33.5
+    const val ANGLE_BOTTOM = -1.2 //-4.0
 
     val roll : Double
         get() = Drive.gyro.getRoll()
-    val angleOffset = if (isCompBot) -46.0 else 28.0
+    val angleOffset = if (isCompBot) 0.0 else 28.0 //-45 to -12
     val angleEncoderModifier = if (isCompBot) 1.0 else -1.0
 //    val angleAbsoluteRaw : Double
 //        get() = angleEncoder.absolutePosition
@@ -89,8 +87,8 @@ object Climb : Subsystem("Climb") {
         /*if (climbIsPrepped || tuningMode) */
         get() {
             if (isCompBot) {
-                val returnThis = linearMap(ANGLE_MIN, ANGLE_MAX, 0.16, 0.027, angle) //(0.16 - 0.027) * ((27.0 - angle) / 32.5) + 0.027 //(0.17 - 0.04) * ((27.0 - angle) / 32.5) + 0.04    ((ff at min angle) - (ff at max)) * ((max angle + min angle) - angle) / (max angle)) + (ff at max angle)
-                println("feedForward: $returnThis      angle: $angle ")
+                val returnThis = linearMap(ANGLE_BOTTOM, ANGLE_TOP, 0.16, 0.027, angle) //(0.16 - 0.027) * ((27.0 - angle) / 32.5) + 0.027 //(0.17 - 0.04) * ((27.0 - angle) / 32.5) + 0.04    ((ff at min angle) - (ff at max)) * ((max angle + min angle) - angle) / (max angle)) + (ff at max angle)
+//                println("feedForward: $returnThis      angle: $angle ")
                 return returnThis
 //                return 0.0005
             } else {
@@ -118,7 +116,7 @@ object Climb : Subsystem("Climb") {
                 p(0.0000001)
             }
             setRawOffsetConfig(angle.degrees) //(-4.5).degrees)
-            currentLimit(16, 18, 1)      //not tested yet but these values after looking at current graph 3/30
+//            currentLimit(16, 18, 1)      //not tested yet but these values after looking at current graph 3/30
         }
         heightSetpointEntry.setDouble(height)
         angleSetpointEntry.setDouble(angle)
@@ -145,7 +143,7 @@ object Climb : Subsystem("Climb") {
                     heightMotorOutput.setDouble(heightMotor.output)
                     angleMotorOutput.setDouble(angleMotor.output)
 
-                    var printingFeedForward = linearMap(ANGLE_MIN, ANGLE_MAX, 0.16, 0.027, angle)
+                    var printingFeedForward = linearMap(ANGLE_BOTTOM, ANGLE_TOP, 0.16, 0.027, angle)
 //                    println("angle: $angle      f: $printingFeedForward")
 
                     angleMotor.setRawOffset(angle.degrees)

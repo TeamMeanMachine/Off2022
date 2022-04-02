@@ -20,6 +20,7 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller
+import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.math.square
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.asFeet
@@ -91,7 +92,7 @@ object Shooter : Subsystem("Shooter") {
 
     val filter = LinearFilter.movingAverage(3) //if (tuningMode) {10} else {2})
 
-    const val PITCH_LOW = -31.0
+    const val PITCH_LOW = -26.2
     const val PITCH_HIGH = 35.0
 
     const val PROXIMITY_STAGED_MIN = 200.0
@@ -230,7 +231,7 @@ object Shooter : Subsystem("Shooter") {
 
         backRPMCurve.storeValue(5.0, 2800.0)
         backRPMCurve.storeValue(10.0, 3300.0) //3200.0)
-        backRPMCurve.storeValue(15.0, 4000.0)
+        backRPMCurve.storeValue(15.0, 3950.0) //4000.0)
         backRPMCurve.storeValue(20.0, 5200.0) // 5100.0)
         backRPMCurve.storeValue(25.0, 5650.0)
 
@@ -252,7 +253,7 @@ object Shooter : Subsystem("Shooter") {
         }
 
         pitchMotor.config {
-            currentLimit(10, 15, 10)
+            currentLimit(20, 25, 1)
             inverted(!isCompBot)
             brakeMode()
         }
@@ -285,7 +286,7 @@ object Shooter : Subsystem("Shooter") {
             filter.calculate(pitch)
             periodic {
                 if (pitchIsReady && pitchPDEnable) {
-                    val power = pitchPDController.update(filter.calculate(pitchSetpoint) - pitch) + (pitch + 30.0) / 60.0 * (-0.05) + 0.1 // mapping (-30.0, 30.0) to (0.1, 0.05)
+                    val power = pitchPDController.update(filter.calculate(pitchSetpoint) - pitch) + linearMap(-30.0, 30.0, 0.1, 0.05, pitch) // mapping (-30.0, 30.0) to (0.1, 0.05)
                     pitchSetPower(power)
 //                    println("pitchPower $power")
                 }
