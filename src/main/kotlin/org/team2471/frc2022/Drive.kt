@@ -25,6 +25,7 @@ import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
 import kotlin.math.absoluteValue
+import kotlin.math.atan2
 
 @OptIn(DelicateCoroutinesApi::class)
 object Drive : Subsystem("Drive"), SwerveDrive {
@@ -290,7 +291,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 turn = aimPDController.update(Limelight.aimError)
 //                println("LimeLightAimError=${Limelight.aimError}")
             } else if (autoAim) {
-                var error = (position.angle.degrees - heading).wrap()
+                var error = (position.angle.radians - heading).wrap()
                 if (error.asDegrees.absoluteValue > 90.0) error = (error - 180.0.degrees).wrap()
                 turn = aimPDController.update(error.asDegrees)
             }

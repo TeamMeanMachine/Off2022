@@ -83,7 +83,7 @@ object Feeder : Subsystem("Feeder") {
 //                println("feeder curr ${shooterFeedMotor.current}")
 
                 currentFeedStatus = when {
-//                    isAuto && (Shooter.allGood && !waitASecond) -> Status.ACTIVELY_SHOOTING
+                    isAuto && (Shooter.allGood) -> Status.ACTIVELY_SHOOTING
                     Shooter.shootMode && OI.driveRightTrigger > 0.1 -> Status.ACTIVELY_SHOOTING
                     isClearing -> Status.CLEARING
                     Shooter.cargoIsStaged && Feeder.cargoIsStaged -> Status.DUAL_STAGED
