@@ -252,7 +252,7 @@ suspend fun performClimb(traverseClimb: Boolean = true) = use(Climb, Intake) {
                     println("Trigger climb stage ${Climb.climbStage}, roll is ${Climb.roll}")
                     when (Climb.climbStage) {
                         0 -> {
-                            Climb.angleMotor.brakeMode()
+//                            Climb.angleMotor.brakeMode()
                             goToPose(Pose.PULL_UP)
                             delay(0.1)
                         }
@@ -284,7 +284,8 @@ suspend fun performClimb(traverseClimb: Boolean = true) = use(Climb, Intake) {
                                         hit25 = true
                                         println("hit 30, angle ${Climb.angle}")
                                     }
-                                    if (lasTroll - Climb.roll > 0.0 && (Climb.angle > 25.0 || Climb.roll < 15.0)) {
+                                    val deltaRoll = lasTroll - Climb.roll
+                                    if (deltaRoll > 0.0 && (Climb.angle > 25.0 || Climb.roll < -10.0)) {
                                         println("Angle ${angleTimer.get()} Roll ${Climb.roll}")
                                         stop()
                                     }
@@ -296,8 +297,8 @@ suspend fun performClimb(traverseClimb: Boolean = true) = use(Climb, Intake) {
                             goToPose(Pose.TRAVERSE_ENGAGE)
                             delay(0.1)
                         }
-                        4 -> goToPose(Pose.TRAVERSE_PULL_MID)
-                        5 -> goToPose(Pose.TRAVERSE_PULL_UP)
+                        4 -> goToPose(Pose.TRAVERSE_PULL_MID, false, 0.5)
+                        5 -> goToPose(Pose.TRAVERSE_PULL_UP, false, 0.5)
 
                         else -> println("Climb Stage Complete")
                     }

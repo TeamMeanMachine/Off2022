@@ -140,7 +140,6 @@ object Limelight : Subsystem("Front Limelight") {
         get() = backLedModeEntry.getDouble(1.0) == 0.0
         set(value) {
             field = value
-//            ledModeEntry.setDouble(if (value) 0.0 else 1.0)
             backLedModeEntry.setDouble(if (value) 0.0 else 1.0)
         }
 

@@ -302,7 +302,7 @@ object Shooter : Subsystem("Shooter") {
                 aimGood = Limelight.aimError.absoluteValue < aimMaxError
                 rpmGood = filteredError < rpmMaxError
                 pitchGood = pitchSetpoint - pitch < pitchMaxError
-                //isCargoAlignedWithAlliance = (allianceColor == cargoColor || cargoColor == NOTSET)
+                isCargoAlignedWithAlliance = (allianceColor == cargoColor || cargoColor == NOTSET)
                 allGood = shootMode && aimGood && rpmGood && pitchGood
 
                 aimGoodEntry.setBoolean(aimGood)
@@ -367,7 +367,19 @@ object Shooter : Subsystem("Shooter") {
                     //println("intentional bad shot for $stagedColorString ${DriverStation.getAlliance()}")
                 }
                 // set rpm for shot
-                rpm = if (shootMode || tuningMode) rpmSetpoint * rpmBadShotAdjustment else 0.0
+                if (isCargoAlignedWithAlliance) {
+                    if  (shootMode || tuningMode) {
+                        rpm = rpmSetpoint
+                    } else {
+                        rpm = 0.0
+                    }
+                } else {
+                    if (pitch > 0) {
+                        rpm = 1200.0
+                    } else {
+                        rpm = 1200.0
+                    }
+                }
 
             }
         }

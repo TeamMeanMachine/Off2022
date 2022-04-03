@@ -60,8 +60,8 @@ object Climb : Subsystem("Climb") {
     const val HEIGHT_BOTTOM_DETACH = 8.0
     const val HEIGHT_BOTTOM = 0.0
 
-    val ANGLE_TOP = if (isCompBot) 32.7 else 36.0 //comp: 33.5
-    const val ANGLE_BOTTOM = -1.2 //-4.0
+    val ANGLE_TOP = if (isCompBot) 32.0 else 36.0 //comp: 33.5
+    const val ANGLE_BOTTOM = -3.0 //-4.0
 
     val roll : Double
         get() = Drive.gyro.getRoll()
@@ -87,10 +87,10 @@ object Climb : Subsystem("Climb") {
         /*if (climbIsPrepped || tuningMode) */
         get() {
             if (isCompBot) {
-                val returnThis = linearMap(ANGLE_BOTTOM, ANGLE_TOP, 0.16, 0.027, angle) //(0.16 - 0.027) * ((27.0 - angle) / 32.5) + 0.027 //(0.17 - 0.04) * ((27.0 - angle) / 32.5) + 0.04    ((ff at min angle) - (ff at max)) * ((max angle + min angle) - angle) / (max angle)) + (ff at max angle)
+                val returnThis = linearMap(ANGLE_BOTTOM, ANGLE_TOP, 0.09, 0.04, angle) //outLo 0.16   outHi 0.027   //(0.16 - 0.027) * ((27.0 - angle) / 32.5) + 0.027 //(0.17 - 0.04) * ((27.0 - angle) / 32.5) + 0.04    ((ff at min angle) - (ff at max)) * ((max angle + min angle) - angle) / (max angle)) + (ff at max angle)
 //                println("feedForward: $returnThis      angle: $angle ")
                 return returnThis
-//                return 0.0005
+//                return 0.1
             } else {
                 return 0.2
             }
@@ -109,11 +109,12 @@ object Climb : Subsystem("Climb") {
             }
         }
         angleMotor.config {
-            coastMode()
+            coastMode()  //0.09
             inverted(true)
-            feedbackCoefficient = (360.0 / 2048.0 / 75.0) * (35.9 / 27.0) //* (36.7 / 29.8) // Circle over ticks over gear ratio //(360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0 * (34.0 / 40.0)/*(if (isCompBot) (34.0 / 40.0) /* (32.0 / 17.0)*/ else 39.0 / 26.0)*/)  //added a / 2.0 to compbot after mechanical change with same gear ratio?
+            feedbackCoefficient = (360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0 * (if (isCompBot) 34.0 / 40.0 else 39.0 / 26.0)) //(360.0 / 2048.0 / 75.0) * (35.9 / 27.0) //* (36.7 / 29.8) // Circle over ticks over gear ratio //(360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0 * (34.0 / 40.0)/*(if (isCompBot) (34.0 / 40.0) /* (32.0 / 17.0)*/ else 39.0 / 26.0)*/)  //added a / 2.0 to compbot after mechanical change with same gear ratio?
             pid {
-                p(0.0000001)
+                p(0.00000008) //1e-5)
+                d(1e-4)
             }
             setRawOffsetConfig(angle.degrees) //(-4.5).degrees)
 //            currentLimit(16, 18, 1)      //not tested yet but these values after looking at current graph 3/30

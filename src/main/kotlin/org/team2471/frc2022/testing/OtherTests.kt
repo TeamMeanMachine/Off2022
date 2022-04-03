@@ -39,10 +39,11 @@ suspend fun Climb.motorTest() = use(this) {
 suspend fun Climb.anglePIDTest() = use(this){
     var setpoint = 0.0
     periodic {
-        setpoint = (OI.operatorController.leftThumbstickY * 10.0 ) + 30.0
+        setpoint = (OI.operatorController.leftThumbstickY * 10.0 ) + 15.0
         angleSetpoint = setpoint
         updatePositions()
-        println("climb setpoint: $setpoint")
+        println("climb setpoint: $setpoint                      climb angle output ${angleMotor.output}")
+
     }
 }
 
@@ -113,7 +114,7 @@ suspend fun climbPoseTest() = use(Climb) {
 }
 
 suspend fun Climb.currentTest() = use(this) {
-    var power = 0.0
+    var f = 0.0
     var upPressed = false
     var downPressed = false
     periodic {
@@ -124,19 +125,20 @@ suspend fun Climb.currentTest() = use(this) {
         }
         if (OI.driverController.dPad != Controller.Direction.UP && upPressed) {
             upPressed = false
-            power += 0.01
+            f += 0.01
         }
         if (OI.driverController.dPad != Controller.Direction.DOWN && downPressed) {
             downPressed = false
-            power -= 0.01
+            f -= 0.01
         }
 //        for (moduleCount in 0..3) {
 //            val module = modules[moduleCount] as Drive.Module
 //        }
 //        println()
 //        println("power: $power")
-        angleSetPower(power)
-        println("current: ${round(angleMotor.current, 2)}  power: $power")
+        angleMotor.setPositionSetpoint(25.0, f)
+//        angleSetPower(f)
+        println("current: ${round(angleMotor.current, 2)}  f: $f")
 //        drive(
 //            Vector2(0.0, power),
 //            0.0,

@@ -42,6 +42,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val odometer2Entry = table.getEntry("Odometer 2")
     val odometer3Entry = table.getEntry("Odometer 3")
 
+    val radialVelocityEntry = table.getEntry("Radial Velocity")
+    val angularVelocityEntry = table.getEntry("Angular Velocity")
+
     val fieldObject = Field2d()
     val radarObject = Field2d()
 
@@ -140,6 +143,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     var aimPDController = teleopPDController // 0.006, 0.032, 0.011  // 0.012, 0.03, 0.0
     var lastError = 0.0
 
+    var prevRadius = 0.0
+    var prevAngle = 0.0
+
     init {
         println("drive init")
         initializeSteeringMotors()
@@ -195,6 +201,15 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 //               println("XPos: ${position.x.feet} yPos: ${position.y.feet}")
                 fieldObject.robotPose = Pose2d(position.x.feet.asMeters+fieldCenterOffset.x, position.y.feet.asMeters+fieldCenterOffset.y, -Rotation2d((heading-90.0.degrees).asRadians))
 
+                val currRadius = position.length
+                val currAngle = position.angle
+                val radialVelocity = currRadius - prevRadius
+                val angularVelocity = currAngle - prevAngle
+                radialVelocityEntry.setDouble(radialVelocity)
+                angularVelocityEntry.setDouble(angularVelocity)
+                prevRadius = currRadius
+                prevAngle = currAngle
+
                 val redCargo = redCargoEntry.getDoubleArray(emptyArray())
                 var redCargoOnField = ArrayList<Double>()
 
@@ -202,7 +217,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     if ((i + 1) % 3 != 0)
                         continue
 
-                    val cargoWithBot = fieldObject.robotPose + Transform2d(Translation2d(redCargo[i-2], redCargo[i-1]), Rotation2d(gyro.angle.degrees.asRadians))
+                    val cargoWithBot = fieldObject.robotPose + Transform2d(Translation2d(redCargo[i-2], redCargo[i-1]), Rotation2d((gyro.angle.degrees + 90.0.degrees).asRadians))
                     redCargoOnField.add(cargoWithBot.x)
                     redCargoOnField.add(cargoWithBot.y)
                     redCargoOnField.add(0.0)
@@ -406,25 +421,25 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             }
 
             val moduleContLimit: Int = when ((driveMotor.motorID as FalconID).value) {
-                Falcons.DRIVE_FRONTLEFT -> 55
-                Falcons.DRIVE_FRONTRIGHT -> 55   //
-                Falcons.DRIVE_BACKRIGHT -> 65     //
-                Falcons.DRIVE_BACKLEFT -> 65
+                Falcons.DRIVE_FRONTLEFT -> 60     //added 5 to all
+                Falcons.DRIVE_FRONTRIGHT -> 60   //
+                Falcons.DRIVE_BACKRIGHT -> 70     //
+                Falcons.DRIVE_BACKLEFT -> 70
                 else -> 55
             }
 
             val modulePeakLimit: Int = when ((driveMotor.motorID as FalconID).value) {
-                Falcons.DRIVE_FRONTLEFT -> 60
-                Falcons.DRIVE_FRONTRIGHT -> 60    //
-                Falcons.DRIVE_BACKRIGHT -> 70        //
-                Falcons.DRIVE_BACKLEFT -> 70
+                Falcons.DRIVE_FRONTLEFT -> 65    //added 5 to all
+                Falcons.DRIVE_FRONTRIGHT -> 65    //
+                Falcons.DRIVE_BACKRIGHT -> 75        //
+                Falcons.DRIVE_BACKLEFT -> 75
                 else -> 60
             }
 
             driveMotor.config {
                 brakeMode()
                 feedbackCoefficient = 1.0 / 2048.0 / 5.857 / 1.09 * 6.25 / 8.0 // spark max-neo 1.0 / 42.0/ 5.857 / fudge factor * 8ft test 2022
-//                currentLimit(moduleContLimit, modulePeakLimit, 1)
+                currentLimit(moduleContLimit, modulePeakLimit, 1)
                 openLoopRamp(1.0)
 //                burnSettings()
             }

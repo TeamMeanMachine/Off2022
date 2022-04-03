@@ -49,6 +49,8 @@ object Robot : MeanlibRobot() {
         Limelight
         Climb
         PowerInfo
+//        Limelight.frontLedEnabled = true
+//        Limelight.backLedEnabled = true
     }
 
     override suspend fun enable() {
@@ -87,7 +89,7 @@ object Robot : MeanlibRobot() {
 
     override suspend fun test()  {
         println("test mode begin. Hi.")
-        Intake.pivotFeedForwardTest()
+         Climb.anglePIDTest()
     }
 
 

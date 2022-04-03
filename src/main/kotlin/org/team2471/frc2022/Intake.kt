@@ -15,6 +15,7 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller
+import org.team2471.frc.lib.input.whenTrue
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.degrees
 import kotlin.math.absoluteValue
@@ -93,8 +94,8 @@ object Intake : Subsystem("Intake") {
             brakeMode()
 //            inverted(true)
             pid {
-                p(0.0000030)
-//                d(0.00000005)
+                p(1e-5)
+                d(0.00000005)
 //                f(0.04)
             }
 
@@ -133,6 +134,12 @@ object Intake : Subsystem("Intake") {
                 pivotMotorEntry.setDouble(intakePivotMotor.position)
 //                println("pivotMotor ${intakePivotMotor.position}")
                 intakeStateEntry.setString(intakeState.name)
+
+                if (OI.driverController.rightBumper) {
+                    pivotSetpoint -= 1.0
+                    setIntakePower(0.0)
+                }
+
                 //println("$isCompBot intake angle: $pivotAngle ${pivotEncoder.absolutePosition}")
 //                if (OI.operatorController.b) {
 //                    setIntakePower(INTAKE_POWER)
@@ -227,24 +234,26 @@ object Intake : Subsystem("Intake") {
     }
 
     suspend fun changeAngle(angle: Double) {
-        val angleCurve = MotionCurve()
-        print("angle currently at $pivotAngle ")
-        print(" going to $angle ")
-        val distance = (pivotAngle - angle).absoluteValue
-        val rate = 90.0 / 1.0  // degrees per sec
-        val time = distance / rate
-        println("intake angle $time")
-        angleCurve.storeValue(0.0, pivotAngle)
-        angleCurve.storeValue(time, angle)
-        val timer = Timer()
-        timer.start()
+        if (!OI.driverController.rightBumper) {
+            val angleCurve = MotionCurve()
+            print("angle currently at $pivotAngle ")
+            print(" going to $angle ")
+            val distance = (pivotAngle - angle).absoluteValue
+            val rate = 90.0 / 1.0  // degrees per sec
+            val time = distance / rate
+            println("intake angle $time")
+            angleCurve.storeValue(0.0, pivotAngle)
+            angleCurve.storeValue(time, angle)
+            val timer = Timer()
+            timer.start()
 //        changeAngleSetUp(angle)
-        periodic {
-            val t = timer.get()
-            pivotSetpoint = angleCurve.getValue(t)
-            //println("${angleCurve.getValue(t)}")
-            if (t >= angleCurve.length) {
-                stop()
+            periodic {
+                val t = timer.get()
+                pivotSetpoint = angleCurve.getValue(t)
+                //println("${angleCurve.getValue(t)}")
+                if (t >= angleCurve.length) {
+                    stop()
+                }
             }
         }
 //                changeAnglePeriodic()

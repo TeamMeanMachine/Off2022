@@ -108,6 +108,11 @@ object Feeder : Subsystem("Feeder") {
                 feedUseFrontLimelightEntry.setBoolean(Limelight.useFrontLimelight)
                 distanceEntry.setDouble(feedDistance)
                 isClearingEntry.setBoolean(isClearing)
+                if (!Shooter.isCargoAlignedWithAlliance) {
+                    setShooterFeedPower(0.9)
+                    setBedFeedPower(0.0)
+                    println("shot other alliance's color")
+                }
                 if (autoFeedMode) {
                     when (currentFeedStatus) {
                         Status.ACTIVELY_SHOOTING -> {
@@ -167,7 +172,7 @@ object Feeder : Subsystem("Feeder") {
                         cargoWasStaged = false
                         setBedFeedPower(-BED_FEED_POWER)
                         setShooterFeedPower(-SHOOTER_FEED_POWER)
-                    } else  {
+                    } else {
                         cargoWasStaged = false
                         setShooterFeedPower(0.0)
                         setBedFeedPower(0.0)
