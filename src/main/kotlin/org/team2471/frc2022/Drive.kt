@@ -186,10 +186,19 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
             val autoAimEntry = table.getEntry("Auto Aim")
 
+            val reducedField = Vector2(fieldCenterOffset.x.meters.asFeet - (35.0/12)/2, fieldCenterOffset.y.meters.asFeet - (35.0/12)/2)
+            var lastPosition = Pose2d(position.x.feet.asMeters+fieldCenterOffset.x, position.y.feet.asMeters+fieldCenterOffset.y, -Rotation2d((heading-90.0.degrees).asRadians))
+
 //            aimPEntry.setDouble(0.015)
 //            aimDEntry.setDouble(0.005)
             periodic {
-                val (x, y) = position
+                var (x, y) = position
+                if (x.absoluteValue > reducedField.x || y.absoluteValue > reducedField.y ){
+                    println("Coercing x inside field dimensions")
+                    x = x.coerceIn(-reducedField.x, reducedField.x)
+                    y = y.coerceIn(-reducedField.y, reducedField.y)
+                    position = Vector2(x, y)
+                }
                 xEntry.setDouble(x)
                 yEntry.setDouble(y)
                 headingEntry.setDouble(heading.asDegrees)
@@ -199,7 +208,18 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 angleTwoEntry.setDouble((modules[2] as Module).analogAngle.asDegrees)
                 angleThreeEntry.setDouble((modules[3] as Module).analogAngle.asDegrees)
 //               println("XPos: ${position.x.feet} yPos: ${position.y.feet}")
-                fieldObject.robotPose = Pose2d(position.x.feet.asMeters+fieldCenterOffset.x, position.y.feet.asMeters+fieldCenterOffset.y, -Rotation2d((heading-90.0.degrees).asRadians))
+                if (lastPosition != fieldObject.robotPose) {
+                    position = Vector2((fieldObject.robotPose.x - fieldCenterOffset.x).meters.asFeet, (fieldObject.robotPose.y - fieldCenterOffset.y).meters.asFeet)
+                    lastPosition = fieldObject.robotPose
+                } else {
+                    val robotPose = Pose2d(
+                        position.x.feet.asMeters + fieldCenterOffset.x,
+                        position.y.feet.asMeters + fieldCenterOffset.y,
+                        -Rotation2d((heading - 90.0.degrees).asRadians)
+                    )
+                    fieldObject.robotPose = robotPose
+                    lastPosition = robotPose
+                }
 
                 val currRadius = position.length
                 val currAngle = position.angle
@@ -217,7 +237,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     if ((i + 1) % 3 != 0)
                         continue
 
-                    val cargoWithBot = fieldObject.robotPose + Transform2d(Translation2d(redCargo[i-2], redCargo[i-1]), Rotation2d((gyro.angle.degrees + 90.0.degrees).asRadians))
+                    val cargoWithBot = fieldObject.robotPose + Transform2d(Translation2d(redCargo[i-2], redCargo[i-1]), Rotation2d(gyro.angle.degrees.asRadians))
                     redCargoOnField.add(cargoWithBot.x)
                     redCargoOnField.add(cargoWithBot.y)
                     redCargoOnField.add(0.0)
