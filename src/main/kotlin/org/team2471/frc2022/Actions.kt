@@ -204,7 +204,7 @@ suspend fun shootTest2() = use(Shooter, Feeder) {
     }
 }
 
-suspend fun goToPose(targetPose: Pose, fullCurve: Boolean = false, minTime: Double = 0.0) = use(Climb, Intake) {
+suspend fun goToPose(targetPose: Pose, fullCurve: Boolean = false, minTime: Double = 0.0) = use(Climb) {
     val time = if (fullCurve) {
         maxOf(minTime, Climb.angleChangeTime(targetPose.angle), Climb.heightChangeTime(targetPose.height))
     } else {
@@ -237,7 +237,7 @@ suspend fun climbPrep() = use(Climb, Shooter, Intake) {
 }
 
 
-suspend fun performClimb(traverseClimb: Boolean = true) = use(Climb, Intake) {
+suspend fun performClimb(traverseClimb: Boolean = true) {
     println("trying to start climb")
     if (Climb.climbIsPrepped) {
         //println("Climb stage executing: ${Climb.climbStage} roll: ${Climb.roll}")
@@ -254,7 +254,7 @@ suspend fun performClimb(traverseClimb: Boolean = true) = use(Climb, Intake) {
                         0 -> {
 //                            Climb.angleMotor.brakeMode()
                             goToPose(Pose.PULL_UP)
-                            delay(0.1)
+                            if (loop > 0) delay(0.1)
                         }
                         1 -> {
                             goToPose(Pose.PULL_UP_LATCH, true)
@@ -284,9 +284,9 @@ suspend fun performClimb(traverseClimb: Boolean = true) = use(Climb, Intake) {
                                         hit25 = true
                                         println("hit 30, angle ${Climb.angle}")
                                     }
-                                    val deltaRoll = lasTroll - Climb.roll
-                                    if (deltaRoll > 0.0 && (Climb.angle > 25.0 || Climb.roll < -10.0)) {
-                                        println("Angle ${angleTimer.get()} Roll ${Climb.roll}")
+                                    val deltaRoll = Climb.roll - lasTroll
+                                    if (deltaRoll > -3.0 && deltaRoll < 1.0 && Climb.angle > 25.0 && Climb.roll < 20.0) {
+                                        println("Angle ${angleTimer.get()} Roll ${Climb.roll} DeltaRoll $deltaRoll")
                                         stop()
                                     }
                                     lasTroll = Climb.roll
@@ -295,9 +295,12 @@ suspend fun performClimb(traverseClimb: Boolean = true) = use(Climb, Intake) {
                         }
                         3 -> {
                             goToPose(Pose.TRAVERSE_ENGAGE)
-                            delay(0.1)
+                            if (loop == 0) delay(0.2) else delay(0.1)
                         }
-                        4 -> goToPose(Pose.TRAVERSE_PULL_MID, false, 0.5)
+                        4 -> {
+                            goToPose(Pose.TRAVERSE_PULL_MID, false, 0.5)
+                            delay(0.04)
+                        }
                         5 -> goToPose(Pose.TRAVERSE_PULL_UP, false, 0.5)
 
                         else -> println("Climb Stage Complete")

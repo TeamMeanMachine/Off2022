@@ -66,7 +66,7 @@ object Intake : Subsystem("Intake") {
     val PIVOT_INTAKE
         get() = if (isCompBot) intakePresetEntry.getDouble(26.5) else 16.0
     val PIVOT_STORE = if (isCompBot) 95.0 else 98.0
-    val PIVOT_TOP = if (isCompBot) 110.0 else 98.0
+    val PIVOT_TOP = if (isCompBot) 110.7 else 98.0
 
 
 //    val button = DigitalInput(9)

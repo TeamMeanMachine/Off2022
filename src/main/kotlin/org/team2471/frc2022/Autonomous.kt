@@ -166,6 +166,7 @@ object AutoChooser {
                 autoShootv2(1, 3.5)
             }, {
                 powerSave()
+                Intake.changeAngle(Intake.PIVOT_INTAKE) //untested
                 Feeder.autoFeedMode = true
             })
             println("lowering intake and getting 1st ball")

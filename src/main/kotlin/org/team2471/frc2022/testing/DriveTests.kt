@@ -5,6 +5,7 @@ import org.team2471.frc2022.OI
 import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.use
+import org.team2471.frc.lib.input.Controller
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion.following.drive
@@ -66,4 +67,31 @@ suspend fun Drive.rampTest() = use(Drive) {
         }
     }
     println("endPos: ${Drive.position.y}")
+}
+
+suspend fun Drive.aimFTest() = use(Drive) {
+    var turn = 0.0
+    var upPressed = false
+    var downPressed = false
+    periodic {
+        if (OI.driverController.dPad == Controller.Direction.UP) {
+            upPressed = true
+        } else if (OI.driverController.dPad == Controller.Direction.DOWN) {
+            downPressed = true
+        }
+        if (OI.driverController.dPad != Controller.Direction.UP && upPressed) {
+            upPressed = false
+            turn += 0.01
+        }
+        if (OI.driverController.dPad != Controller.Direction.DOWN && downPressed) {
+            downPressed = false
+            turn -= 0.01
+        }
+        println("turn $turn")
+        drive(
+            Vector2(0.0, 0.0),
+            turn,
+            false
+        )
+    }
 }

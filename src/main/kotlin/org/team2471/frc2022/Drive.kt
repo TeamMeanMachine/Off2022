@@ -138,8 +138,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override val kCarpet = 1.0 / 40.0 //to take out, make 0.0
     override val kTread = 0.0//5 //how much of an effect treadWear has
 
-    val autoPDController = PDConstantFController(0.015, 0.012, 0.008) //not tuned
-    val teleopPDController =  PDConstantFController(0.02, 0.02, 0.05) //0.02, 0.01, 0.05) //0.011, 0.032, 0.008)
+    val autoPDController = PDConstantFController(0.012, 0.09, 0.05) //0.015, 0.012, 0.008)
+    val teleopPDController =  PDConstantFController(0.012, 0.09, 0.05) //0.01, 0.05, 0.05)
 
     var aimPDController = teleopPDController // 0.006, 0.032, 0.011  // 0.012, 0.03, 0.0
     var lastError = 0.0
@@ -223,9 +223,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 }
 
                 val currRadius = position.length
-                val currAngle = position.angle
-                val radialVelocity = currRadius - prevRadius
-                val angularVelocity = currAngle - prevAngle
+                val currAngle = position.angle.radians.asDegrees
+                val radialVelocity = (currRadius - prevRadius) * 50.0
+                val angularVelocity = (currAngle - prevAngle) * 50.0
                 radialVelocityEntry.setDouble(radialVelocity)
                 angularVelocityEntry.setDouble(angularVelocity)
                 prevRadius = currRadius
