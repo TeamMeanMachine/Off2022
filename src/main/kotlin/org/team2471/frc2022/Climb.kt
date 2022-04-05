@@ -43,18 +43,18 @@ object Climb : Subsystem("Climb") {
     var climbMode = false
     val height: Double
         get() = heightMotor.position
-    var heightSetpoint
-        get() = heightSetpointEntry.getDouble(0.0)
+    var heightSetpoint = height
+        get() = heightSetpointEntry.getDouble(height)
         set(value) {
-//            field = value.coerceIn(HEIGHT_BOTTOM, HEIGHT_TOP)
-            heightSetpointEntry.setDouble(value)
+            field = value.coerceIn(HEIGHT_BOTTOM, HEIGHT_TOP)
+            heightSetpointEntry.setDouble(field)
         }
 
     val tuningMode = false
 
     const val HOLDING_ANGLE = 1.0
 
-    const val HEIGHT_TOP = 32.0
+    const val HEIGHT_TOP = 30.5
     const val HEIGHT_VERTICAL_TOP = 25.5
     const val HEIGHT_PARTIAL_PULL = 15.0
     const val HEIGHT_BOTTOM_DETACH = 8.0
@@ -103,7 +103,7 @@ object Climb : Subsystem("Climb") {
             brakeMode()
             inverted(true)
             followersInverted(true)
-            feedbackCoefficient = 3.14 / 2048.0 / 9.38 * 30.0 / 25.0  //3.14 / 2048.0 / 9.38 * 30.0 / 26.0
+            feedbackCoefficient = 3.14 / 2048.0 / 9.38 * 30.0 / 25.5 //3.14 / 2048.0 / 9.38 * 30.0 / 26.0
             pid {
                 p(0.00000002)
             }
@@ -117,7 +117,7 @@ object Climb : Subsystem("Climb") {
                 d(1e-4)
             }
             setRawOffsetConfig(angle.degrees) //(-4.5).degrees)
-//            currentLimit(16, 18, 1)      //not tested yet but these values after looking at current graph 3/30
+            currentLimit(60, 70, 1)      //not tested yet but these values after looking at current graph 3/30
         }
         heightSetpointEntry.setDouble(height)
         angleSetpointEntry.setDouble(angle)
@@ -138,7 +138,8 @@ object Climb : Subsystem("Climb") {
                     heightEntry.setDouble(heightMotor.position)
                     angleEntry.setDouble(angle)
                     angleMotorEntry.setDouble(angleMotor.position)
-                    val throughBoreAngle = ((((angleEncoder.absolutePosition * angleEncoderModifier) - 0.05) * 37.0 / 0.13) + angleOffset).degrees.wrap().asDegrees
+                    val throughBoreAngle =
+                        ((((angleEncoder.absolutePosition * angleEncoderModifier) - 0.05) * 37.0 / 0.13) + angleOffset).degrees.wrap().asDegrees
                     throughBoreEntry.setDouble(throughBoreAngle)
                     robotRollEntry.setDouble(roll)
                     heightMotorOutput.setDouble(heightMotor.output)
@@ -150,11 +151,25 @@ object Climb : Subsystem("Climb") {
                     angleMotor.setRawOffset(angle.degrees)
 
                     if (climbMode) {
+                        if (OI.operatorLeftY.absoluteValue > 0.1 || OI.operatorRightX.absoluteValue > 0.1) {
+                            heightSetpoint -= OI.operatorLeftY * 0.45
+                            angleSetpoint += OI.operatorRightX * 0.1
+                        }
                         val power = anglePDController.update(angleSetpoint - angle)
                         angleSetPower(power + angleFeedForward)
 //                        println("pdController setting angle power to ${power + angleFeedForward}")
                     } else {
                         angleSetPower(0.0)
+                    }
+                    if ((OI.operatorLeftTrigger > 0.1 || OI.operatorRightTrigger > 0.1) && !climbMode) {
+                        setPower((OI.operatorLeftTrigger - OI.operatorRightTrigger) * 0.5)
+                    } else {
+                        if (heightSetpoint > 1.5 && !climbMode) {
+                            heightSetpoint -= 0.05
+                        } else if (heightSetpoint < 1.0 && !climbMode) {
+                            heightSetpoint = 1.0
+                        }
+                        heightMotor.setPositionSetpoint(heightSetpoint)
                     }
                 }
         }
@@ -257,13 +272,11 @@ object Climb : Subsystem("Climb") {
                 println("is tuning mode")
 //                updatePositions()
             } else if (OI.operatorLeftY.absoluteValue > 0.1 || OI.operatorRightY.absoluteValue > 0.1) {
-                heightSetpoint -= OI.operatorLeftY * 0.45
-                angleSetpoint += OI.operatorRightY * 0.2
-                heightMotor.setPositionSetpoint(heightSetpoint)
+//                heightSetpoint -= OI.operatorLeftY * 0.45
+//                angleSetpoint += OI.operatorRightY * 0.2
+//                heightMotor.setPositionSetpoint(heightSetpoint)
             }
-            if (OI.operatorLeftTrigger > 0.1 || OI.operatorRightTrigger > 0.1) {
-                setPower((OI.operatorLeftTrigger - OI.operatorRightTrigger) * 0.5)
-            }
+
         }
     }
 

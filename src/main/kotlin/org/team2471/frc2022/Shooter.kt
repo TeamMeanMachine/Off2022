@@ -34,7 +34,7 @@ object Shooter : Subsystem("Shooter") {
     val pitchMotor = MotorController(TalonID(Talons.PITCH))
     private val table = NetworkTableInstance.getDefault().getTable(name)
     val pitchEncoder = DutyCycleEncoder(DigitalSensors.SHOOTER_PITCH)
-    val rpmErrorFilter = LinearFilter.movingAverage(4)
+    val rpmErrorFilter = LinearFilter.movingAverage(10)
 
     private val i2cPort: I2C.Port = I2C.Port.kMXP
     private val colorSensor = ColorSensorV3(i2cPort)
@@ -90,7 +90,7 @@ object Shooter : Subsystem("Shooter") {
     }
 
 
-    val filter = LinearFilter.movingAverage(3) //if (tuningMode) {10} else {2})
+    val pitchFilter = LinearFilter.movingAverage(4) //if (tuningMode) {10} else {2})
 
     const val PITCH_LOW = -26.2
     const val PITCH_HIGH = 35.0
@@ -283,10 +283,10 @@ object Shooter : Subsystem("Shooter") {
             useAutoOdomEntry.setPersistent()
 
             pitchSetpoint = pitch
-            filter.calculate(pitch)
+            pitchFilter.calculate(pitch)
             periodic {
                 if (pitchIsReady && pitchPDEnable) {
-                    val power = pitchPDController.update(filter.calculate(pitchSetpoint) - pitch) + linearMap(-30.0, 30.0, 0.1, 0.05, pitch) // mapping (-30.0, 30.0) to (0.1, 0.05)
+                    val power = pitchPDController.update(pitchFilter.calculate(pitchSetpoint) - pitch) + linearMap(-30.0, 30.0, 0.1, 0.05, pitch) // mapping (-30.0, 30.0) to (0.1, 0.05)
                     pitchSetPower(power)
 //                    println("pitchPower $power")
                 }
@@ -299,7 +299,7 @@ object Shooter : Subsystem("Shooter") {
                 aimMaxErrorEntry.setDouble(aimMaxError)
 
                 val filteredError = rpmErrorFilter.calculate(rpmError)
-                aimGood = Limelight.aimError.absoluteValue < aimMaxError
+                aimGood = Limelight.filteredAimError < aimMaxError
                 rpmGood = filteredError < rpmMaxError
                 pitchGood = pitchSetpoint - pitch < pitchMaxError
                 isCargoAlignedWithAlliance = (allianceColor == cargoColor || cargoColor == NOTSET)

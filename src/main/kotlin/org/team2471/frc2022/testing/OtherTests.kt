@@ -49,8 +49,9 @@ suspend fun Climb.anglePIDTest() = use(this){
 
 suspend fun Intake.pivotTest() = use(this) {
     periodic {
-        intakePivotMotor.setPercentOutput((OI.driveRightTrigger - OI.driveLeftTrigger) * 0.5)
-        println("pivotTest active    ${(OI.driveRightTrigger - OI.driveLeftTrigger) * 0.5}")
+        var power = (OI.driveRightTrigger - OI.driveLeftTrigger)
+        intakePivotMotor.setPercentOutput(power)
+        if (power > 0.1) println("pivotTest active    $power")
     }
 }
 

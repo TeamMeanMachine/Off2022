@@ -13,6 +13,7 @@ import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.round
+import org.team2471.frc.lib.motion_profiling.Autonomous
 import org.team2471.frc.lib.util.Timer
 
 import kotlin.math.roundToInt
@@ -27,6 +28,7 @@ object Feeder : Subsystem("Feeder") {
     val feedDistanceEncoder = DutyCycleEncoder(DigitalSensors.FEEDER_DISTANCE)
 
     val secondShotDelayTimer = Timer()
+    var feederPrint = false
 
     private val table = NetworkTableInstance.getDefault().getTable(Feeder.name)
 
@@ -80,10 +82,12 @@ object Feeder : Subsystem("Feeder") {
 
         GlobalScope.launch(MeanlibDispatcher) {
             periodic {
-//                println("feeder curr ${shooterFeedMotor.current}")
+                if (isAuto && feederPrint) {
+                    println("feeder curr ${shooterFeedMotor.current}             status ${currentFeedStatus}  timerStatus ${currentTimerStatus}   allGood ${Shooter.allGood}   ")
+                }
 
                 currentFeedStatus = when {
-                    isAuto && (Shooter.allGood) -> Status.ACTIVELY_SHOOTING
+                    isAuto && Shooter.allGood && Shooter.shootMode -> Status.ACTIVELY_SHOOTING
                     Shooter.shootMode && OI.driveRightTrigger > 0.1 -> Status.ACTIVELY_SHOOTING
                     isClearing -> Status.CLEARING
                     Shooter.cargoIsStaged && Feeder.cargoIsStaged -> Status.DUAL_STAGED
@@ -108,7 +112,7 @@ object Feeder : Subsystem("Feeder") {
                 feedUseFrontLimelightEntry.setBoolean(Limelight.useFrontLimelight)
                 distanceEntry.setDouble(feedDistance)
                 isClearingEntry.setBoolean(isClearing)
-                if (!Shooter.isCargoAlignedWithAlliance) {
+                if (!Shooter.isCargoAlignedWithAlliance && Shooter.cargoStageProximity > 200) {  //untested
                     setShooterFeedPower(0.9)
                     setBedFeedPower(0.0)
                     println("shot other alliance's color")
@@ -177,6 +181,8 @@ object Feeder : Subsystem("Feeder") {
                         setShooterFeedPower(0.0)
                         setBedFeedPower(0.0)
                     }
+                } else {
+                    setShooterFeedPower(0.0)
                 }
             }
         }
@@ -202,7 +208,7 @@ object Feeder : Subsystem("Feeder") {
             println("Shot is detected. Timer status is queued")
         }
         autoCargoShot += 1
-        println("Shot has been detected rpm: ${Shooter.rpm} rpmError: ${Shooter.rpmError} aimError: ${Limelight.aimError} angle: ${Shooter.pitch}")
+        println("Shot has been detected rpm: ${Shooter.rpm} rpmError: ${Shooter.rpmError} aimError: ${Limelight.aimError} pitchError: ${Shooter.pitchSetpoint - Shooter.pitch}")
     }
 
     val cargoIsStaged: Boolean

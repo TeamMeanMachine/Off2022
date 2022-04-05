@@ -43,7 +43,7 @@ suspend fun armUp() = use(Intake) {
 }
 
 suspend fun powerSave() = use(Intake) {
-    Feeder.autoFeedMode = false
+    if (!Feeder.isAuto) Feeder.autoFeedMode = false
     Intake.setIntakePower(0.0)
     Intake.intakeState = Intake.Mode.POWERSAVE
     Intake.resetPivotOffset()
@@ -83,6 +83,7 @@ suspend fun shootMode() = use(Shooter) {
 suspend fun autoShootv2(shotCount: Int = 2, maxWait: Double = 2.5) = use(Shooter, Feeder, Drive) {
     var doneShooting = false
     Feeder.autoFeedMode = true
+    Shooter.rpmSetpoint = 3000.0
     Shooter.shootMode = true
     val t = Timer()
     t.start()

@@ -1,5 +1,6 @@
 package org.team2471.frc2022
 
+import edu.wpi.first.math.filter.LinearFilter
 import edu.wpi.first.networktables.EntryListenerFlags
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
@@ -153,9 +154,11 @@ object AutoChooser {
     }
 
     suspend fun right5v3() = use(Drive, Shooter, Intake, Feeder) {
+        Feeder.feederPrint = true
         val t = Timer()
         t.start()
         Limelight.backLedEnabled = true
+        Feeder.autoFeedMode = false
         val auto = autonomi["NewAuto"]
         if (auto != null) {
             val firstAuto = auto["4 - 1st Ball"]
@@ -163,14 +166,15 @@ object AutoChooser {
             Drive.heading = firstAuto.headingCurve.getValue(0.0).degrees
             println("auto started - shooting first ball from ${Drive.position} angle: ${Drive.heading}")
             parallel({
-                autoShootv2(1, 3.5)
+                autoShootv2(1, 3.0)
             }, {
                 powerSave()
-                Intake.changeAngle(Intake.PIVOT_INTAKE) //untested
-                Feeder.autoFeedMode = true
+                Intake.changeAngle(Intake.PIVOT_INTAKE)
             })
+            Feeder.feederPrint = false
             println("lowering intake and getting 1st ball")
             parallel({
+//                Intake.resetPivotOffset()
                 intake()
             }, {
                 Drive.driveAlongPath(firstAuto, false)
@@ -218,16 +222,21 @@ object AutoChooser {
         val auto = autonomi["Straight Back Shoot Auto"]
         if (auto != null) {
             Limelight.backLedEnabled = true
+            val firstAuto = auto["1- First Field Cargo"]
+            Drive.position = firstAuto.getPosition(0.0)
+            Drive.heading = firstAuto.headingCurve.getValue(0.0).degrees
             parallel({
                 autoShootv2(1, 4.0)
             }, {
                 powerSave()
                 Feeder.autoFeedMode = true
+                Intake.changeAngle(Intake.PIVOT_INTAKE)
             })
+//            delay(1.0)
             parallel({
                 intake()
             }, {
-                Drive.driveAlongPath(auto["1- First Field Cargo"], true)
+                Drive.driveAlongPath(auto["1- First Field Cargo"], false)
             })
             delay(1.0)
             parallel({

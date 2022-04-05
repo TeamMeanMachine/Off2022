@@ -1,5 +1,6 @@
 package org.team2471.frc2022
 
+import edu.wpi.first.math.filter.LinearFilter
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
@@ -24,6 +25,7 @@ import org.team2471.frc.lib.motion.following.SwerveDrive
 import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
+import org.team2471.frc2022.Limelight.aimError
 import kotlin.math.absoluteValue
 import kotlin.math.atan2
 
@@ -138,7 +140,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     override val kCarpet = 1.0 / 40.0 //to take out, make 0.0
     override val kTread = 0.0//5 //how much of an effect treadWear has
 
-    val autoPDController = PDConstantFController(0.012, 0.09, 0.05) //0.015, 0.012, 0.008)
+    val autoPDController = PDConstantFController(0.015, 0.04, 0.05) //0.015, 0.012, 0.008)
     val teleopPDController =  PDConstantFController(0.012, 0.09, 0.05) //0.01, 0.05, 0.05)
 
     var aimPDController = teleopPDController // 0.006, 0.032, 0.011  // 0.012, 0.03, 0.0

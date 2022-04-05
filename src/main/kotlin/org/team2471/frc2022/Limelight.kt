@@ -14,7 +14,6 @@ import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.halt
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
-import org.team2471.frc.lib.input.Controller
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.units.*
@@ -154,8 +153,10 @@ object Limelight : Subsystem("Front Limelight") {
     val xTranslation
         get() = if (useFrontLimelight) frontXEntry.getDouble(0.0) else -backXEntry.getDouble(0.0)
 
-    val yTranslation
-        get() = if (useFrontLimelight) frontYEntry.getDouble(0.0) else -backYEntry.getDouble(0.0)
+    val yTranslation: Double
+        get() {
+            return if (useFrontLimelight) frontYEntry.getDouble(0.0) else -backYEntry.getDouble(0.0)
+        }
 
     val area
         get() = areaEntry.getDouble(0.0)
@@ -189,7 +190,17 @@ object Limelight : Subsystem("Front Limelight") {
         }
 
     val aimError: Double
-        get() = -yTranslation + Limelight.angleOffset // + parallax.asDegrees
+        get() {
+//            if (hasValidBackTarget) {
+                return -yTranslation + Limelight.angleOffset
+//            } else {
+//                return based on odom
+//            }
+        }
+    var aimFilter = LinearFilter.movingAverage(4)
+    val filteredAimError
+        get() = aimFilter.calculate(aimError)
+
 
 
     fun leftAngleOffset() {
@@ -225,6 +236,7 @@ object Limelight : Subsystem("Front Limelight") {
         //            i += 0.5
         //        }
         GlobalScope.launch(MeanlibDispatcher) {
+            aimFilter.calculate(aimError)
             periodic {
                 backLedEnabled = Shooter.shootMode && !useFrontLimelight
                 frontLedEnabled = Shooter.shootMode && useFrontLimelight
@@ -233,7 +245,7 @@ object Limelight : Subsystem("Front Limelight") {
                 positionXEntry.setDouble(savePosition.x)
                 positionYEntry.setDouble(savePosition.y)
                 aimErrorEntry.setDouble(aimError)
-//
+
 //                var leftPressed = false
 //                var rightPressed = false
 //

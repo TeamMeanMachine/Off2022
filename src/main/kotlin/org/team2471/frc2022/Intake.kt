@@ -39,10 +39,10 @@ object Intake : Subsystem("Intake") {
     var pivotDriverOffset
         get() = pivotDriverOffsetEntry.getDouble(0.0)
         set(value) { pivotDriverOffsetEntry.setDouble(value) }
-    var pivotOffset = if (isCompBot) -90.0 else -56.0  //comp: if angle too high, increase offset 159.7   .0145
+    var pivotOffset = if (isCompBot) 0.0 else -56.0  //comp: if angle too high, increase offset 159.7   .0145
     val pivotEncoder = DutyCycleEncoder(if (isCompBot) DigitalSensors.INTAKE_PIVOT else DigitalSensors.INTAKE_PIVOT_PRACTICE)  // this encoder seems to give randomly changing answers - very naughty encoder
     var pivotAngle : Double = 0.0
-        get() = (if (isCompBot) -1.0 else 1.0) * (((pivotEncoder.absolutePosition - 0.334) * 360.0 * 90.0 / 86.0) + pivotOffset).degrees.wrap().asDegrees
+        get() = (if (isCompBot) -1.0 else 1.0) * (((pivotEncoder.absolutePosition - 0.573) * 360.0 * 118.4 / 105.8) + pivotOffset).degrees.wrap().asDegrees  // (if (isCompBot) -1.0 else 1.0) * (((pivotEncoder.absolutePosition - 0.334) * 360.0 * 90.0 / 86.0) + pivotOffset).degrees.wrap().asDegrees
 
 //        get() = intakePivotMotor.position
 //        set(value) {
@@ -65,8 +65,8 @@ object Intake : Subsystem("Intake") {
 
     val PIVOT_INTAKE
         get() = if (isCompBot) intakePresetEntry.getDouble(26.5) else 16.0
-    val PIVOT_STORE = if (isCompBot) 95.0 else 98.0
-    val PIVOT_TOP = if (isCompBot) 110.7 else 98.0
+    val PIVOT_STORE = if (isCompBot) 110.0 else 98.0
+    val PIVOT_TOP = if (isCompBot) 118.0 else 98.0
 
 
 //    val button = DigitalInput(9)
@@ -90,7 +90,7 @@ object Intake : Subsystem("Intake") {
         intakePresetEntry.getDouble(26.5)
         intakePivotMotor.config(20) {
             feedbackCoefficient =
-                360.0 / 2048.0 / 135.0 * 111.0 / 103.0 // degrees in a rotation, ticks per rotation
+                360.0 / 2048.0 / 135.0 * 118.4 / 105.1  // * 111.0 / 103.0 // degrees in a rotation, ticks per rotation
             brakeMode()
 //            inverted(true)
             pid {
@@ -129,7 +129,7 @@ object Intake : Subsystem("Intake") {
 //                }
             }},{
             periodic {
-                currentEntry.setDouble(intakePivotMotor.current)
+                currentEntry.setDouble(Climb.angleMotor.current)
                 pivotEntry.setDouble(pivotAngle) // intakePivotMotor.position)
                 pivotMotorEntry.setDouble(intakePivotMotor.position)
 //                println("pivotMotor ${intakePivotMotor.position}")
@@ -235,26 +235,27 @@ object Intake : Subsystem("Intake") {
 
     suspend fun changeAngle(angle: Double) {
         if (!OI.driverController.rightBumper) {
-            val angleCurve = MotionCurve()
-            print("angle currently at $pivotAngle ")
-            print(" going to $angle ")
-            val distance = (pivotAngle - angle).absoluteValue
-            val rate = 90.0 / 1.0  // degrees per sec
-            val time = distance / rate
-            println("intake angle $time")
-            angleCurve.storeValue(0.0, pivotAngle)
-            angleCurve.storeValue(time, angle)
-            val timer = Timer()
-            timer.start()
-//        changeAngleSetUp(angle)
-            periodic {
-                val t = timer.get()
-                pivotSetpoint = angleCurve.getValue(t)
-                //println("${angleCurve.getValue(t)}")
-                if (t >= angleCurve.length) {
-                    stop()
-                }
-            }
+            pivotSetpoint = angle
+//            val angleCurve = MotionCurve()
+//            print("angle currently at $pivotAngle ")
+//            print(" going to $angle ")
+//            val distance = (pivotAngle - angle).absoluteValue
+//            val rate = 90.0 / 1.0  // degrees per sec
+//            val time = distance / rate
+//            println("intake angle $time")
+//            angleCurve.storeValue(0.0, pivotAngle)
+//            angleCurve.storeValue(time, angle)
+//            val timer = Timer()
+//            timer.start()
+////        changeAngleSetUp(angle)
+//            periodic {
+//                val t = timer.get()
+//                pivotSetpoint = angleCurve.getValue(t)
+//                //println("${angleCurve.getValue(t)}")
+//                if (t >= angleCurve.length) {
+//                    stop()
+//                }
+//            }
         }
 //                changeAnglePeriodic()
     }
