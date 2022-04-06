@@ -219,23 +219,30 @@ suspend fun goToPose(targetPose: Pose, fullCurve: Boolean = false, minTime: Doub
     })
 }
 
-suspend fun climbPrep() = use(Climb, Shooter, Intake) {
+suspend fun climbPrep() = use(Climb) {
     Feeder.autoFeedMode = false
     Climb.climbMode = true
     Climb.setStatusFrames(forClimb = true)
     Climb.changeAngle(8.0, 0.3)
 
-    parallel({
-        Intake.changeAngle(Intake.PIVOT_BOTTOM)
-    }, {
-        Shooter.changeAngle(Shooter.PITCH_LOW)
-    })
+    climbPrepOther()
     goToPose(Pose.CLIMB_PREP)
     Climb.climbIsPrepped = true
     Climb.bungeeTakeOver = true
     println("climb is prepped")
-    suspendUntil { OI.operatorRightTrigger > 0.1 || OI.operatorLeftTrigger > 0.1 }
-    performClimb()
+    suspendUntil { OI.operatorRightTrigger > 0.1 || OI.operatorLeftTrigger > 0.1 || !Climb.climbIsPrepped}
+    if (Climb.climbIsPrepped) {
+        performClimb()
+    }
+}
+
+suspend fun climbPrepOther () = use(Shooter, Intake) {
+    parallel({
+        Intake.setIntakePower(0.0)
+        Intake.changeAngle(Intake.PIVOT_BOTTOM)
+    }, {
+        Shooter.changeAngle(Shooter.PITCH_LOW)
+    })
 }
 
 

@@ -156,17 +156,15 @@ object Climb : Subsystem("Climb") {
 //                    println("angle: $angle      f: $angleFeedForward")
 
                     angleMotor.setRawOffset(angle.degrees)
-                    if (climbMode && !bungeeTakeOver) {
-                        if (OI.operatorLeftY.absoluteValue > 0.1 || OI.operatorRightX.absoluteValue > 0.1) {
-                            heightSetpoint -= OI.operatorLeftY * 0.45
-                            angleSetpoint += OI.operatorRightX * 0.1
-                        }
-                        val power = anglePDController.update(angleSetpoint - angle)
-                        angleSetPower(power + angleFeedForward)
-    //                        println("pdController setting angle power to ${power + angleFeedForward}")
+                    if (climbMode && (!bungeeTakeOver || OI.operatorRightX.absoluteValue > 0.1)) {
+                            if (OI.operatorRightX.absoluteValue > 0.1) angleSetpoint += OI.operatorRightX * 0.1
+                            val power = anglePDController.update(angleSetpoint - angle)
+                            angleSetPower(power + angleFeedForward)
+                            //                        println("pdController setting angle power to ${power + angleFeedForward}")
                     } else {
                         angleSetPower(0.0)
                     }
+                    if (OI.operatorLeftY.absoluteValue > 0.1 && climbMode) heightSetpoint -= OI.operatorLeftY * 0.45
                     if ((OI.operatorLeftTrigger > 0.1 || OI.operatorRightTrigger > 0.1) && !climbMode) {
                         setPower((OI.operatorLeftTrigger - OI.operatorRightTrigger) * 0.5)
                     } else {

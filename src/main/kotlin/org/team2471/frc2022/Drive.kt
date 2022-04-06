@@ -1,10 +1,7 @@
 package org.team2471.frc2022
 
-import edu.wpi.first.math.filter.LinearFilter
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.math.geometry.Transform2d
-import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.*
@@ -25,9 +22,7 @@ import org.team2471.frc.lib.motion.following.SwerveDrive
 import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
-import org.team2471.frc2022.Limelight.aimError
 import kotlin.math.absoluteValue
-import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -40,8 +35,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val table = NetworkTableInstance.getDefault().getTable(name)
     val navXGyroEntry = table.getEntry("NavX Gyro")
     val blueCargoEntry = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable("Radar").getEntry("BlueCargo")
-    val robotRadarEntry = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable("Radar").getEntry("Robot")
+    val robotsRadarEntry = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable("Radar").getEntry("Robots")
     val robotFieldEntry = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable("Field").getEntry("Robot")
+    val robotsFieldEntry = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable("Field").getEntry("Robots")
     val blueFieldCargoEntry = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable("Field").getEntry("BlueCargo")
 
     val odometer0Entry = table.getEntry("Odometer 0")
@@ -195,8 +191,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             val autoAimEntry = table.getEntry("Auto Aim")
             val defaultXYPos = doubleArrayOf(0.0,0.0)
 
-            val reducedField = Vector2(fieldCenterOffset.x.meters.asFeet - (35.0/12)/2, fieldCenterOffset.y.meters.asFeet - (35.0/12)/2)
-             lastPosition = Pose2d(position.x.feet.asMeters+fieldCenterOffset.x, position.y.feet.asMeters+fieldCenterOffset.y, -Rotation2d((heading-90.0.degrees).asRadians))
+            val robotHalfWidth = (35.0/12.0)/2.0
+
+            val reducedField = Vector2(fieldCenterOffset.x.meters.asFeet - robotHalfWidth, fieldCenterOffset.y.meters.asFeet - robotHalfWidth)
+            lastPosition = Pose2d(position.x.feet.asMeters+fieldCenterOffset.x, position.y.feet.asMeters+fieldCenterOffset.y, -Rotation2d((heading-90.0.degrees).asRadians))
 
 //            aimPEntry.setDouble(0.015)
 //            aimDEntry.setDouble(0.005)
@@ -219,8 +217,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 //               println("XPos: ${position.x.feet} yPos: ${position.y.feet}")
 //                val currRobotPose = fieldObject.robotPose
                 val lastRobotFieldXY = robotFieldEntry.getDoubleArray(defaultXYPos)
-                if (lastPosition.x != lastRobotFieldXY[0] || lastPosition.y != lastRobotFieldXY[1]) {
-                    position = Vector2((lastRobotFieldXY[0] - fieldCenterOffset.x).meters.asFeet, (lastRobotFieldXY[1] - fieldCenterOffset.y).meters.asFeet)
+                val lastX = lastRobotFieldXY[0]
+                val lastY = lastRobotFieldXY[1]
+                if (!Shooter.shootMode &&  lastX != 0.0 && lastY != 0.0 && robotHalfWidth < lastX && lastX < fieldDimensions.x - robotHalfWidth && robotHalfWidth < lastY && lastY < fieldDimensions.y - robotHalfWidth && (lastPosition.x != lastX || lastPosition.y != lastY)) {
+                    position = Vector2((lastX - fieldCenterOffset.x).meters.asFeet, (lastY - fieldCenterOffset.y).meters.asFeet)
                     lastPosition = fieldObject.robotPose
                     println("from fieldobject")
                 } else {
@@ -244,12 +244,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
                 val redCargoOnField = getFieldOffsets(redCargoEntry.getDoubleArray(emptyArray()).toDoubleArray())
                 val blueCargoOnField = getFieldOffsets(blueCargoEntry.getDoubleArray(emptyArray()).toDoubleArray())
-                val robotOnField = getFieldOffsets(robotRadarEntry.getDoubleArray(emptyArray()).toDoubleArray())
+                val robotOnField = getFieldOffsets(robotsRadarEntry.getDoubleArray(emptyArray()).toDoubleArray())
 
 
                 redFieldCargoEntry.setDoubleArray(redCargoOnField.toDoubleArray())
                 blueFieldCargoEntry.setDoubleArray(blueCargoOnField.toDoubleArray())
-                robotFieldEntry.setDoubleArray(robotOnField.toDoubleArray())
+                robotsFieldEntry.setDoubleArray(robotOnField.toDoubleArray())
 
                 autoAim = Shooter.shootMode && Shooter.isKnownShot == Shooter.knownShotType.NOTSET
                 // println(gyro.getNavX().pitch.degrees)
@@ -274,11 +274,11 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         for (i in 0..arrObjects.size) {
             if ((i + 1) % 3 != 0)
                 continue
-            val cargoX = arrObjects[i-2]
+            val cargoX = (arrObjects[i-2] - 3.0)
             val cargoY = arrObjects[i-1]
             //val cargoWithBot = Vector2((cargoX * sinRobot) + lastPosition.x, (cargoY * cosRobot) + lastPosition.y)
             val cargoWithBot = Vector2((cargoX * cosRobot - cargoY * sinRobot) + lastPosition.x, (cargoY * cosRobot + cargoX * sinRobot) + lastPosition.y)
-            //val cargoWithBot = fieldObject.robotPose + Transform2d(Translation2d(redCargo[i-2], redCargo[i-1]), Rotation2d(gyro.angle.degrees.asRadians))
+            //val cargoWithBot = fieldObject.robotPose + Transform2d(Translation2d(redCargo[i-2], redCargo[i-1]), Rotation2d(gyro.angle.degrees.asRadians+90.0.degrees.asRadians))
             returnArray.add(cargoWithBot.x)
             returnArray.add(cargoWithBot.y)
             returnArray.add(0.0)
