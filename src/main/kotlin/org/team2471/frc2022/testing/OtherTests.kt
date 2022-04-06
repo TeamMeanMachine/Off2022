@@ -42,7 +42,7 @@ suspend fun Climb.anglePIDTest() = use(this){
         setpoint = (OI.operatorController.leftThumbstickY * 10.0 ) + 15.0
         angleSetpoint = setpoint
         updatePositions()
-        println("climb setpoint: $setpoint                      climb angle output ${angleMotor.output}")
+//        println("climb setpoint: $setpoint                      climb angle output ${angleMotor.output}")
 
     }
 }
