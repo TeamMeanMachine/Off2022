@@ -76,7 +76,8 @@ object Climb : Subsystem("Climb") {
 //        get() = ((((angleEncoder.get() * angleEncoderModifier) - 0.05) * 37.0 / 0.13) + angleOffset).degrees.wrap().asDegrees
     val angle: Double
 //        get() = angleMotor.position
-         get() = ((((angleEncoder.absolutePosition * angleEncoderModifier) - 0.05) * 37.0 / 0.13) + angleOffset).degrees.wrap().asDegrees
+         get() = (((((angleEncoder.absolutePosition * angleEncoderModifier) - 0.0429) * 360.0) -2.0) * 29.1 / 42.2).degrees.wrap().asDegrees
+
     var angleSetpoint = 0.0
         get() = angleSetpointEntry.getDouble(0.0)
         set(value) {
@@ -140,29 +141,30 @@ object Climb : Subsystem("Climb") {
                     heightEntry.setDouble(heightMotor.position)
                     angleEntry.setDouble(angle)
                     angleMotorEntry.setDouble(angleMotor.position)
-                    val throughBoreAngle =
-                        ((((angleEncoder.absolutePosition * angleEncoderModifier) - 0.05) * 37.0 / 0.13) + angleOffset).degrees.wrap().asDegrees
+                    val throughBoreAngle = (((((angleEncoder.absolutePosition * angleEncoderModifier) - 0.0429) * 360.0) -2.0) * 29.1 / 42.2).degrees.wrap().asDegrees
                     throughBoreEntry.setDouble(throughBoreAngle)
                     robotRollEntry.setDouble(roll)
                     heightMotorOutput.setDouble(heightMotor.output)
                     angleMotorOutput.setDouble(angleMotor.output)
 
-                    var printingFeedForward = linearMap(ANGLE_BOTTOM, ANGLE_TOP, 0.16, 0.027, angle)
-//                    println("angle: $angle      f: $printingFeedForward")
+                    angleFeedForwardCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+
+                    angleFeedForwardCurve.storeValue(-5.0, 0.2) //0.15)
+                    angleFeedForwardCurve.storeValue(15.0, 0.11)
+                    angleFeedForwardCurve.storeValue(32.0, 0.07)
+
+//                    println("angle: $angle      f: $angleFeedForward")
 
                     angleMotor.setRawOffset(angle.degrees)
-
-                    if (climbMode) {
-                        if (OI.operatorLeftY.absoluteValue > 0.1 || OI.operatorRightX.absoluteValue > 0.1) {
-                            heightSetpoint -= OI.operatorLeftY * 0.45
-                            angleSetpoint += OI.operatorRightX * 0.1
-                        }
-                        val power = anglePDController.update(angleSetpoint - angle)
-                        angleSetPower(power + angleFeedForward)
-//                        println("pdController setting angle power to ${power + angleFeedForward}")
+                    if (climbMode && (!bungeeTakeOver || OI.operatorRightX.absoluteValue > 0.1)) {
+                            if (OI.operatorRightX.absoluteValue > 0.1) angleSetpoint += OI.operatorRightX * 0.1
+                            val power = anglePDController.update(angleSetpoint - angle)
+                            angleSetPower(power + angleFeedForward)
+                            //                        println("pdController setting angle power to ${power + angleFeedForward}")
                     } else {
                         angleSetPower(0.0)
                     }
+                    if (OI.operatorLeftY.absoluteValue > 0.1 && climbMode) heightSetpoint -= OI.operatorLeftY * 0.45
                     if ((OI.operatorLeftTrigger > 0.1 || OI.operatorRightTrigger > 0.1) && !climbMode) {
                         setPower((OI.operatorLeftTrigger - OI.operatorRightTrigger) * 0.5)
                     } else {
