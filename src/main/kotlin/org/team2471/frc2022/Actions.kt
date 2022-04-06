@@ -232,25 +232,26 @@ suspend fun climbPrep() = use(Climb, Shooter, Intake) {
     })
     goToPose(Pose.CLIMB_PREP)
     Climb.climbIsPrepped = true
+    Climb.bungeeTakeOver = true
     println("climb is prepped")
     suspendUntil { OI.operatorRightTrigger > 0.1 || OI.operatorLeftTrigger > 0.1 }
-    performClimb(OI.operatorLeftTrigger > 0.1)
+    performClimb()
 }
 
 
-suspend fun performClimb(traverseClimb: Boolean = true) {
+suspend fun performClimb() {
     println("trying to start climb")
     if (Climb.climbIsPrepped) {
         //println("Climb stage executing: ${Climb.climbStage} roll: ${Climb.roll}")
         OI.operatorController.rumble = 0.5
         var loop = 0
-        var maxLoop = if (traverseClimb) 2 else 1
         var lasTroll = Climb.roll
-        while (loop < maxLoop) {
+        while (true) {
             Climb.climbStage = 0
             while (Climb.climbStage < 6) {
                 if (OI.operatorRightTrigger > 0.1 || OI.operatorLeftTrigger > 0.1) {
-                    println("Trigger climb stage ${Climb.climbStage}, roll is ${Climb.roll}")
+                    if (loop == 0) Climb.bungeeTakeOver = false
+                    println("Trigger climb stage ${Climb.climbStage}, loop $loop, roll is ${Climb.roll}")
                     when (Climb.climbStage) {
                         0 -> {
 //                            Climb.angleMotor.brakeMode()
@@ -258,7 +259,7 @@ suspend fun performClimb(traverseClimb: Boolean = true) {
                             if (loop > 0) delay(0.1)
                         }
                         1 -> {
-                            goToPose(Pose.PULL_UP_LATCH, true)
+                            goToPose(Pose.PULL_UP_LATCH, false, 0.5)
                             delay(0.1)
                             goToPose(Pose.PULL_UP_LATCH_LIFT, false, 0.45)
                             goToPose(Pose.PULL_UP_LATCH_RELEASE, true)
@@ -266,10 +267,11 @@ suspend fun performClimb(traverseClimb: Boolean = true) {
                                 delay(0.1)
                             } else {
                                 periodic {
-                                    if (lasTroll - Climb.roll < 0.0 && Climb.roll > 5.0)
+                                    if (lasTroll - Climb.roll < 0.0 && Climb.roll > 10.0)
                                         stop()
                                 }
                                 lasTroll = Climb.roll
+                                delay(0.1)
                             }
                         }
                         2 -> {
@@ -286,7 +288,8 @@ suspend fun performClimb(traverseClimb: Boolean = true) {
                                         println("hit 30, angle ${Climb.angle}")
                                     }
                                     val deltaRoll = Climb.roll - lasTroll
-                                    if (deltaRoll > -3.0 && deltaRoll < 1.0 && Climb.angle > 25.0 && Climb.roll < 20.0) {
+//                                    var maxRoll = if (loop == 0) 18.0 else 15.0
+                                    if (deltaRoll > -3.0 && deltaRoll < 1.0 && Climb.angle > 25.0 && Climb.roll < 15.0) {
                                         println("Angle ${angleTimer.get()} Roll ${Climb.roll} DeltaRoll $deltaRoll")
                                         stop()
                                     }
@@ -296,11 +299,12 @@ suspend fun performClimb(traverseClimb: Boolean = true) {
                         }
                         3 -> {
                             goToPose(Pose.TRAVERSE_ENGAGE)
+//                            delay(0.2)
                             if (loop == 0) delay(0.2) else delay(0.1)
                         }
                         4 -> {
                             goToPose(Pose.TRAVERSE_PULL_MID, false, 0.5)
-                            delay(0.04)
+                            if (loop == 0) delay(0.24) else delay(0.04)
                         }
                         5 -> goToPose(Pose.TRAVERSE_PULL_UP, false, 0.5)
 
@@ -309,8 +313,8 @@ suspend fun performClimb(traverseClimb: Boolean = true) {
                 }
                 Climb.climbStage += 1
             }
+            loop += 1
         }
-        loop += 1
     }
     OI.operatorController.rumble = 0.0
     println("done with start climb")

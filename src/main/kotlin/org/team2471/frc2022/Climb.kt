@@ -41,6 +41,7 @@ object Climb : Subsystem("Climb") {
     var climbIsPrepped = false
     var climbStage = 0
     var climbMode = false
+    var bungeeTakeOver = false
     val height: Double
         get() = heightMotor.position
     var heightSetpoint = height
@@ -75,7 +76,8 @@ object Climb : Subsystem("Climb") {
 //        get() = ((((angleEncoder.get() * angleEncoderModifier) - 0.05) * 37.0 / 0.13) + angleOffset).degrees.wrap().asDegrees
     val angle: Double
 //        get() = angleMotor.position
-         get() = ((((angleEncoder.absolutePosition * angleEncoderModifier) - 0.05) * 37.0 / 0.13) + angleOffset).degrees.wrap().asDegrees
+         get() = (((((angleEncoder.absolutePosition * angleEncoderModifier) - 0.0429) * 360.0) -2.0) * 29.1 / 42.2).degrees.wrap().asDegrees
+
     var angleSetpoint = 0.0
         get() = angleSetpointEntry.getDouble(0.0)
         set(value) {
@@ -87,14 +89,15 @@ object Climb : Subsystem("Climb") {
         /*if (climbIsPrepped || tuningMode) */
         get() {
             if (isCompBot) {
-                val returnThis = linearMap(ANGLE_BOTTOM, ANGLE_TOP, 0.09, 0.04, angle) //outLo 0.16   outHi 0.027   //(0.16 - 0.027) * ((27.0 - angle) / 32.5) + 0.027 //(0.17 - 0.04) * ((27.0 - angle) / 32.5) + 0.04    ((ff at min angle) - (ff at max)) * ((max angle + min angle) - angle) / (max angle)) + (ff at max angle)
-//                println("feedForward: $returnThis      angle: $angle ")
+                val returnThis = angleFeedForwardCurve.getValue(angle) // linearMap(ANGLE_BOTTOM, ANGLE_TOP, 0.19, 0.06, angle) //outLo 0.15  outHi 0.06  //outLo 0.09   outHi 0.04   //(0.16 - 0.027) * ((27.0 - angle) / 32.5) + 0.027 //(0.17 - 0.04) * ((27.0 - angle) / 32.5) + 0.04    ((ff at min angle) - (ff at max)) * ((max angle + min angle) - angle) / (max angle)) + (ff at max angle)
+////                println("feedForward: $returnThis      angle: $angle ")
                 return returnThis
-//                return 0.1
+//                return 0.07
             } else {
                 return 0.2
             }
         }/* else 0.0*/ //compbot 0.09                         //feedforward estimates: at -4.5 min angle -> 0.17         at 28.0 max angle -> 0.04
+    val angleFeedForwardCurve = MotionCurve()
 
     var isAngleMotorControlled = true
 
@@ -103,7 +106,7 @@ object Climb : Subsystem("Climb") {
             brakeMode()
             inverted(true)
             followersInverted(true)
-            feedbackCoefficient = 3.14 / 2048.0 / 9.38 * 30.0 / 25.5 //3.14 / 2048.0 / 9.38 * 30.0 / 26.0
+            feedbackCoefficient = 3.14 / 2048.0 / 9.38 * 28.5 / 25.5 // * 30.0 / 25.5 //3.14 / 2048.0 / 9.38 * 30.0 / 26.0
             pid {
                 p(0.00000002)
             }
@@ -111,13 +114,13 @@ object Climb : Subsystem("Climb") {
         angleMotor.config {
             coastMode()  //0.09
             inverted(true)
-            feedbackCoefficient = (360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0 * (if (isCompBot) 34.0 / 40.0 else 39.0 / 26.0)) //(360.0 / 2048.0 / 75.0) * (35.9 / 27.0) //* (36.7 / 29.8) // Circle over ticks over gear ratio //(360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0 * (34.0 / 40.0)/*(if (isCompBot) (34.0 / 40.0) /* (32.0 / 17.0)*/ else 39.0 / 26.0)*/)  //added a / 2.0 to compbot after mechanical change with same gear ratio?
+            feedbackCoefficient = (360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0) // * (if (isCompBot) 34.0 / 40.0 else 39.0 / 26.0))
             pid {
-                p(0.00000008) //1e-5)
-                d(1e-4)
+                p(0.000000012) //0.000000008) //2e-8) //1e-5)
+//                d(1e-7)
             }
             setRawOffsetConfig(angle.degrees) //(-4.5).degrees)
-            currentLimit(60, 70, 1)      //not tested yet but these values after looking at current graph 3/30
+            currentLimit(45, 50, 1)      //not tested yet but these values after looking at current graph 3/30
         }
         heightSetpointEntry.setDouble(height)
         angleSetpointEntry.setDouble(angle)
@@ -138,26 +141,29 @@ object Climb : Subsystem("Climb") {
                     heightEntry.setDouble(heightMotor.position)
                     angleEntry.setDouble(angle)
                     angleMotorEntry.setDouble(angleMotor.position)
-                    val throughBoreAngle =
-                        ((((angleEncoder.absolutePosition * angleEncoderModifier) - 0.05) * 37.0 / 0.13) + angleOffset).degrees.wrap().asDegrees
+                    val throughBoreAngle = (((((angleEncoder.absolutePosition * angleEncoderModifier) - 0.0429) * 360.0) -2.0) * 29.1 / 42.2).degrees.wrap().asDegrees
                     throughBoreEntry.setDouble(throughBoreAngle)
                     robotRollEntry.setDouble(roll)
                     heightMotorOutput.setDouble(heightMotor.output)
                     angleMotorOutput.setDouble(angleMotor.output)
 
-                    var printingFeedForward = linearMap(ANGLE_BOTTOM, ANGLE_TOP, 0.16, 0.027, angle)
-//                    println("angle: $angle      f: $printingFeedForward")
+                    angleFeedForwardCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+
+                    angleFeedForwardCurve.storeValue(-5.0, 0.2) //0.15)
+                    angleFeedForwardCurve.storeValue(15.0, 0.11)
+                    angleFeedForwardCurve.storeValue(32.0, 0.07)
+
+//                    println("angle: $angle      f: $angleFeedForward")
 
                     angleMotor.setRawOffset(angle.degrees)
-
-                    if (climbMode) {
+                    if (climbMode && !bungeeTakeOver) {
                         if (OI.operatorLeftY.absoluteValue > 0.1 || OI.operatorRightX.absoluteValue > 0.1) {
                             heightSetpoint -= OI.operatorLeftY * 0.45
                             angleSetpoint += OI.operatorRightX * 0.1
                         }
                         val power = anglePDController.update(angleSetpoint - angle)
                         angleSetPower(power + angleFeedForward)
-//                        println("pdController setting angle power to ${power + angleFeedForward}")
+    //                        println("pdController setting angle power to ${power + angleFeedForward}")
                     } else {
                         angleSetPower(0.0)
                     }
