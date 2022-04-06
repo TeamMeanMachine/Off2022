@@ -23,11 +23,13 @@ import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion.following.SwerveDrive
 import org.team2471.frc.lib.motion.following.drive
+import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
 import org.team2471.frc2022.Limelight.aimError
 import kotlin.math.absoluteValue
 import kotlin.math.atan2
+import kotlin.math.sign
 
 @OptIn(DelicateCoroutinesApi::class)
 object Drive : Subsystem("Drive"), SwerveDrive {
@@ -47,6 +49,29 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     val radialVelocityEntry = table.getEntry("Radial Velocity")
     val angularVelocityEntry = table.getEntry("Angular Velocity")
+    val aimFlyOffsetEntry = table.getEntry("Aim Fly Offset")
+
+    var radialVelocity = 0.0
+        get() = radialVelocityEntry.getDouble(0.0)
+        set(value) {
+            radialVelocityEntry.setDouble(value)
+            field = value
+        }
+    var angularVelocity = 0.0
+        get() = angularVelocityEntry.getDouble(0.0)
+        set(value) {
+            angularVelocityEntry.setDouble(value)
+            field = value
+        }
+    val radialVelocityFilter = LinearFilter.movingAverage(2)
+    val angularVelocityFilter = LinearFilter.movingAverage(2)
+    var filteredRadialVelocity = 0.0
+    var filteredAngularVelocity = 0.0
+    var aimFlyOffset: Double = 0.0
+//            get() = aimFlyOffsetEntry.getDouble(0.0)
+        get() = filteredAngularVelocity.sign * angularVelocityCurve.getValue(filteredAngularVelocity.absoluteValue)
+    val angularVelocityCurve: MotionCurve = MotionCurve()
+
 
     val fieldObject = Field2d()
     val radarObject = Field2d()
@@ -153,6 +178,14 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         println("drive init")
         initializeSteeringMotors()
 
+        angularVelocityCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+
+        angularVelocityCurve.storeValue(0.0, 0.0)
+//        angularVelocityCurve.storeValue()
+//        angularVelocityCurve.storeValue()
+//        angularVelocityCurve.storeValue()
+//        angularVelocityCurve.storeValue()
+
         GlobalScope.launch(MeanlibDispatcher) {
 //            odometer0Entry.setPersistent()
 //            odometer1Entry.setPersistent()
@@ -210,6 +243,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 angleOneEntry.setDouble((modules[1] as Module).analogAngle.asDegrees)
                 angleTwoEntry.setDouble((modules[2] as Module).analogAngle.asDegrees)
                 angleThreeEntry.setDouble((modules[3] as Module).analogAngle.asDegrees)
+                aimFlyOffsetEntry.setDouble(aimFlyOffset)
 //               println("XPos: ${position.x.feet} yPos: ${position.y.feet}")
                 if (lastPosition != fieldObject.robotPose) {
                     position = Vector2((fieldObject.robotPose.x - fieldCenterOffset.x).meters.asFeet, (fieldObject.robotPose.y - fieldCenterOffset.y).meters.asFeet)
@@ -226,10 +260,14 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
                 val currRadius = position.length
                 val currAngle = position.angle.radians.asDegrees
-                val radialVelocity = (currRadius - prevRadius) * 50.0
-                val angularVelocity = (currAngle - prevAngle) * 50.0
-                radialVelocityEntry.setDouble(radialVelocity)
-                angularVelocityEntry.setDouble(angularVelocity)
+//                val radialVelocity = (currRadius - prevRadius) * 50.0
+//                val angularVelocity = (currAngle - prevAngle) * 50.0
+//                radialVelocityEntry.setDouble(radialVelocity)
+//                angularVelocityEntry.setDouble(angularVelocity)
+                radialVelocity = (currRadius - prevRadius) * 50.0
+                angularVelocity = (currAngle - prevAngle) * 50.0
+                filteredRadialVelocity = radialVelocityFilter.calculate(radialVelocity)
+                filteredAngularVelocity = angularVelocityFilter.calculate(angularVelocity)
                 prevRadius = currRadius
                 prevAngle = currAngle
 
@@ -313,7 +351,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     fun autoSteer() {
         var turn = 0.0
         if (Limelight.hasValidTarget && (!Feeder.isAuto || !Shooter.useAutoOdomEntry.getBoolean(false))) {
-            turn = aimPDController.update(Limelight.aimError)
+            turn = aimPDController.update(Limelight.aimError + aimFlyOffset)
         }
         Drive.drive(
             Vector2(0.0,0.0),

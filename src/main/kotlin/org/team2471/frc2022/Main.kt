@@ -87,7 +87,7 @@ object Robot : MeanlibRobot() {
 
     override suspend fun test()  {
         println("test mode begin. Hi.")
-        Climb.adjustmentTest()
+        Climb.currentTest()
     }
 
 

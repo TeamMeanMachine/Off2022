@@ -113,11 +113,11 @@ object Climb : Subsystem("Climb") {
             inverted(true)
             feedbackCoefficient = (360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0 * (if (isCompBot) 34.0 / 40.0 else 39.0 / 26.0)) //(360.0 / 2048.0 / 75.0) * (35.9 / 27.0) //* (36.7 / 29.8) // Circle over ticks over gear ratio //(360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0 * (34.0 / 40.0)/*(if (isCompBot) (34.0 / 40.0) /* (32.0 / 17.0)*/ else 39.0 / 26.0)*/)  //added a / 2.0 to compbot after mechanical change with same gear ratio?
             pid {
-                p(0.00000008) //1e-5)
-                d(1e-4)
+//                p(0.00000008) //1e-5)
+//                d(1e-4)
             }
             setRawOffsetConfig(angle.degrees) //(-4.5).degrees)
-            currentLimit(60, 70, 1)      //not tested yet but these values after looking at current graph 3/30
+            currentLimit(50, 60, 1)      //not tested yet but these values after looking at current graph 3/30
         }
         heightSetpointEntry.setDouble(height)
         angleSetpointEntry.setDouble(angle)

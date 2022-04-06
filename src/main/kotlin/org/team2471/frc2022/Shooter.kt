@@ -82,6 +82,8 @@ object Shooter : Subsystem("Shooter") {
     val distanceEntry = table.getEntry("fixedDistances")
     val colorAlignedEntry = table.getEntry("colorAligned")
     val useAutoOdomEntry = table.getEntry("useAutoPreset")
+    val pitchFlyOffsetEntry = table.getEntry("Pitch Fly Offset")
+    val rpmFlyOffsetEntry = table.getEntry("RPM Fly Offset")
     private val knownShotChooser = SendableChooser<String?>().apply {
         setDefaultOption("NOTSET", "notset")
         addOption("FENDER", "fender")
@@ -103,8 +105,11 @@ object Shooter : Subsystem("Shooter") {
     var rpmGood = false
     var pitchGood = false
     var isCargoAlignedWithAlliance = true
+
+    var pitchFlyOffset: Double = 0.0
+//        get() = pitchFlyOffsetEntry.getDouble(0.0)
+        get() = pitchFlyOffsetCurve.getValue(Drive.filteredRadialVelocity)
     var pitchOffset = if (isCompBot) 1.3 else - 76.0
-    var curvepitchOffset = 0.0
     var pitch: Double = 0.0
         get() = (pitchEncoder.absolutePosition - 0.218) * 33.0 / 0.182 + pitchOffset
         set(value) {
@@ -134,10 +139,10 @@ object Shooter : Subsystem("Shooter") {
                 field = pitchSetpointEntry.getDouble(10.0)
             }
             // don't allow values outside of range even with offset
-            field = field.coerceIn(PITCH_LOW-curvepitchOffset, PITCH_HIGH-curvepitchOffset)
+            field = field.coerceIn(PITCH_LOW - pitchFlyOffset, PITCH_HIGH - pitchFlyOffset)
 //            println("tuningMode $tuningMode     useFrontLL ${Limelight.useFrontLimelight}     frontTarget ${Limelight.hasValidFrontTarget}        backTarget ${Limelight.hasValidBackTarget}")
-            pitchSetpointEntry.setDouble(field + curvepitchOffset)
-            return field + curvepitchOffset
+            pitchSetpointEntry.setDouble(field + pitchFlyOffset)
+            return field + pitchFlyOffset
         }
         set(value) {
             field = value.coerceIn(PITCH_LOW, PITCH_HIGH)
@@ -156,12 +161,12 @@ object Shooter : Subsystem("Shooter") {
     val frontPitchCurve: MotionCurve = MotionCurve()
     val frontRPMCurve:MotionCurve = MotionCurve()
     val backRPMCurve: MotionCurve = MotionCurve()
+    val rpmFlyOffsetCurve: MotionCurve = MotionCurve()
+    val pitchFlyOffsetCurve: MotionCurve = MotionCurve()
 
-//    val facingCenter : Boolean
-//        get() {
-//            if (Drive.)
-//        }
-
+    var rpmFlyOffset: Double = 0.0
+//        get() = rpmFlyOffsetEntry.getDouble(0.0)
+        get() = rpmFlyOffsetCurve.getValue(Drive.filteredRadialVelocity)
     var rpmSetpoint: Double = 0.0
         get() {
             if (tuningMode) {
@@ -182,6 +187,7 @@ object Shooter : Subsystem("Shooter") {
             } else {
                 field = rpmSetpointEntry.getDouble(5000.0)
             }
+            field += rpmFlyOffset
             rpmSetpointEntry.setDouble(field)
             return field
         }
@@ -240,6 +246,30 @@ object Shooter : Subsystem("Shooter") {
         frontRPMCurve.storeValue(15.0, 4550.0)
         frontRPMCurve.storeValue(20.0, 5800.0)
 
+        rpmFlyOffsetCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+        pitchFlyOffsetCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+
+//        rpmFlyOffsetCurve.storeValue(0.0, 0.0)
+//        rpmFlyOffsetCurve.storeValue(0.0, 0.0)
+//        rpmFlyOffsetCurve.storeValue(0.0, 0.0)
+//        rpmFlyOffsetCurve.storeValue(0.0, 0.0)
+        rpmFlyOffsetCurve.storeValue(0.0, 0.0)
+//        rpmFlyOffsetCurve.storeValue(0.0, 0.0)
+//        rpmFlyOffsetCurve.storeValue(0.0, 0.0)
+//        rpmFlyOffsetCurve.storeValue(0.0, 0.0)
+//        rpmFlyOffsetCurve.storeValue(0.0, 0.0)
+
+//        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
+//        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
+//        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
+//        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
+        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
+//        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
+//        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
+//        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
+//        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
+
+
         shootingMotor.config {
             followersInverted(true)
             coastMode()
@@ -273,7 +303,8 @@ object Shooter : Subsystem("Shooter") {
             backPitchCurveEntry.setDoubleArray(doubleArrayOf(backPitchCurve.getValue(5.0), backPitchCurve.getValue(10.0), backPitchCurve.getValue(15.0), backPitchCurve.getValue(20.0)))
             frontRPMCurveEntry.setDoubleArray(doubleArrayOf(frontRPMCurve.getValue(5.0), frontRPMCurve.getValue(10.0), frontRPMCurve.getValue(15.0), frontRPMCurve.getValue(20.0)))
             backRPMCurveEntry.setDoubleArray(doubleArrayOf(backRPMCurve.getValue(5.0), backRPMCurve.getValue(10.0), backRPMCurve.getValue(15.0), backRPMCurve.getValue(20.0)))
-
+            pitchFlyOffsetEntry.setDouble(pitchFlyOffset)
+            rpmFlyOffsetEntry.setDouble(rpmFlyOffset)
 
             frontRPMOffsetEntry.setPersistent()
             backRPMOffsetEntry.setPersistent()
