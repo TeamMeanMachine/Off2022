@@ -1,5 +1,6 @@
 package org.team2471.frc2022
 
+import edu.wpi.first.math.filter.LinearFilter
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.networktables.NetworkTableEntry
@@ -20,10 +21,12 @@ import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion.following.SwerveDrive
 import org.team2471.frc.lib.motion.following.drive
+import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
 import kotlin.math.absoluteValue
 import kotlin.math.cos
+import kotlin.math.sign
 import kotlin.math.sin
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -150,9 +153,42 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     var prevAngle = 0.0
     var lastPosition : Pose2d = Pose2d()
 
+
+    val aimFlyOffsetEntry = table.getEntry("Aim Fly Offset")
+
+       var radialVelocity = 0.0
+           get() = radialVelocityEntry.getDouble(0.0)
+           set(value) {
+                   radialVelocityEntry.setDouble(value)
+                   field = value
+           }
+       var angularVelocity = 0.0
+          get() = angularVelocityEntry.getDouble(0.0)
+           set(value) {
+               angularVelocityEntry.setDouble(value)
+                   field = value
+           }
+       val radialVelocityFilter = LinearFilter.movingAverage(2)
+       val angularVelocityFilter = LinearFilter.movingAverage(2)
+       var filteredRadialVelocity = 0.0
+       var filteredAngularVelocity = 0.0
+       var aimFlyOffset: Double = 0.0
+                get() = aimFlyOffsetEntry.getDouble(0.0)
+//            get() = filteredAngularVelocity.sign * angularVelocityCurve.getValue(filteredAngularVelocity.absoluteValue)
+       val angularVelocityCurve: MotionCurve = MotionCurve()
+
+
+
     init {
         println("drive init")
         initializeSteeringMotors()
+        angularVelocityCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+
+                angularVelocityCurve.storeValue(0.0, 0.0)
+        //        angularVelocityCurve.storeValue()
+        //        angularVelocityCurve.storeValue()
+        //        angularVelocityCurve.storeValue()
+        //        angularVelocityCurve.storeValue()
 
         GlobalScope.launch(MeanlibDispatcher) {
 //            odometer0Entry.setPersistent()
@@ -187,6 +223,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             val angleOneEntry = table.getEntry("Swerve Angle 1")
             val angleTwoEntry = table.getEntry("Swerve Angle 2")
             val angleThreeEntry = table.getEntry("Swerve Angle 3")
+            aimFlyOffsetEntry.setDouble(aimFlyOffset)
 
             val autoAimEntry = table.getEntry("Auto Aim")
             val defaultXYPos = doubleArrayOf(0.0,0.0)
@@ -235,10 +272,13 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
                 val currRadius = position.length
                 val currAngle = position.angle.radians.asDegrees
-                val radialVelocity = (currRadius - prevRadius) * 50.0
-                val angularVelocity = (currAngle - prevAngle) * 50.0
-                radialVelocityEntry.setDouble(radialVelocity)
-                angularVelocityEntry.setDouble(angularVelocity)
+                //                val angularVelocity = (currAngle - prevAngle) * 50.0
+                                radialVelocityEntry.setDouble(radialVelocity)
+                                angularVelocityEntry.setDouble(angularVelocity)
+                              radialVelocity = (currRadius - prevRadius) * 50.0
+                              angularVelocity = (currAngle - prevAngle).degrees.wrap().asDegrees * 50.0
+                              filteredRadialVelocity = radialVelocityFilter.calculate(radialVelocity)
+                              filteredAngularVelocity = angularVelocityFilter.calculate(angularVelocity)
                 prevRadius = currRadius
                 prevAngle = currAngle
 

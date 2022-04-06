@@ -192,7 +192,7 @@ object Limelight : Subsystem("Front Limelight") {
     val aimError: Double
         get() {
 //            if (hasValidBackTarget) {
-                return -yTranslation + Limelight.angleOffset
+                return -yTranslation + Limelight.angleOffset + Drive.aimFlyOffset
 //            } else {
 //                return based on odom
 //            }
@@ -299,7 +299,7 @@ object Limelight : Subsystem("Front Limelight") {
 //    }
 
     override suspend fun default() {
-        backLedEnabled = false
+//        backLedEnabled = false
         halt()
     }
 

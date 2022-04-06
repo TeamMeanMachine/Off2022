@@ -12,11 +12,7 @@ import org.team2471.frc.lib.actuators.TalonID
 import org.team2471.frc.lib.coroutines.MeanlibDispatcher
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.Subsystem
-import org.team2471.frc.lib.math.round
-import org.team2471.frc.lib.motion_profiling.Autonomous
 import org.team2471.frc.lib.util.Timer
-
-import kotlin.math.roundToInt
 
 
 object Feeder : Subsystem("Feeder") {
@@ -124,10 +120,12 @@ object Feeder : Subsystem("Feeder") {
                             //setShooterFeedPower(SHOOTER_FEED_POWER)
                             if (currentTimerStatus != Timer_Status.RUNNING) {
                                 setShooterFeedPower(SHOOTER_FEED_POWER)
-                            } else if (currentTimerStatus == Timer_Status.RUNNING && Shooter.cargoIsStaged &&  (secondShotDelayTimer.get()  < 0.025)) {
+                            } else if (currentTimerStatus == Timer_Status.RUNNING && Shooter.cargoIsStaged &&  (secondShotDelayTimer.get()  < 0.05)) { //0.025 0.05
+                                Shooter.rpmSecondOffset = -50.0
                                 setShooterFeedPower(0.0)
                                 println("Timer less than 100 mil. sec")
-                            } else if (currentTimerStatus == Timer_Status.RUNNING && (secondShotDelayTimer.get() >= 0.025)) {
+                            } else if (currentTimerStatus == Timer_Status.RUNNING && (secondShotDelayTimer.get() >= 0.05)) { // 0.025 0.5
+                                Shooter.rpmSecondOffset = 0.0
                                 setShooterFeedPower(SHOOTER_FEED_POWER)
                                 println("Timer greater than 100 mil. sec.")
                                 currentTimerStatus = Timer_Status.STOPPED
@@ -209,6 +207,7 @@ object Feeder : Subsystem("Feeder") {
         }
         autoCargoShot += 1
         println("Shot has been detected rpm: ${Shooter.rpm} rpmError: ${Shooter.rpmError} aimError: ${Limelight.aimError} pitchError: ${Shooter.pitchSetpoint - Shooter.pitch}")
+        println("Angular velocity: ${Drive.angularVelocity} radial velocity: ${Drive.radialVelocity} pitchFlyOffset: ${Shooter.distFlyOffset}")
     }
 
     val cargoIsStaged: Boolean

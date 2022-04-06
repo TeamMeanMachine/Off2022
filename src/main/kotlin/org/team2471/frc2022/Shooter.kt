@@ -82,8 +82,8 @@ object Shooter : Subsystem("Shooter") {
     val distanceEntry = table.getEntry("fixedDistances")
     val colorAlignedEntry = table.getEntry("colorAligned")
     val useAutoOdomEntry = table.getEntry("useAutoPreset")
-    val pitchFlyOffsetEntry = table.getEntry("Pitch Fly Offset")
-    val rpmFlyOffsetEntry = table.getEntry("RPM Fly Offset")
+    val distFlyOffsetEntry = table.getEntry("Pitch Fly Offset")
+//    val rpmFlyOffsetEntry = table.getEntry("RPM Fly Offset")
     private val knownShotChooser = SendableChooser<String?>().apply {
         setDefaultOption("NOTSET", "notset")
         addOption("FENDER", "fender")
@@ -106,9 +106,9 @@ object Shooter : Subsystem("Shooter") {
     var pitchGood = false
     var isCargoAlignedWithAlliance = true
 
-    var pitchFlyOffset: Double = 0.0
-//        get() = pitchFlyOffsetEntry.getDouble(0.0)
-        get() = pitchFlyOffsetCurve.getValue(Drive.filteredRadialVelocity)
+    var distFlyOffset: Double = 0.0
+        get() = distFlyOffsetEntry.getDouble(0.0)
+//        get() = distFlyOffsetCurve.getValue(Drive.radialVelocity)
     var pitchOffset = if (isCompBot) 1.3 else - 76.0
     var pitch: Double = 0.0
         get() = (pitchEncoder.absolutePosition - 0.218) * 33.0 / 0.182 + pitchOffset
@@ -130,19 +130,19 @@ object Shooter : Subsystem("Shooter") {
             } else if (Feeder.isAuto && useAutoOdomEntry.getBoolean(false)) {
                 field = autoOdomPitch
             } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
-                val tempPitch = backPitchCurve.getValue(Limelight.distance.asFeet)
+                val tempPitch = backPitchCurve.getValue(Limelight.distance.asFeet + distFlyOffset)
                 field = tempPitch
             } else if (Limelight.useFrontLimelight && Limelight.hasValidFrontTarget) {
-                val tempPitch = frontPitchCurve.getValue(Limelight.distance.asFeet)
+                val tempPitch = frontPitchCurve.getValue(Limelight.distance.asFeet + distFlyOffset)
                 field = tempPitch
             } else {
                 field = pitchSetpointEntry.getDouble(10.0)
             }
             // don't allow values outside of range even with offset
-            field = field.coerceIn(PITCH_LOW - pitchFlyOffset, PITCH_HIGH - pitchFlyOffset)
+            field = field.coerceIn(PITCH_LOW - distFlyOffset, PITCH_HIGH - distFlyOffset)
 //            println("tuningMode $tuningMode     useFrontLL ${Limelight.useFrontLimelight}     frontTarget ${Limelight.hasValidFrontTarget}        backTarget ${Limelight.hasValidBackTarget}")
-            pitchSetpointEntry.setDouble(field + pitchFlyOffset)
-            return field + pitchFlyOffset
+            pitchSetpointEntry.setDouble(field)
+            return field
         }
         set(value) {
             field = value.coerceIn(PITCH_LOW, PITCH_HIGH)
@@ -161,12 +161,13 @@ object Shooter : Subsystem("Shooter") {
     val frontPitchCurve: MotionCurve = MotionCurve()
     val frontRPMCurve:MotionCurve = MotionCurve()
     val backRPMCurve: MotionCurve = MotionCurve()
-    val rpmFlyOffsetCurve: MotionCurve = MotionCurve()
-    val pitchFlyOffsetCurve: MotionCurve = MotionCurve()
+//    val rpmFlyOffsetCurve: MotionCurve = MotionCurve()
+    val distFlyOffsetCurve: MotionCurve = MotionCurve()
 
-    var rpmFlyOffset: Double = 0.0
+//    var rpmFlyOffset: Double = 0.0
 //        get() = rpmFlyOffsetEntry.getDouble(0.0)
-        get() = rpmFlyOffsetCurve.getValue(Drive.filteredRadialVelocity)
+//        get() = rpmFlyOffsetCurve.getValue(Drive.filteredRadialVelocity)
+    var rpmSecondOffset = 0.0
     var rpmSetpoint: Double = 0.0
         get() {
             if (tuningMode) {
@@ -181,13 +182,14 @@ object Shooter : Subsystem("Shooter") {
                     else -> 3200.0
                 }
             } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
-                field = backRPMCurve.getValue(Limelight.distance.asFeet) * backLLRPMOffset
+                field = backRPMCurve.getValue(Limelight.distance.asFeet + distFlyOffset) * backLLRPMOffset
             } else if (Limelight.useFrontLimelight && Limelight.hasValidFrontTarget) {
-                field = frontRPMCurve.getValue(Limelight.distance.asFeet) * frontLLRPMOffset
+                field = frontRPMCurve.getValue(Limelight.distance.asFeet + distFlyOffset) * frontLLRPMOffset
             } else {
                 field = rpmSetpointEntry.getDouble(5000.0)
             }
-            field += rpmFlyOffset
+//            field += rpmFlyOffset
+            field += rpmSecondOffset
             rpmSetpointEntry.setDouble(field)
             return field
         }
@@ -225,12 +227,12 @@ object Shooter : Subsystem("Shooter") {
         backPitchCurve.storeValue(10.0, -19.0)
         backPitchCurve.storeValue(15.0, -27.0)
         backPitchCurve.storeValue(20.0, -30.0)
-        backPitchCurve.storeValue(25.0, -32.0) //lower than min
+        backPitchCurve.storeValue(25.0, -32.0) //lower than min //-32
 
         frontPitchCurve.storeValue(5.0, 24.8)
         frontPitchCurve.storeValue(10.0, 31.8)
         frontPitchCurve.storeValue(15.0, 36.0) //higher than max
-        frontPitchCurve.storeValue(20.0, 36.0) //higher than max
+        frontPitchCurve.storeValue(20.0, 36.0) //higher than max //36
 
         backRPMCurve.setMarkBeginOrEndKeysToZeroSlope(false)
         frontRPMCurve.setMarkBeginOrEndKeysToZeroSlope(false)
@@ -246,26 +248,16 @@ object Shooter : Subsystem("Shooter") {
         frontRPMCurve.storeValue(15.0, 4550.0)
         frontRPMCurve.storeValue(20.0, 5800.0)
 
-        rpmFlyOffsetCurve.setMarkBeginOrEndKeysToZeroSlope(false)
-        pitchFlyOffsetCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+//        rpmFlyOffsetCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+        distFlyOffsetCurve.setMarkBeginOrEndKeysToZeroSlope(false)
 
 //        rpmFlyOffsetCurve.storeValue(0.0, 0.0)
 //        rpmFlyOffsetCurve.storeValue(0.0, 0.0)
 //        rpmFlyOffsetCurve.storeValue(0.0, 0.0)
 //        rpmFlyOffsetCurve.storeValue(0.0, 0.0)
-        rpmFlyOffsetCurve.storeValue(0.0, 0.0)
-//        rpmFlyOffsetCurve.storeValue(0.0, 0.0)
-//        rpmFlyOffsetCurve.storeValue(0.0, 0.0)
-//        rpmFlyOffsetCurve.storeValue(0.0, 0.0)
-//        rpmFlyOffsetCurve.storeValue(0.0, 0.0)
-
-//        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
-//        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
-//        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
-//        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
-        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
-//        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
-//        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
+        distFlyOffsetCurve.storeValue(0.0, 0.0)
+        distFlyOffsetCurve.storeValue(2.0, 1.0)
+        distFlyOffsetCurve.storeValue(10.0, 6.0)
 //        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
 //        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
 
@@ -303,8 +295,8 @@ object Shooter : Subsystem("Shooter") {
             backPitchCurveEntry.setDoubleArray(doubleArrayOf(backPitchCurve.getValue(5.0), backPitchCurve.getValue(10.0), backPitchCurve.getValue(15.0), backPitchCurve.getValue(20.0)))
             frontRPMCurveEntry.setDoubleArray(doubleArrayOf(frontRPMCurve.getValue(5.0), frontRPMCurve.getValue(10.0), frontRPMCurve.getValue(15.0), frontRPMCurve.getValue(20.0)))
             backRPMCurveEntry.setDoubleArray(doubleArrayOf(backRPMCurve.getValue(5.0), backRPMCurve.getValue(10.0), backRPMCurve.getValue(15.0), backRPMCurve.getValue(20.0)))
-            pitchFlyOffsetEntry.setDouble(pitchFlyOffset)
-            rpmFlyOffsetEntry.setDouble(rpmFlyOffset)
+            distFlyOffsetEntry.setDouble(0.0)
+//            rpmFlyOffsetEntry.setDouble(rpmFlyOffset)
 
             frontRPMOffsetEntry.setPersistent()
             backRPMOffsetEntry.setPersistent()
@@ -328,6 +320,7 @@ object Shooter : Subsystem("Shooter") {
                 rpmMaxErrorEntry.setDouble(rpmMaxError)
                 pitchErrorEntry.setDouble(pitchSetpoint-pitch)
                 aimMaxErrorEntry.setDouble(aimMaxError)
+                distFlyOffsetEntry.setDouble(distFlyOffset)
 
                 val filteredError = rpmErrorFilter.calculate(rpmError)
                 aimGood = Limelight.filteredAimError < aimMaxError
