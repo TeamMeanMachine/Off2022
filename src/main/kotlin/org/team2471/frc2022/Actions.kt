@@ -221,6 +221,11 @@ suspend fun goToPose(targetPose: Pose, fullCurve: Boolean = false, minTime: Doub
 
 suspend fun climbPrep() = use(Climb) {
     Feeder.autoFeedMode = false
+    if (Climb.climbIsPrepped){
+        Climb.climbIsPrepped = false
+        delay(0.5)
+    }
+
     Climb.climbMode = true
     Climb.setStatusFrames(forClimb = true)
     Climb.changeAngle(8.0, 0.3)
@@ -253,9 +258,9 @@ suspend fun performClimb() {
         OI.operatorController.rumble = 0.5
         var loop = 0
         var lasTroll = Climb.roll
-        while (true) {
+        while (true && Climb.climbIsPrepped) {
             Climb.climbStage = 0
-            while (Climb.climbStage < 6) {
+            while (Climb.climbStage < 6 /*&& Climb.climbIsPrepped*/) {
                 if (OI.operatorRightTrigger > 0.1 || OI.operatorLeftTrigger > 0.1) {
                     if (loop == 0) Climb.bungeeTakeOver = false
                     println("Trigger climb stage ${Climb.climbStage}, loop $loop, roll is ${Climb.roll}")
@@ -274,7 +279,7 @@ suspend fun performClimb() {
                                 delay(0.1)
                             } else {
                                 periodic {
-                                    if (lasTroll - Climb.roll < 0.0 && Climb.roll > 10.0)
+                                    if (lasTroll - Climb.roll < 0.0 && Climb.roll > 10.0 && Climb.climbIsPrepped)
                                         stop()
                                 }
                                 lasTroll = Climb.roll
@@ -290,13 +295,13 @@ suspend fun performClimb() {
                                 var hit25 = false
                                 angleTimer.start()
                                 periodic {
-                                    if (!hit25 && Climb.roll > 25.0) {
+                                    if (!hit25 && Climb.roll > 25.0 && Climb.climbIsPrepped) {
                                         hit25 = true
                                         println("hit 30, angle ${Climb.angle}")
                                     }
                                     val deltaRoll = Climb.roll - lasTroll
 //                                    var maxRoll = if (loop == 0) 18.0 else 15.0
-                                    if (deltaRoll > -3.0 && deltaRoll < 1.0 && Climb.angle > 25.0 && Climb.roll < 15.0) {
+                                    if (deltaRoll > -3.0 && deltaRoll < 1.0 && Climb.angle > 25.0 && Climb.roll < 15.0 && Climb.climbIsPrepped) {
                                         println("Angle ${angleTimer.get()} Roll ${Climb.roll} DeltaRoll $deltaRoll")
                                         stop()
                                     }
