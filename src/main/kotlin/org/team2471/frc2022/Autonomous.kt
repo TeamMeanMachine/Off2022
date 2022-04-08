@@ -208,12 +208,10 @@ object AutoChooser {
                 Intake.setIntakePower(0.0)
             },
                 {
-                    autoShootv2(2, 2.5)
+                    autoShootv2(6, 10.0)
                 }
             )
-            Drive.aimPDController = PDConstantFController (0.011, 0.032, 0.008)
             println("auto complete in ${t.get()} seconds")
-            Feeder.autoFeedMode = false
         }
     }
 
@@ -240,11 +238,12 @@ object AutoChooser {
             })
             delay(1.0)
             parallel({
-                autoShootv2(1, 4.0)
+                autoShootv2(3, 5.0)
             }, {
                 Intake.setIntakePower(0.0)
             })
         }
+        Feeder.autoFeedMode = false
     }
 
     suspend fun carpetBiasTest() = use(Drive) {

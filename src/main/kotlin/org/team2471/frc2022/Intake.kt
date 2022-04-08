@@ -129,7 +129,7 @@ object Intake : Subsystem("Intake") {
 //                }
             }},{
             periodic {
-                currentEntry.setDouble(Climb.angleMotor.current)
+                currentEntry.setDouble(intakeMotor.current)
                 pivotEntry.setDouble(pivotAngle) // intakePivotMotor.position)
                 pivotMotorEntry.setDouble(intakePivotMotor.position)
 //                println("pivotMotor ${intakePivotMotor.position}")
@@ -139,6 +139,8 @@ object Intake : Subsystem("Intake") {
                     pivotSetpoint -= 1.0
                     setIntakePower(0.0)
                 }
+
+                if (intakeMotor.current > 15) OI.driverController.rumble = 0.5 else if (!Shooter.shootMode) OI.driverController.rumble = 0.0
 
                 //println("$isCompBot intake angle: $pivotAngle ${pivotEncoder.absolutePosition}")
 //                if (OI.operatorController.b) {

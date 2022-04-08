@@ -107,7 +107,7 @@ object Shooter : Subsystem("Shooter") {
     var isCargoAlignedWithAlliance = true
 
     var distFlyOffset: Double = 0.0
-        get() = distFlyOffsetEntry.getDouble(0.0)
+        get() = 0.0 //distFlyOffsetEntry.getDouble(0.0)
 //        get() = distFlyOffsetCurve.getValue(Drive.radialVelocity)
     var pitchOffset = if (isCompBot) 1.3 else - 76.0
     var pitch: Double = 0.0

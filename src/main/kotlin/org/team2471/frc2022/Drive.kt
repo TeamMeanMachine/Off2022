@@ -173,7 +173,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
        var filteredRadialVelocity = 0.0
        var filteredAngularVelocity = 0.0
        var aimFlyOffset: Double = 0.0
-                get() = aimFlyOffsetEntry.getDouble(0.0)
+                get() = 0.0 //aimFlyOffsetEntry.getDouble(0.0)
 //            get() = filteredAngularVelocity.sign * angularVelocityCurve.getValue(filteredAngularVelocity.absoluteValue)
        val angularVelocityCurve: MotionCurve = MotionCurve()
 
@@ -253,6 +253,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 angleThreeEntry.setDouble((modules[3] as Module).analogAngle.asDegrees)
 //               println("XPos: ${position.x.feet} yPos: ${position.y.feet}")
 //                val currRobotPose = fieldObject.robotPose
+
+
                 val lastRobotFieldXY = robotFieldEntry.getDoubleArray(defaultXYPos)
                 val lastX = lastRobotFieldXY[0]
                 val lastY = lastRobotFieldXY[1]

@@ -83,6 +83,7 @@ object Robot : MeanlibRobot() {
         println("telop begin")
         Drive.aimPDController = Drive.teleopPDController
         Drive.headingSetpoint = Drive.heading
+        Feeder.autoFeedMode = false
     }
 
     override suspend fun test()  {
