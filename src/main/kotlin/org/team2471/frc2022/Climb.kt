@@ -116,7 +116,9 @@ object Climb : Subsystem("Climb") {
             inverted(true)
             feedbackCoefficient = (360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0) // * (if (isCompBot) 34.0 / 40.0 else 39.0 / 26.0))
             pid {
-                p(0.000000012) //0.000000008) //2e-8) //1e-5)
+                p(0.04)
+                d(0.002)
+//                p(0.000000012) //0.000000008) //2e-8) //1e-5)
 //                d(1e-7)
             }
             setRawOffsetConfig(angle.degrees) //(-4.5).degrees)
