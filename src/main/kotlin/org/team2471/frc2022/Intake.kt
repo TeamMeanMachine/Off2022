@@ -42,7 +42,7 @@ object Intake : Subsystem("Intake") {
     var pivotOffset = if (isCompBot) 0.0 else -56.0  //comp: if angle too high, increase offset 159.7   .0145
     val pivotEncoder = DutyCycleEncoder(if (isCompBot) DigitalSensors.INTAKE_PIVOT else DigitalSensors.INTAKE_PIVOT_PRACTICE)  // this encoder seems to give randomly changing answers - very naughty encoder
     var pivotAngle : Double = 0.0
-        get() = (if (isCompBot) -1.0 else 1.0) * (((pivotEncoder.absolutePosition - 0.573) * 360.0 * 118.4 / 105.8) + pivotOffset).degrees.wrap().asDegrees  // (if (isCompBot) -1.0 else 1.0) * (((pivotEncoder.absolutePosition - 0.334) * 360.0 * 90.0 / 86.0) + pivotOffset).degrees.wrap().asDegrees
+        get() = ((if (isCompBot) -1.0 else 1.0) * ((pivotEncoder.absolutePosition - 0.427) * 360.0 * 118.4 / 105.8) + pivotOffset).degrees.wrap().asDegrees  //0.573  // (if (isCompBot) -1.0 else 1.0) * (((pivotEncoder.absolutePosition - 0.334) * 360.0 * 90.0 / 86.0) + pivotOffset).degrees.wrap().asDegrees
 
 //        get() = intakePivotMotor.position
 //        set(value) {
