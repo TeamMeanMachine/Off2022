@@ -81,8 +81,9 @@ suspend fun shootMode() = use(Shooter) {
     Limelight.frontLedEnabled = (Shooter.shootMode && Limelight.useFrontLimelight)
 }
 
-suspend fun autoShootv2(shotCount: Int = 2, maxWait: Double = 2.5) = use(Shooter, Feeder, Drive) {
+suspend fun autoShootv2(shotCount: Int = 2, maxWait: Double = 2.5, minWait: Double = 0.0) = use(Shooter, Feeder, Drive) {
     var doneShooting = false
+    Shooter.pastMinWait = false  //pizza (parameter too)
     Feeder.autoFeedMode = true
     Shooter.rpmSetpoint = 3000.0
     Shooter.shootMode = true
@@ -117,6 +118,7 @@ suspend fun autoShootv2(shotCount: Int = 2, maxWait: Double = 2.5) = use(Shooter
         doneShooting = true
     }, {
         periodic {
+            if (!doneShooting && t.get() > minWait) Shooter.pastMinWait = true //pizza
             if (!doneShooting && t.get() > maxWait) {
                 println("failed shoot allGood: ${Shooter.allGood} rpmGood ${Shooter.rpmGood} pitchGood ${Shooter.pitchGood} aimGood ${Shooter.aimGood} ")
                 doneShooting = true
@@ -127,6 +129,7 @@ suspend fun autoShootv2(shotCount: Int = 2, maxWait: Double = 2.5) = use(Shooter
         }
     })
     Shooter.shootMode = false
+    Shooter.pastMinWait = false  //pizza
 }
 
 suspend fun autoShoot() = use(Shooter, Feeder, Drive) {
@@ -238,7 +241,7 @@ suspend fun climbPrep() = use(Climb) {
         Climb.climbIsPrepped = true
         Climb.bungeeTakeOver = true
         println("climb is prepped")
-        suspendUntil { OI.operatorRightTrigger > 0.1 || OI.operatorLeftTrigger > 0.1 || !Climb.climbIsPrepped }
+        suspendUntil { OI.operatorController.rightBumper || !Climb.climbIsPrepped }
         if (Climb.climbIsPrepped) {
             performClimb()
         }
@@ -265,7 +268,7 @@ suspend fun performClimb() {
         while (Climb.climbIsPrepped) {
             Climb.climbStage = 0
             while (Climb.climbStage < 6 && Climb.climbIsPrepped) {
-                if (OI.operatorRightTrigger > 0.1 || OI.operatorLeftTrigger > 0.1) {
+                if (OI.operatorController.rightBumper) {  //rightBumper instead of leftTrigger
                     if (loop == 0) Climb.bungeeTakeOver = false
                     println("Trigger climb stage ${Climb.climbStage}, loop $loop, roll is ${Climb.roll}")
                     when (Climb.climbStage) {
@@ -289,7 +292,7 @@ suspend fun performClimb() {
                                 delay(0.1)
                             } else {
                                 periodic {
-                                    if ((lasTroll - Climb.roll < 0.0 && Climb.roll > 10.0) || !Climb.climbIsPrepped)
+                                    if ((lasTroll - Climb.roll < 0.0 && Climb.roll > 10.0) || !Climb.climbIsPrepped || OI.driverController.y)
                                         stop()
                                 }
                                 lasTroll = Climb.roll

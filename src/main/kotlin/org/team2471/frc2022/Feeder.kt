@@ -83,7 +83,7 @@ object Feeder : Subsystem("Feeder") {
                 }
 
                 currentFeedStatus = when {
-                    isAuto && Shooter.allGood && Shooter.shootMode -> Status.ACTIVELY_SHOOTING
+                    isAuto && Shooter.allGood && Shooter.shootMode && Shooter.pastMinWait -> Status.ACTIVELY_SHOOTING  //pizza
                     Shooter.shootMode && OI.driveRightTrigger > 0.1 -> Status.ACTIVELY_SHOOTING
                     isClearing -> Status.CLEARING
                     Shooter.cargoIsStaged && Feeder.cargoIsStaged -> Status.DUAL_STAGED

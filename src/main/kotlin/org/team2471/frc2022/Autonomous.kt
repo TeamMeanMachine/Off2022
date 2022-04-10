@@ -166,7 +166,7 @@ object AutoChooser {
             Drive.heading = firstAuto.headingCurve.getValue(0.0).degrees
             println("auto started - shooting first ball from ${Drive.position} angle: ${Drive.heading}")
             parallel({
-                autoShootv2(1, 3.0)
+                autoShootv2(1, 2.5, 0.1)  //pizza  autoShootv2(1, 3.0)
             }, {
                 powerSave()
                 Intake.changeAngle(Intake.PIVOT_INTAKE)
@@ -188,7 +188,7 @@ object AutoChooser {
                 delay(0.25)
                 Intake.setIntakePower(0.0)
             }, {
-                autoShootv2(2, 2.5)
+                autoShootv2(2, 2.5, 0.5) // autoShootv2(2, 3.0)   //pizza
             })
             println("getting 3rd batch")
             Intake.setIntakePower(Intake.INTAKE_POWER)
@@ -208,7 +208,7 @@ object AutoChooser {
                 Intake.setIntakePower(0.0)
             },
                 {
-                    autoShootv2(6, 10.0)
+                    autoShootv2(6, 10.0, 0.1) //pizza
                 }
             )
             println("auto complete in ${t.get()} seconds")

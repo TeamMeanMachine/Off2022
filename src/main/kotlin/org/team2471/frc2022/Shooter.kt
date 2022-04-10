@@ -105,6 +105,7 @@ object Shooter : Subsystem("Shooter") {
     var rpmGood = false
     var pitchGood = false
     var isCargoAlignedWithAlliance = true
+    var pastMinWait = false
 
     var distFlyOffset: Double = 0.0
         get() = 0.0 //distFlyOffsetEntry.getDouble(0.0)

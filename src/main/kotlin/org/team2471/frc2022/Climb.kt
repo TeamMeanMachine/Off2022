@@ -169,7 +169,7 @@ object Climb : Subsystem("Climb") {
                         angleSetPower(0.0)
                     }
                     if (OI.operatorLeftY.absoluteValue > 0.1 && climbMode) heightSetpoint -= OI.operatorLeftY * 0.45
-                    if ((OI.operatorLeftTrigger > 0.1 || OI.operatorRightTrigger > 0.1) && !climbMode) {
+                    if ((OI.operatorLeftTrigger > 0.1 || OI.operatorRightTrigger > 0.1)/* && !climbMode*/) {  //!climbMode commented out to allow for zeroing in climbMode
                         setPower((OI.operatorLeftTrigger - OI.operatorRightTrigger) * 0.5)
                     } else {
                         if (heightSetpoint > 1.5 && !climbMode) {
