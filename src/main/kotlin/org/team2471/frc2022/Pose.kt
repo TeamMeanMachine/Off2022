@@ -11,7 +11,7 @@ data class Pose(val height: Double, val angle: Double) {
 
         val CLIMB_PREP = Pose(Climb.HEIGHT_VERTICAL_TOP, 0.0)
         val PULL_UP = Pose(Climb.HEIGHT_BOTTOM, Climb.ANGLE_BOTTOM)
-        val PULL_UP_LATCH = Pose(Climb.HEIGHT_BOTTOM - 1.0, 13.0)
+        val PULL_UP_LATCH = Pose(Climb.HEIGHT_BOTTOM, 13.0)
         val PULL_UP_LATCH_LIFT = Pose(Climb.HEIGHT_BOTTOM_DETACH, 13.0)
         val PULL_UP_LATCH_RELEASE = Pose(Climb.HEIGHT_BOTTOM_DETACH, 20.0)
         val EXTEND_HOOKS = Pose(Climb.HEIGHT_TOP, Climb.ANGLE_TOP)

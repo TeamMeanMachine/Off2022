@@ -123,7 +123,7 @@ object Shooter : Subsystem("Shooter") {
                 field = pitchSetpointEntry.getDouble(10.0)
             } else if (isKnownShot != knownShotType.NOTSET) {
                 field = when (isKnownShot) {
-                    knownShotType.FENDER -> 15.0
+                    knownShotType.FENDER -> 17.5
                     knownShotType.SAFE -> 35.0
                     knownShotType.WALL -> 35.0
                     else -> 15.0
@@ -338,8 +338,6 @@ object Shooter : Subsystem("Shooter") {
 
                 if (allGood) {
                     OI.driverController.rumble = 0.5
-                } else {
-                    OI.driverController.rumble = 0.0
                 }
 
                  //val detectedColor: Color = m_colorSensor.color

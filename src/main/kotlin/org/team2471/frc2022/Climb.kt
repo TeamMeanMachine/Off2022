@@ -124,6 +124,7 @@ object Climb : Subsystem("Climb") {
             setRawOffsetConfig(angle.degrees) //(-4.5).degrees)
             currentLimit(45, 50, 1)      //not tested yet but these values after looking at current graph 3/30
         }
+        heightMotor.position = 1.0
         heightSetpointEntry.setDouble(height)
         angleSetpointEntry.setDouble(angle)
         setStatusFrames(true)

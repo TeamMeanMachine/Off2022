@@ -63,7 +63,7 @@ object Intake : Subsystem("Intake") {
     const val PIVOT_BOTTOM = -3.0
     const val PIVOT_CATCH = 0.0
 
-    val defaultPivotIntake = 27.0
+    val defaultPivotIntake = 25.0
     val PIVOT_INTAKE
         get() = if (isCompBot) intakePresetEntry.getDouble(defaultPivotIntake) else 16.0
     val PIVOT_STORE = if (isCompBot) 110.0 else 98.0
@@ -87,7 +87,6 @@ object Intake : Subsystem("Intake") {
     var intakeState = Mode.STOW
     init {
         pivotDriverOffsetEntry.getDouble(0.0)
-        intakePresetEntry.setDouble(defaultPivotIntake)
         intakePresetEntry.getDouble(defaultPivotIntake)
         intakePivotMotor.config(20) {
             feedbackCoefficient =
@@ -141,7 +140,7 @@ object Intake : Subsystem("Intake") {
                     setIntakePower(0.0)
                 }
 
-                if (intakeMotor.current > 15) OI.driverController.rumble = 0.5 else if (!Shooter.shootMode) OI.driverController.rumble = 0.0
+                if (intakeMotor.current > 12) OI.driverController.rumble = 1.0 else if (!Shooter.shootMode) OI.driverController.rumble = 0.0
 
                 //println("$isCompBot intake angle: $pivotAngle ${pivotEncoder.absolutePosition}")
 //                if (OI.operatorController.b) {
