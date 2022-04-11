@@ -103,7 +103,7 @@ object Intake : Subsystem("Intake") {
         }
         intakeMotor.config {
             coastMode()
-            currentLimit(20, 25, 1)
+            currentLimit(20, 40, 1)
         }
 
         GlobalScope.launch(MeanlibDispatcher) {

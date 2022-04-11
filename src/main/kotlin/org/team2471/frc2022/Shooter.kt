@@ -29,7 +29,7 @@ import kotlin.math.sqrt
 
 
 object Shooter : Subsystem("Shooter") {
-    val tuningMode = false
+    val tuningMode = true
     val shootingMotor = MotorController(FalconID(Falcons.SHOOTER), FalconID(Falcons.SHOOTER_TWO)) //private
     val pitchMotor = MotorController(TalonID(Talons.PITCH))
     private val table = NetworkTableInstance.getDefault().getTable(name)
@@ -54,7 +54,7 @@ object Shooter : Subsystem("Shooter") {
         get() = backRPMCurve.getValue(sqrt(square(Drive.position.x) + square(Drive.position.y)))
 
     enum class knownShotType {
-        NOTSET, FENDER, WALL, SAFE
+        NOTSET, FENDER, WALL, SAFE_FRONT, SAFE_BACK
     }
 
     val rpmEntry = table.getEntry("RPM")
@@ -88,7 +88,7 @@ object Shooter : Subsystem("Shooter") {
         setDefaultOption("NOTSET", "notset")
         addOption("FENDER", "fender")
         addOption("WALL", "wall")
-        addOption("SAFE", "safe")
+        addOption("SAFE_FRONT", "safe_front")
     }
 
 
@@ -124,7 +124,8 @@ object Shooter : Subsystem("Shooter") {
             } else if (isKnownShot != knownShotType.NOTSET) {
                 field = when (isKnownShot) {
                     knownShotType.FENDER -> 17.5
-                    knownShotType.SAFE -> 35.0
+                    knownShotType.SAFE_FRONT -> 35.0
+                    knownShotType.SAFE_BACK -> -19.0
                     knownShotType.WALL -> 35.0
                     else -> 15.0
                 }
@@ -178,7 +179,8 @@ object Shooter : Subsystem("Shooter") {
             } else if (isKnownShot != knownShotType.NOTSET) {
                 field =  frontLLRPMOffset * when (isKnownShot) {
                     knownShotType.FENDER -> 3200.0
-                    knownShotType.SAFE -> 4200.0
+                    knownShotType.SAFE_FRONT -> 4000.0 //4200
+                    knownShotType.SAFE_BACK -> 3500.0
                     knownShotType.WALL -> 3450.0
                     else -> 3200.0
                 }
@@ -191,7 +193,9 @@ object Shooter : Subsystem("Shooter") {
             }
 //            field += rpmFlyOffset
             field += rpmSecondOffset
-            rpmSetpointEntry.setDouble(field)
+            if (!tuningMode) {
+                rpmSetpointEntry.setDouble(field)
+            }
             return field
         }
     var rpm: Double
