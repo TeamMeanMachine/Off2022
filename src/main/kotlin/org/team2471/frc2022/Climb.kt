@@ -62,7 +62,7 @@ object Climb : Subsystem("Climb") {
     const val HEIGHT_BOTTOM = 0.0
 
     val ANGLE_TOP = if (isCompBot) 32.0 else 36.0 //comp: 33.5
-    const val ANGLE_BOTTOM = -3.0 //-4.0
+    const val ANGLE_BOTTOM = -1.0 //-4.0
 
     val roll : Double
         get() = Drive.gyro.getRoll()
@@ -99,7 +99,7 @@ object Climb : Subsystem("Climb") {
         }/* else 0.0*/ //compbot 0.09                         //feedforward estimates: at -4.5 min angle -> 0.17         at 28.0 max angle -> 0.04
     val angleFeedForwardCurve = MotionCurve()
 
-    var isAngleMotorControlled = true
+    var isAngleMotorControlled = false
 
     init {
         heightMotor.config {
@@ -116,8 +116,8 @@ object Climb : Subsystem("Climb") {
             inverted(true)
             feedbackCoefficient = (360.0 / 2048.0 / 87.1875 * 90.0 / 83.0 / 3.0) // * (if (isCompBot) 34.0 / 40.0 else 39.0 / 26.0))
             pid {
-                p(0.04)
-                d(0.002)
+                p(0.00000001) //0.04)
+                d(0.00000001)
 //                p(0.000000012) //0.000000008) //2e-8) //1e-5)
 //                d(1e-7)
             }
@@ -152,9 +152,10 @@ object Climb : Subsystem("Climb") {
 
                     angleFeedForwardCurve.setMarkBeginOrEndKeysToZeroSlope(false)
 
-                    angleFeedForwardCurve.storeValue(-5.0, 0.2) //0.15)
-                    angleFeedForwardCurve.storeValue(15.0, 0.11)
-                    angleFeedForwardCurve.storeValue(32.0, 0.07)
+                    angleFeedForwardCurve.storeValue(-5.0, 0.2)  // 0.22 //0.2)
+                    angleFeedForwardCurve.storeValue(5.0, 0.18) //0.18
+                    angleFeedForwardCurve.storeValue(15.0, 0.07) // 0.075 //0.11
+                    angleFeedForwardCurve.storeValue(32.0, 0.04)  // 0.06  //0.09
 
 //                    println("angle: $angle      f: $angleFeedForward")
 
@@ -166,7 +167,7 @@ object Climb : Subsystem("Climb") {
 //                        angleMotor.setPositionSetpoint(angleSetpoint, angleFeedForward)
 //                        angleMotor.setPositionSetpoint(angleSetpoint)
                             //                        println("pdController setting angle power to ${power + angleFeedForward}")
-                    } else {
+                    } else if (!tuningMode) {
                         angleSetPower(0.0)
                     }
                     if (OI.operatorLeftY.absoluteValue > 0.1 && climbMode) heightSetpoint -= OI.operatorLeftY * 0.45
