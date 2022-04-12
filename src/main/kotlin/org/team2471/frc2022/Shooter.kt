@@ -29,8 +29,8 @@ import kotlin.math.sqrt
 
 
 object Shooter : Subsystem("Shooter") {
-    val tuningMode = true
-    val shootingMotor = MotorController(FalconID(Falcons.SHOOTER), FalconID(Falcons.SHOOTER_TWO)) //private
+    val tuningMode = false
+    val shootingMotor = MotorController(FalconID(Falcons.SHOOTER), FalconID(Falcons.SHOOTER_TWO))
     val pitchMotor = MotorController(TalonID(Talons.PITCH))
     private val table = NetworkTableInstance.getDefault().getTable(name)
     val pitchEncoder = DutyCycleEncoder(DigitalSensors.SHOOTER_PITCH)
@@ -89,10 +89,11 @@ object Shooter : Subsystem("Shooter") {
         addOption("FENDER", "fender")
         addOption("WALL", "wall")
         addOption("SAFE_FRONT", "safe_front")
+        addOption("SAFE_BACK", "safe_back")
     }
 
 
-    val pitchFilter = LinearFilter.movingAverage(4) //if (tuningMode) {10} else {2})
+    val pitchFilter = LinearFilter.movingAverage(15) //if (tuningMode) {10} else {2})
 
     const val PITCH_LOW = -26.2
     const val PITCH_HIGH = 35.0
@@ -184,9 +185,9 @@ object Shooter : Subsystem("Shooter") {
                     knownShotType.WALL -> 3450.0
                     else -> 3200.0
                 }
-            } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
+            } else if (!Limelight.useFrontLimelight/* && Limelight.hasValidBackTarget*/) {
                 field = backRPMCurve.getValue(Limelight.distance.asFeet + distFlyOffset) * backLLRPMOffset
-            } else if (Limelight.useFrontLimelight && Limelight.hasValidFrontTarget) {
+            } else if (Limelight.useFrontLimelight/* && Limelight.hasValidFrontTarget*/) {
                 field = frontRPMCurve.getValue(Limelight.distance.asFeet + distFlyOffset) * frontLLRPMOffset
             } else {
                 field = rpmSetpointEntry.getDouble(5000.0)
@@ -398,7 +399,7 @@ object Shooter : Subsystem("Shooter") {
                     if  (shootMode || tuningMode) {
                         rpm = rpmSetpoint
                     } else {
-                        rpm = 0.0
+                        shootingMotor.setPercentOutput(0.0)
                     }
                 } else {
                     if (pitch > 0) {

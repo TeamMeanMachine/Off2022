@@ -60,7 +60,7 @@ object Intake : Subsystem("Intake") {
         }
 
     const val INTAKE_POWER = 0.9
-    const val PIVOT_BOTTOM = -3.0
+    const val PIVOT_BOTTOM = 0.0
     const val PIVOT_CATCH = 0.0
 
     val defaultPivotIntake = 25.0
@@ -110,7 +110,7 @@ object Intake : Subsystem("Intake") {
             intakePresetEntry.setPersistent()
             parallel({
             periodic {
-                if (pivotEncoder.isConnected && pivotAngle > (PIVOT_BOTTOM - 1.0) && pivotAngle < (PIVOT_TOP + 1.0)) {
+                if (pivotEncoder.isConnected && pivotAngle > (PIVOT_BOTTOM - 3.0) && pivotAngle < (PIVOT_TOP + 1.0)) {
                     println("connected ${pivotEncoder.isConnected}   pivotAngle ${pivotAngle > (PIVOT_BOTTOM - 1.0)} ")
                     resetPivotOffset()
                     println("setpoints pivotAngle")
