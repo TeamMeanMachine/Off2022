@@ -83,7 +83,7 @@ suspend fun shootMode() = use(Shooter) {
 
 suspend fun autoShootv2(shotCount: Int = 2, maxWait: Double = 2.5, minWait: Double = 0.0) = use(Shooter, Feeder, Drive) {
     var doneShooting = false
-    Shooter.pastMinWait = false  //pizza (parameter too)
+    Shooter.pastMinWait = false
     Feeder.autoFeedMode = true
     Shooter.rpmSetpoint = 3000.0
     Shooter.shootMode = true
@@ -129,7 +129,7 @@ suspend fun autoShootv2(shotCount: Int = 2, maxWait: Double = 2.5, minWait: Doub
         }
     })
     Shooter.shootMode = false
-    Shooter.pastMinWait = false  //pizza
+    Shooter.pastMinWait = false
 }
 
 suspend fun autoShoot() = use(Shooter, Feeder, Drive) {
