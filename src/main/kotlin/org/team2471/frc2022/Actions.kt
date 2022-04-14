@@ -12,46 +12,51 @@ import kotlin.math.absoluteValue
 //Intake
 
 
-suspend fun intake() = use(Intake) {
+fun intake() {
 //    Intake.resetPivotOffset()
     Feeder.autoFeedMode = true
     Intake.setIntakePower(Intake.INTAKE_POWER)
     Intake.intakeState = Intake.Mode.INTAKE
     Intake.changeAngle(Intake.PIVOT_INTAKE)
-    Intake.changeAngle(Intake.PIVOT_INTAKE)
     Climb.climbMode = false
     Climb.climbIsPrepped = false
 }
 
-suspend fun catch() = use(Intake) {
+fun catch() {
 //    Intake.resetPivotOffset()
-    Feeder.autoFeedMode = true
-    Intake.setIntakePower(0.0)
-    Intake.intakeState = Intake.Mode.CATCH
-    Intake.changeAngle(Intake.PIVOT_CATCH)
-    Climb.climbMode = false
-    Climb.climbIsPrepped = false
+    if (OI.driveLeftTrigger < 0.1) {
+        Feeder.autoFeedMode = true
+        Intake.setIntakePower(0.0)
+        Intake.intakeState = Intake.Mode.CATCH
+        Intake.changeAngle(Intake.PIVOT_CATCH)
+        Climb.climbMode = false
+        Climb.climbIsPrepped = false
+    }
 }
 
-suspend fun armUp() = use(Intake) {
+fun armUp() {
 //    Intake.resetPivotOffset()
-    Feeder.autoFeedMode = false
-    Intake.setIntakePower(0.0)
-    Intake.intakeState = Intake.Mode.STOW
-    Intake.changeAngle(Intake.PIVOT_STORE)
-    Climb.climbMode = false
-    Climb.climbIsPrepped = false
+    if (OI.driveLeftTrigger < 0.1) {
+        Feeder.autoFeedMode = false
+        Intake.setIntakePower(0.0)
+        Intake.intakeState = Intake.Mode.STOW
+        Intake.changeAngle(Intake.PIVOT_STORE)
+        Climb.climbMode = false
+        Climb.climbIsPrepped = false
+    }
 }
 
-suspend fun powerSave() = use(Intake) {
-    if (!Feeder.isAuto) Feeder.autoFeedMode = false
-    Intake.setIntakePower(0.0)
-    Intake.intakeState = Intake.Mode.POWERSAVE
-    Intake.resetPivotOffset()
-    Intake.changeAngle(Intake.PIVOT_BOTTOM)
-    Climb.climbMode = false
-    Climb.climbIsPrepped = false
-    Intake.resetPivotOffset()
+fun powerSave() {
+    if (OI.driveLeftTrigger < 0.1) {
+        if (!Feeder.isAuto) Feeder.autoFeedMode = false
+        Intake.setIntakePower(0.0)
+        Intake.intakeState = Intake.Mode.POWERSAVE
+        Intake.resetPivotOffset()
+        Intake.changeAngle(Intake.PIVOT_BOTTOM)
+        Climb.climbMode = false
+        Climb.climbIsPrepped = false
+        Intake.resetPivotOffset()
+    }
 }
 
 suspend fun feedUntilCargo() = use(Intake, Feeder) {
@@ -248,7 +253,7 @@ suspend fun climbPrep() = use(Climb) {
     }
 }
 
-suspend fun climbPrepOther () = use(Shooter, Intake) {
+suspend fun climbPrepOther () = use(Shooter) {
     parallel({
         Intake.setIntakePower(0.0)
         Intake.changeAngle(Intake.PIVOT_BOTTOM)

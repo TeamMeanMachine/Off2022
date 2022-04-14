@@ -140,6 +140,10 @@ object Intake : Subsystem("Intake") {
                     setIntakePower(0.0)
                 }
 
+                if (OI.driveLeftTrigger > 0.1) {
+                    intake()
+                }
+
                 if (intakeMotor.current > 12) OI.driverController.rumble = 1.0 else if (!Shooter.shootMode) OI.driverController.rumble = 0.0
 
                 //println("$isCompBot intake angle: $pivotAngle ${pivotEncoder.absolutePosition}")
@@ -235,7 +239,7 @@ object Intake : Subsystem("Intake") {
         intakePivotMotor.setPercentOutput(power)
     }
 
-    suspend fun changeAngle(angle: Double) {
+    fun changeAngle(angle: Double) {
         if (!OI.driverController.rightBumper) {
             pivotSetpoint = angle
 //            val angleCurve = MotionCurve()
