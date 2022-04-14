@@ -2,6 +2,7 @@ package org.team2471.frc2022
 
 import com.revrobotics.ColorSensorV3
 import edu.wpi.first.math.filter.LinearFilter
+import edu.wpi.first.networktables.EntryListenerFlags
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DutyCycleEncoder
@@ -75,10 +76,22 @@ object Shooter : Subsystem("Shooter") {
     val aimGoodEntry = table.getEntry("aimGood")
     val rpmGoodEntry = table.getEntry("rpmGood")
     val allGoodEntry = table.getEntry("allGood")
-    val frontRPMCurveEntry = table.getEntry("frontRPMCurve")
-    val backRPMCurveEntry = table.getEntry("backRPMCurve")
-    val frontPitchCurveEntry = table.getEntry("frontPitchCurve")
-    val backPitchCurveEntry = table.getEntry("backPitchCurve")
+    val frontPitch5Entry = table.getEntry("frontPitch5Entry")
+    val frontPitch10Entry = table.getEntry("frontPitch10Entry")
+    val frontPitch15Entry = table.getEntry("frontPitch15Entry")
+    val frontPitch20Entry = table.getEntry("frontPitch20Entry")
+    val frontRPM5Entry = table.getEntry("frontRPM5Entry")
+    val frontRPM10Entry = table.getEntry("frontRPM10Entry")
+    val frontRPM15Entry = table.getEntry("frontRPM15Entry")
+    val frontRPM20Entry = table.getEntry("frontRPM20Entry")
+    val backPitch5Entry = table.getEntry("backPitch5Entry")
+    val backPitch10Entry = table.getEntry("backPitch10Entry")
+    val backPitch15Entry = table.getEntry("backPitch15Entry")
+    val backPitch20Entry = table.getEntry("backPitch20Entry")
+    val backRPM5Entry = table.getEntry("backRPM5Entry")
+    val backRPM10Entry = table.getEntry("backRPM10Entry")
+    val backRPM15Entry = table.getEntry("backRPM15Entry")
+    val backRPM20Entry = table.getEntry("backRPM20Entry")
     val distanceEntry = table.getEntry("fixedDistances")
     val colorAlignedEntry = table.getEntry("colorAligned")
     val useAutoOdomEntry = table.getEntry("useAutoPreset")
@@ -225,34 +238,60 @@ object Shooter : Subsystem("Shooter") {
 
     init {
         SmartDashboard.putData("KnownShot", knownShotChooser)
+        
+        // Remove this after running the bot for the first time
+        backPitch5Entry.setDouble(-8.0)
+        backPitch10Entry.setDouble(-19.0)
+        backPitch15Entry.setDouble(-27.0)
+        backPitch20Entry.setDouble(-30.0)
+        frontPitch5Entry.setDouble(24.8)
+        frontPitch10Entry.setDouble(31.8)
+        frontPitch15Entry.setDouble(36.0)
+        frontPitch20Entry.setDouble(36.0)
+        backRPM5Entry.setDouble(2800.0)
+        backRPM10Entry.setDouble(3300.0)
+        backRPM15Entry.setDouble(3950.0)
+        backRPM20Entry.setDouble(5200.0)
+        frontRPM5Entry.setDouble(3200.0)
+        frontRPM10Entry.setDouble(3600.0)
+        frontRPM15Entry.setDouble(4550.0)
+        frontRPM20Entry.setDouble(5800.0)
 
-        backPitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
-        frontPitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+        backPitch5Entry.setPersistent()
+        backPitch10Entry.setPersistent()
+        backPitch15Entry.setPersistent()
+        backPitch20Entry.setPersistent()
+        frontPitch5Entry.setPersistent()
+        frontPitch10Entry.setPersistent()
+        frontPitch15Entry.setPersistent()
+        frontPitch20Entry.setPersistent()
+        backRPM5Entry.setPersistent()
+        backRPM10Entry.setPersistent()
+        backRPM15Entry.setPersistent()
+        backRPM20Entry.setPersistent()
+        frontRPM5Entry.setPersistent()
+        frontRPM10Entry.setPersistent()
+        frontRPM15Entry.setPersistent()
+        frontRPM20Entry.setPersistent()
 
-        backPitchCurve.storeValue(5.0, -8.0)
-        backPitchCurve.storeValue(10.0, -19.0)
-        backPitchCurve.storeValue(15.0, -27.0)
-        backPitchCurve.storeValue(20.0, -30.0)
-        backPitchCurve.storeValue(25.0, -32.0) //lower than min //-32
+        frontPitch5Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
+        frontPitch10Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
+        frontPitch15Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
+        frontPitch20Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
+        backPitch5Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
+        backPitch10Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
+        backPitch15Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
+        backPitch20Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
+        frontRPM5Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
+        frontRPM10Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
+        frontRPM15Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
+        frontRPM20Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
+        backRPM5Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
+        backRPM10Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
+        backRPM15Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
+        backRPM20Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
 
-        frontPitchCurve.storeValue(5.0, 24.8)
-        frontPitchCurve.storeValue(10.0, 31.8)
-        frontPitchCurve.storeValue(15.0, 36.0) //higher than max
-        frontPitchCurve.storeValue(20.0, 36.0) //higher than max //36
-
-        backRPMCurve.setMarkBeginOrEndKeysToZeroSlope(false)
-        frontRPMCurve.setMarkBeginOrEndKeysToZeroSlope(false)
-
-        backRPMCurve.storeValue(5.0, 2800.0)
-        backRPMCurve.storeValue(10.0, 3300.0) //3200.0)
-        backRPMCurve.storeValue(15.0, 3950.0) //4000.0)
-        backRPMCurve.storeValue(20.0, 5200.0) // 5100.0)
-        backRPMCurve.storeValue(25.0, 5650.0)
-
-        frontRPMCurve.storeValue(5.0, 3200.0)
-        frontRPMCurve.storeValue(10.0, 3600.0) //3900.0)
-        frontRPMCurve.storeValue(15.0, 4550.0)
-        frontRPMCurve.storeValue(20.0, 5800.0)
+        rebuildCurves()
 
 //        rpmFlyOffsetCurve.setMarkBeginOrEndKeysToZeroSlope(false)
         distFlyOffsetCurve.setMarkBeginOrEndKeysToZeroSlope(false)
@@ -297,11 +336,8 @@ object Shooter : Subsystem("Shooter") {
             frontRPMOffsetEntry.setDouble(frontLLRPMOffset)
             backRPMOffsetEntry.setDouble(backLLRPMOffset)
             distanceEntry.setDoubleArray(doubleArrayOf(5.0, 10.0, 15.0, 20.0))
-            frontPitchCurveEntry.setDoubleArray(doubleArrayOf(frontPitchCurve.getValue(5.0), frontPitchCurve.getValue(10.0), frontPitchCurve.getValue(15.0), frontPitchCurve.getValue(20.0)))
-            backPitchCurveEntry.setDoubleArray(doubleArrayOf(backPitchCurve.getValue(5.0), backPitchCurve.getValue(10.0), backPitchCurve.getValue(15.0), backPitchCurve.getValue(20.0)))
-            frontRPMCurveEntry.setDoubleArray(doubleArrayOf(frontRPMCurve.getValue(5.0), frontRPMCurve.getValue(10.0), frontRPMCurve.getValue(15.0), frontRPMCurve.getValue(20.0)))
-            backRPMCurveEntry.setDoubleArray(doubleArrayOf(backRPMCurve.getValue(5.0), backRPMCurve.getValue(10.0), backRPMCurve.getValue(15.0), backRPMCurve.getValue(20.0)))
             distFlyOffsetEntry.setDouble(0.0)
+
 //            rpmFlyOffsetEntry.setDouble(rpmFlyOffset)
 
             frontRPMOffsetEntry.setPersistent()
@@ -411,6 +447,36 @@ object Shooter : Subsystem("Shooter") {
 
             }
         }
+    }
+
+    fun rebuildCurves() {
+        backPitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+        frontPitchCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+
+        backPitchCurve.storeValue(5.0, backPitch5Entry.getDouble(-8.0))
+        backPitchCurve.storeValue(10.0, backPitch10Entry.getDouble(-19.0))
+        backPitchCurve.storeValue(15.0, backPitch15Entry.getDouble(-27.0))
+        backPitchCurve.storeValue(20.0, backPitch20Entry.getDouble(-30.0))
+        backPitchCurve.storeValue(25.0, -32.0) //lower than min //-32
+
+        frontPitchCurve.storeValue(5.0, frontPitch5Entry.getDouble(24.8))
+        frontPitchCurve.storeValue(10.0, frontPitch10Entry.getDouble(31.8))
+        frontPitchCurve.storeValue(15.0, frontPitch15Entry.getDouble(36.0)) //higher than max
+        frontPitchCurve.storeValue(20.0, frontPitch20Entry.getDouble(36.0)) //higher than max //36
+
+        backRPMCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+        frontRPMCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+
+        backRPMCurve.storeValue(5.0, backRPM5Entry.getDouble(2800.0))
+        backRPMCurve.storeValue(10.0, backRPM10Entry.getDouble(3300.0)) //3200.0)
+        backRPMCurve.storeValue(15.0, backRPM15Entry.getDouble(3950.0)) //4000.0)
+        backRPMCurve.storeValue(20.0, backRPM20Entry.getDouble(5200.0)) // 5100.0)
+        backRPMCurve.storeValue(25.0, 5650.0)
+
+        frontRPMCurve.storeValue(5.0, frontRPM5Entry.getDouble(3200.0))
+        frontRPMCurve.storeValue(10.0, frontRPM10Entry.getDouble(3600.0)) //3900.0)
+        frontRPMCurve.storeValue(15.0, frontRPM15Entry.getDouble(4550.0))
+        frontRPMCurve.storeValue(20.0, frontRPM20Entry.getDouble(5800.0))
     }
 
     override fun preEnable() {
