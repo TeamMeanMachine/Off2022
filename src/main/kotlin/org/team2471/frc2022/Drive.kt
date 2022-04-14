@@ -18,6 +18,7 @@ import org.team2471.frc.lib.control.PDController
 import org.team2471.frc.lib.coroutines.*
 import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.Vector2
+import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion.following.SwerveDrive
 import org.team2471.frc.lib.motion.following.drive
@@ -68,7 +69,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             Vector2(-11.5, 14.0),
             (45.0).degrees,
             AnalogSensors.SWERVE_FRONT_LEFT,
-            1.0, //0.0 is totally worn out and 1.0 is fresh new tread
             odometer0Entry
         ),
         Module(
@@ -77,7 +77,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             Vector2(11.5, 14.0),
             (135.0).degrees,
             AnalogSensors.SWERVE_FRONT_RIGHT,
-            1.0, //0.0 is totally worn out and 1.0 is fresh new tread
             odometer1Entry
         ),
         Module(
@@ -86,7 +85,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             Vector2(11.5, -14.0),
             (-135.0).degrees,
             AnalogSensors.SWERVE_BACK_RIGHT,
-            1.0, //0.0 is totally worn out and 1.0 is fresh new tread
             odometer2Entry
         ),
         Module(
@@ -95,7 +93,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             Vector2(-11.5, -14.0),
             (-45.0).degrees,
             AnalogSensors.SWERVE_BACK_LEFT,
-            1.0, //0.0 is totally worn out and 1.0 is fresh new treadK
             odometer3Entry
         )
     )
@@ -141,7 +138,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     override val carpetFlow = if (DriverStation.getAlliance() == DriverStation.Alliance.Red) Vector2(0.0, 1.0) else Vector2(0.0, -1.0)
     override val kCarpet = 1.0 / 40.0 //to take out, make 0.0
-    override val kTread = 0.0//5 //how much of an effect treadWear has
+    override val kTread = 1.0//5 //how much of an effect treadWear has
 
     val autoPDController = PDConstantFController(0.015, 0.04, 0.05) //0.015, 0.012, 0.008)
     val teleopPDController =  PDConstantFController(0.012, 0.09, 0.05) //0.01, 0.05, 0.05)
@@ -438,7 +435,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         override val modulePosition: Vector2,
         override val angleOffset: Angle,
         private val analogAnglePort: Int,
-        override val treadWear: Double,
         private val odometerEntry: NetworkTableEntry
     ) : SwerveDrive.Module {
         companion object {
@@ -458,6 +454,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             get() {
                 return ((((analogAngleInput.voltage - 0.0) / 5.0) * 360.0).degrees + angleOffset).wrap()
             }
+
+        override val treadWear: Double
+            get() = linearMap(0.0, 10000.0, 1.0, 0.0, odometer)
 
         val driveCurrent: Double
             get() = driveMotor.current
