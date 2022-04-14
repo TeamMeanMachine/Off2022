@@ -314,7 +314,7 @@ object Shooter : Subsystem("Shooter") {
             pitchSetpoint = pitch
             pitchFilter.calculate(pitch)
             periodic {
-                if (pitchIsReady && pitchPDEnable && !Climb.climbIsPrepped) {
+                if (pitchIsReady && pitchPDEnable && !Climb.climbIsPrepped && !tuningMode) {
                     val power = pitchPDController.update(pitchFilter.calculate(pitchSetpoint) - pitch) + linearMap(-30.0, 30.0, 0.1, 0.05, pitch) // mapping (-30.0, 30.0) to (0.1, 0.05)
                     pitchSetPower(power)
 //                    println("pitchPower $power")

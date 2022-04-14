@@ -80,10 +80,12 @@ object Limelight : Subsystem("Front Limelight") {
 
     val distance: Length
         get() {
-            return if ((hasValidBackTarget && backLedEnabled) || (hasValidFrontTarget && frontLedEnabled)) {
-                (9.0.feet - 30.5.inches) / (34.0.degrees + xTranslation.degrees).tan()
+            var llDistance = (9.0.feet - 30.5.inches) / (34.0.degrees + xTranslation.degrees).tan()
+            var driveDistance = Drive.position.length.feet
+            return if (((hasValidBackTarget && backLedEnabled) || (hasValidFrontTarget && frontLedEnabled)) && (llDistance - driveDistance) < maxPositionError.feet) {
+                llDistance
             } else {
-                Drive.position.length.feet
+                driveDistance
             }
         }
 
@@ -210,6 +212,7 @@ object Limelight : Subsystem("Front Limelight") {
     fun rightAngleOffset() {
         Limelight.angleOffset += 0.1
     }
+    var maxPositionError = 3.0
 
 
     init {
@@ -270,11 +273,16 @@ object Limelight : Subsystem("Front Limelight") {
                 if (Shooter.shootMode && hasValidTarget && !Feeder.isAuto && Shooter.aimGood && Drive.position.x.absoluteValue > 1.0 && Drive.position.y.absoluteValue > 1.0) {
                     val alpha = 0.0
                     val prev = Drive.position
-                    Drive.position = Drive.position * alpha + position * (1.0-alpha)
-                    //println("Reset odometry based on limelight to ${Drive.position} from ${prev}. Hi.")
-                    if (prev.distance(Drive.position) > 3.0) {
-//                        println("Distance changed > 3.0....whoops .. that was probably an error. Might want to examine the logic for limelight distances?")
+                    if (prev.distance(position) < maxPositionError) {
+                        Drive.position = Drive.position * alpha + position * (1.0 - alpha)
+                        println("Reset odometry based on limelight to ${Drive.position} from ${prev}. Hi.")
+                    } else {
+                        println("LL odom too far away to reset")
                     }
+                    //println("Reset odometry based on limelight to ${Drive.position} from ${prev}. Hi.")
+//                    if (prev.distance(Drive.position) > 3.0) {
+////                        println("Distance changed > 3.0....whoops .. that was probably an error. Might want to examine the logic for limelight distances?")
+//                    }
                 }
             }
         }
