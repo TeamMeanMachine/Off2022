@@ -30,7 +30,8 @@ import kotlin.math.sqrt
 
 object Shooter : Subsystem("Shooter") {
     val tuningMode = false
-    val shootingMotor = MotorController(FalconID(Falcons.SHOOTER), FalconID(Falcons.SHOOTER_TWO))
+    val shootingMotorOne = MotorController(FalconID(Falcons.SHOOTER))
+    val shootingMotorTwo = MotorController(FalconID(Falcons.SHOOTER_TWO))
     val pitchMotor = MotorController(TalonID(Talons.PITCH))
     private val table = NetworkTableInstance.getDefault().getTable(name)
     val pitchEncoder = DutyCycleEncoder(DigitalSensors.SHOOTER_PITCH)
@@ -74,6 +75,7 @@ object Shooter : Subsystem("Shooter") {
     val pitchGoodEntry = table.getEntry("pitchGood")
     val aimGoodEntry = table.getEntry("aimGood")
     val rpmGoodEntry = table.getEntry("rpmGood")
+    val shootMotorsGoodEntry = table.getEntry("shootMotorsGood")
     val allGoodEntry = table.getEntry("allGood")
     val frontRPMCurveEntry = table.getEntry("frontRPMCurve")
     val backRPMCurveEntry = table.getEntry("backRPMCurve")
@@ -105,6 +107,7 @@ object Shooter : Subsystem("Shooter") {
     var aimGood = false
     var rpmGood = false
     var pitchGood = false
+    var shootMotorsGood = false
     var isCargoAlignedWithAlliance = true
     var pastMinWait = false
 
@@ -200,9 +203,10 @@ object Shooter : Subsystem("Shooter") {
             return field
         }
     var rpm: Double
-        get() = shootingMotor.velocity
+        get() = shootingMotorOne.velocity
         set(value) {
-            shootingMotor.setVelocitySetpoint(value)
+            shootingMotorOne.setVelocitySetpoint(value)
+            shootingMotorTwo.setVelocitySetpoint(value)
         }
     var rpmError = rpm
         get() = rpmErrorEntry.getDouble(rpmSetpoint - rpm)
@@ -268,8 +272,19 @@ object Shooter : Subsystem("Shooter") {
 //        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
 
 
-        shootingMotor.config {
-            followersInverted(true)
+        shootingMotorOne.config {
+//            followersInverted(true)
+            coastMode()
+            feedbackCoefficient = 1.0 / 2048.0 * 60.0
+            pid {
+                p(7.5e-6)
+                i(0.0)
+                d(2.0e-4)
+                f(0.0140)
+            }
+        }
+        shootingMotorTwo.config {
+            inverted(true)
             coastMode()
             feedbackCoefficient = 1.0 / 2048.0 * 60.0
             pid {
@@ -331,17 +346,19 @@ object Shooter : Subsystem("Shooter") {
                 val filteredError = rpmErrorFilter.calculate(rpmError)
                 aimGood = Limelight.filteredAimError < aimMaxError
                 rpmGood = filteredError < rpmMaxError
-                pitchGood = pitchSetpoint - pitch < pitchMaxError
-                isCargoAlignedWithAlliance = (allianceColor == cargoColor || cargoColor == NOTSET)
-                allGood = shootMode && aimGood && rpmGood && pitchGood
+                pitchGood = (pitchSetpoint - pitch).absoluteValue < pitchMaxError
+                shootMotorsGood = (rpm - shootingMotorTwo.velocity).absoluteValue < 50.0
+                isCargoAlignedWithAlliance = true //(allianceColor == cargoColor || cargoColor == NOTSET) //ignore color
+                allGood = shootMode && aimGood && rpmGood && pitchGood && shootMotorsGood
 
                 aimGoodEntry.setBoolean(aimGood)
                 rpmGoodEntry.setBoolean(rpmGood)
                 pitchGoodEntry.setBoolean(pitchGood)
+                shootMotorsGoodEntry.setBoolean(shootMotorsGood)
                 allGoodEntry.setBoolean(allGood)
                 colorAlignedEntry.setBoolean(isCargoAlignedWithAlliance)
 
-                if (allGood) {
+                if (allGood && !Feeder.isAuto) {
                     OI.driverController.rumble = 0.5
                 }
 
@@ -399,7 +416,8 @@ object Shooter : Subsystem("Shooter") {
                     if  (shootMode || tuningMode) {
                         rpm = rpmSetpoint
                     } else {
-                        shootingMotor.setPercentOutput(0.0)
+                        shootingMotorOne.setPercentOutput(0.0)
+                        shootingMotorTwo.setPercentOutput(0.0)
                     }
                 } else {
                     if (pitch > 0) {

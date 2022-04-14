@@ -123,7 +123,7 @@ suspend fun autoShootv2(shotCount: Int = 2, maxWait: Double = 2.5, minWait: Doub
         doneShooting = true
     }, {
         periodic {
-            if (!doneShooting && t.get() > minWait) Shooter.pastMinWait = true //pizza
+            if (t.get() > minWait) Shooter.pastMinWait = true
             if (!doneShooting && t.get() > maxWait) {
                 println("failed shoot allGood: ${Shooter.allGood} rpmGood ${Shooter.rpmGood} pitchGood ${Shooter.pitchGood} aimGood ${Shooter.aimGood} ")
                 doneShooting = true

@@ -80,6 +80,8 @@ object Intake : Subsystem("Intake") {
     var downPressed = false
     var leftPressed = false
 
+    var prevDriverControl = false
+
     enum class Mode {
         CATCH, INTAKE, STOW, POWERSAVE
     }
@@ -143,6 +145,12 @@ object Intake : Subsystem("Intake") {
                 if (OI.driveLeftTrigger > 0.1) {
                     intake()
                 }
+
+                if (prevDriverControl && OI.driverController.leftTrigger < 0.1) {
+                    catch()
+                }
+
+                prevDriverControl = OI.driverController.leftTrigger > 0.1
 
                 if (intakeMotor.current > 12) OI.driverController.rumble = 1.0 else if (!Shooter.shootMode) OI.driverController.rumble = 0.0
 

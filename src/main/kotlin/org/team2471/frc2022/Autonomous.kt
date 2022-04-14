@@ -188,7 +188,7 @@ object AutoChooser {
                 delay(0.25)
                 Intake.setIntakePower(0.0)
             }, {
-                autoShootv2(2, 2.5, 0.5) // autoShootv2(2, 3.0)   //pizza
+                autoShootv2(2, 2.5, 1.0) // autoShootv2(2, 3.0)   //pizza
             })
             println("getting 3rd batch")
             Intake.setIntakePower(Intake.INTAKE_POWER)
