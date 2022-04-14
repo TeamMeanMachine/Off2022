@@ -238,8 +238,9 @@ object Shooter : Subsystem("Shooter") {
 
     init {
         SmartDashboard.putData("KnownShot", knownShotChooser)
-        
+
         // Remove this after running the bot for the first time
+        /**
         backPitch5Entry.setDouble(-8.0)
         backPitch10Entry.setDouble(-19.0)
         backPitch15Entry.setDouble(-27.0)
@@ -273,6 +274,7 @@ object Shooter : Subsystem("Shooter") {
         frontRPM10Entry.setPersistent()
         frontRPM15Entry.setPersistent()
         frontRPM20Entry.setPersistent()
+        **/
 
         frontPitch5Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
         frontPitch10Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
@@ -290,6 +292,7 @@ object Shooter : Subsystem("Shooter") {
         backRPM10Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
         backRPM15Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
         backRPM20Entry.addListener({ event -> rebuildCurves() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
+
 
         rebuildCurves()
 
