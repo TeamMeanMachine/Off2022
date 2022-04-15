@@ -20,14 +20,12 @@ import org.team2471.frc.lib.framework.Subsystem
 import org.team2471.frc.lib.math.Vector2
 import org.team2471.frc.lib.math.linearMap
 import org.team2471.frc.lib.math.round
-import org.team2471.frc.lib.motion.following.SwerveDrive
-import org.team2471.frc.lib.motion.following.drive
+import org.team2471.frc.lib.motion.following.*
 import org.team2471.frc.lib.motion_profiling.MotionCurve
 import org.team2471.frc.lib.motion_profiling.following.SwerveParameters
 import org.team2471.frc.lib.units.*
 import kotlin.math.absoluteValue
 import kotlin.math.cos
-import kotlin.math.sign
 import kotlin.math.sin
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -557,5 +555,69 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             driveMotor.stop()
             //turnMotor.stop()
         }
+    }
+    suspend fun driveCircle() {
+        println("Driving along circle")
+
+        var prevTime = 0.0
+        var prevPosition = position
+
+        val timer = Timer()
+        timer.start()
+        var prevPositionError = Vector2(0.0, 0.0)
+        var prevHeadingError = 0.0.degrees
+        periodic {
+            val t = timer.get()
+            val dt = t - prevTime
+
+
+
+   /*         // position error
+           // val pathPosition = positionSetpo
+            val positionError = pathPosition - position
+            //println("time=$t   pathPosition=$pathPosition position=$position positionError=$positionError")
+
+            // position feed forward
+            val pathVelocity = (pathPosition - prevPosition) / dt
+            prevPosition = pathPosition
+
+            // position d
+            val deltaPositionError = positionError - prevPositionError
+            prevPositionError = positionError
+
+            val translationControlField =
+                pathVelocity * parameters.kPositionFeedForward + positionError * parameters.kpPosition + deltaPositionError * parameters.kdPosition
+
+            // heading error
+            val robotHeading = heading
+            val pathHeading = path.getAbsoluteHeadingDegreesAt(t).degrees
+            val headingError = (pathHeading - robotHeading).wrap()
+            //println("Heading Error: $headingError. Hi. %%%%%%%%%%%%%%%%%%%%%%%%%%")
+
+            // heading feed forward
+            val headingVelocity = (pathHeading.asDegrees - prevPathHeading.asDegrees) / dt
+            prevPathHeading = pathHeading
+
+            // heading d
+            val deltaHeadingError = headingError - prevHeadingError
+            prevHeadingError = headingError
+
+            val turnControl = headingVelocity * parameters.kHeadingFeedForward + headingError.asDegrees * parameters.kpHeading + deltaHeadingError.asDegrees * parameters.kdHeading
+
+            // send it
+            drive(translationControlField, turnControl, true)
+
+            // are we done yet?
+            if (t >= path.durationWithSpeed + extraTime || earlyExit())
+                stop()
+
+            prevTime = t
+*/
+//        println("Time=$t Path Position=$pathPosition Position=$position")
+//        println("DT$dt Path Velocity = $pathVelocity Velocity = $velocity")
+        }
+
+        // shut it down
+        drive(Vector2(0.0, 0.0), 0.0, true)
     }
 }
