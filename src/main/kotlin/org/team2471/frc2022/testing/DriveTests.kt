@@ -12,7 +12,11 @@ import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.motion.following.resetOdometry
 import org.team2471.frc.lib.motion.following.tuneDrivePositionController
 import org.team2471.frc.lib.units.degrees
+import org.team2471.frc.lib.units.radians
 import org.team2471.frc.lib.util.Timer
+import org.team2471.frc2022.Limelight
+import org.team2471.frc2022.Shooter
+import kotlin.math.absoluteValue
 
 suspend fun Drive.steeringTests() = use(this) {
     println("Got into steeringTests. Hi")
@@ -94,4 +98,66 @@ suspend fun Drive.aimFTest() = use(Drive) {
             false
         )
     }
+}
+
+suspend fun Drive.driveCircle() = use(Drive) {
+    println("Driving along circle")
+
+    var prevTime = 0.0
+    var circlePosition = position
+    var prevPosition = position
+    Shooter.shootMode = true
+
+    val timer = Timer()
+    timer.start()
+    var prevPositionError = Vector2(0.0, 0.0)
+    periodic {
+        val t = timer.get()
+        val dt = t - prevTime
+
+        val currRadius = circlePosition.length
+        val currAngle = circlePosition.angle.radians
+
+        val goalAngle = currAngle + angleSpeed.degrees * dt
+        val goalRadius = currRadius + radialSpeed * dt
+
+        circlePosition = Vector2(goalRadius * goalAngle.sin(), goalRadius * goalAngle.cos())
+        val positionSetPoint = circlePosition
+        println("dt=$dt  x = ${positionSetPoint.x} y = ${positionSetPoint.y}")
+
+        // position error
+        val positionError = positionSetPoint - position
+        //println("time=$t   pathPosition=$pathPosition position=$position positionError=$positionError")
+
+        // position feed forward
+        val pathVelocity = (positionSetPoint - prevPosition) / dt
+        prevPosition = positionSetPoint
+
+        // position d
+        val deltaPositionError = positionError - prevPositionError
+        prevPositionError = positionError
+
+        val translationControlField =
+            pathVelocity * parameters.kPositionFeedForward + positionError * parameters.kpPosition + deltaPositionError * parameters.kdPosition
+
+        var turn = 0.0
+        if (Limelight.hasValidTarget) {
+            turn = aimPDController.update(Limelight.aimError)
+        } else {
+            var error = (position.angle.radians - heading).wrap()
+            if (error.asDegrees.absoluteValue > 90.0) error = (error - 180.0.degrees).wrap()
+            turn = aimPDController.update(error.asDegrees)
+        }
+
+        // send it
+        drive(translationControlField, turn, true)
+
+        prevTime = t
+
+//        println("Time=$t Path Position=$pathPosition Position=$position")
+//        println("DT$dt Path Velocity = $pathVelocity Velocity = $velocity")
+    }
+
+    // shut it down
+    drive(Vector2(0.0, 0.0), 0.0, true)
 }

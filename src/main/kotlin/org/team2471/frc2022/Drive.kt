@@ -31,17 +31,15 @@ import kotlin.math.sin
 @OptIn(DelicateCoroutinesApi::class)
 object Drive : Subsystem("Drive"), SwerveDrive {
 
-
-    val redCargoEntry = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable("Radar").getEntry("RedCargo")
-    val redFieldCargoEntry = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable("Field").getEntry("RedCargo")
     val table = NetworkTableInstance.getDefault().getTable(name)
+    val redCargoEntry = table.getSubTable("Radar").getEntry("RedCargo")
+    val redFieldCargoEntry = table.getSubTable("Field").getEntry("RedCargo")
     val navXGyroEntry = table.getEntry("NavX Gyro")
-    val blueCargoEntry = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable("Radar").getEntry("BlueCargo")
-    val robotsRadarEntry = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable("Radar").getEntry("Robots")
-    val robotFieldEntry = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable("Field").getEntry("Robot")
-    val robotsFieldEntry = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable("Field").getEntry("Robots")
-    val blueFieldCargoEntry = NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable("Field").getEntry("BlueCargo")
-
+    val blueCargoEntry = table.getSubTable("Radar").getEntry("BlueCargo")
+    val robotsRadarEntry = table.getSubTable("Radar").getEntry("Robots")
+    val robotFieldEntry = table.getSubTable("Field").getEntry("Robot")
+    val robotsFieldEntry = table.getSubTable("Field").getEntry("Robots")
+    val blueFieldCargoEntry = table.getSubTable("Field").getEntry("BlueCargo")
     val odometer0Entry = table.getEntry("Odometer 0")
     val odometer1Entry = table.getEntry("Odometer 1")
     val odometer2Entry = table.getEntry("Odometer 2")
@@ -49,6 +47,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     val radialVelocityEntry = table.getEntry("Radial Velocity")
     val angularVelocityEntry = table.getEntry("Angular Velocity")
+    val angleSpeedEntry = table.getEntry("angleSpeed")
+    val radialSpeedEntry = table.getEntry("radialSpeed")
 
     val fieldObject = Field2d()
     val radarObject = Field2d()
@@ -145,9 +145,13 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     var lastError = 0.0
 
     var prevRadius = 0.0
-    var prevAngle = 0.0
+    var prevAngle = 0.0.degrees
     var lastPosition : Pose2d = Pose2d()
 
+    val angleSpeed : Double
+    get() = angleSpeedEntry.getDouble(0.0)
+    val radialSpeed : Double
+    get() = radialSpeedEntry.getDouble(0.0)
 
     val aimFlyOffsetEntry = table.getEntry("Aim Fly Offset")
 
@@ -173,13 +177,17 @@ object Drive : Subsystem("Drive"), SwerveDrive {
        val angularVelocityCurve: MotionCurve = MotionCurve()
 
 
-
     init {
         println("drive init")
         initializeSteeringMotors()
-        angularVelocityCurve.setMarkBeginOrEndKeysToZeroSlope(false)
 
-                angularVelocityCurve.storeValue(0.0, 0.0)
+        if(!angleSpeedEntry.exists()) {
+            angleSpeedEntry.setDouble(0.0)
+            radialSpeedEntry.setDouble(0.0)
+        }
+
+        angularVelocityCurve.setMarkBeginOrEndKeysToZeroSlope(false)
+        angularVelocityCurve.storeValue(0.0, 0.0)
         //        angularVelocityCurve.storeValue()
         //        angularVelocityCurve.storeValue()
         //        angularVelocityCurve.storeValue()
@@ -250,6 +258,17 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 //                val currRobotPose = fieldObject.robotPose
 
 
+                val currRadius = position.length
+                val currAngle = position.angle.radians
+                radialVelocityEntry.setDouble(radialVelocity)
+                angularVelocityEntry.setDouble(angularVelocity)
+                radialVelocity = (currRadius - prevRadius) * 50.0
+                angularVelocity = (currAngle - prevAngle).wrap().asDegrees * 50.0
+                filteredRadialVelocity = radialVelocityFilter.calculate(radialVelocity)
+                filteredAngularVelocity = angularVelocityFilter.calculate(angularVelocity)
+                prevRadius = currRadius
+                prevAngle = currAngle
+
                 val lastRobotFieldXY = robotFieldEntry.getDoubleArray(defaultXYPos)
                 val lastX = lastRobotFieldXY[0]
                 val lastY = lastRobotFieldXY[1]
@@ -266,18 +285,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                     fieldObject.robotPose = robotPose
                     lastPosition = robotPose
                 }
-
-                val currRadius = position.length
-                val currAngle = position.angle.radians.asDegrees
-                //                val angularVelocity = (currAngle - prevAngle) * 50.0
-                                radialVelocityEntry.setDouble(radialVelocity)
-                                angularVelocityEntry.setDouble(angularVelocity)
-                              radialVelocity = (currRadius - prevRadius) * 50.0
-                              angularVelocity = (currAngle - prevAngle).degrees.wrap().asDegrees * 50.0
-                              filteredRadialVelocity = radialVelocityFilter.calculate(radialVelocity)
-                              filteredAngularVelocity = angularVelocityFilter.calculate(angularVelocity)
-                prevRadius = currRadius
-                prevAngle = currAngle
 
                 val redCargoOnField = getFieldOffsets(redCargoEntry.getDoubleArray(emptyArray()).toDoubleArray())
                 val blueCargoOnField = getFieldOffsets(blueCargoEntry.getDoubleArray(emptyArray()).toDoubleArray())
@@ -555,69 +562,5 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             driveMotor.stop()
             //turnMotor.stop()
         }
-    }
-    suspend fun driveCircle() {
-        println("Driving along circle")
-
-        var prevTime = 0.0
-        var prevPosition = position
-
-        val timer = Timer()
-        timer.start()
-        var prevPositionError = Vector2(0.0, 0.0)
-        var prevHeadingError = 0.0.degrees
-        periodic {
-            val t = timer.get()
-            val dt = t - prevTime
-
-
-
-   /*         // position error
-           // val pathPosition = positionSetpo
-            val positionError = pathPosition - position
-            //println("time=$t   pathPosition=$pathPosition position=$position positionError=$positionError")
-
-            // position feed forward
-            val pathVelocity = (pathPosition - prevPosition) / dt
-            prevPosition = pathPosition
-
-            // position d
-            val deltaPositionError = positionError - prevPositionError
-            prevPositionError = positionError
-
-            val translationControlField =
-                pathVelocity * parameters.kPositionFeedForward + positionError * parameters.kpPosition + deltaPositionError * parameters.kdPosition
-
-            // heading error
-            val robotHeading = heading
-            val pathHeading = path.getAbsoluteHeadingDegreesAt(t).degrees
-            val headingError = (pathHeading - robotHeading).wrap()
-            //println("Heading Error: $headingError. Hi. %%%%%%%%%%%%%%%%%%%%%%%%%%")
-
-            // heading feed forward
-            val headingVelocity = (pathHeading.asDegrees - prevPathHeading.asDegrees) / dt
-            prevPathHeading = pathHeading
-
-            // heading d
-            val deltaHeadingError = headingError - prevHeadingError
-            prevHeadingError = headingError
-
-            val turnControl = headingVelocity * parameters.kHeadingFeedForward + headingError.asDegrees * parameters.kpHeading + deltaHeadingError.asDegrees * parameters.kdHeading
-
-            // send it
-            drive(translationControlField, turnControl, true)
-
-            // are we done yet?
-            if (t >= path.durationWithSpeed + extraTime || earlyExit())
-                stop()
-
-            prevTime = t
-*/
-//        println("Time=$t Path Position=$pathPosition Position=$position")
-//        println("DT$dt Path Velocity = $pathVelocity Velocity = $velocity")
-        }
-
-        // shut it down
-        drive(Vector2(0.0, 0.0), 0.0, true)
     }
 }
