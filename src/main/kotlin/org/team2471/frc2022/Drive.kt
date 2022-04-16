@@ -135,8 +135,8 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     )
 
     override val carpetFlow = if (DriverStation.getAlliance() == DriverStation.Alliance.Red) Vector2(0.0, 1.0) else Vector2(0.0, -1.0)
-    override val kCarpet = 1.0 / 40.0 //to take out, make 0.0
-    override val kTread = 1.0//5 //how much of an effect treadWear has
+    override val kCarpet = 0.025 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.5% more distance downstream)
+    override val kTread = 0.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
 
     val autoPDController = PDConstantFController(0.015, 0.04, 0.05) //0.015, 0.012, 0.008)
     val teleopPDController =  PDConstantFController(0.012, 0.09, 0.05) //0.01, 0.05, 0.05)
@@ -461,7 +461,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             }
 
         override val treadWear: Double
-            get() = linearMap(0.0, 10000.0, 1.0, 0.0, odometer)
+            get() = linearMap(0.0, 10000.0, 1.0, 0.0, odometer).coerceIn(0.0, 1.0)
 
         val driveCurrent: Double
             get() = driveMotor.current

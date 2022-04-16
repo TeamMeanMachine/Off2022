@@ -88,9 +88,7 @@ object Robot : MeanlibRobot() {
 
     override suspend fun test()  {
         println("test mode begin. Hi.")
-//        Shooter.pitchTest()
         Drive.driveCircle()
-
     }
 
 

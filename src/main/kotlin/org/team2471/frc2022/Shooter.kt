@@ -51,9 +51,9 @@ object Shooter : Subsystem("Shooter") {
     const val pitchMaxError = 2.5
 
     var autoOdomPitch = 0.0
-        get() = backPitchCurve.getValue(sqrt(square(Drive.position.x) + square(Drive.position.y)))
+        get() = backPitchCurve.getValue(Drive.position.length + 2.25)
     var autoOdomRPM = 0.0
-        get() = backRPMCurve.getValue(sqrt(square(Drive.position.x) + square(Drive.position.y)))
+        get() = backRPMCurve.getValue(Drive.position.length + 2.25)
 
     enum class knownShotType {
         NOTSET, FENDER, WALL, SAFE_FRONT, SAFE_BACK
@@ -467,6 +467,11 @@ object Shooter : Subsystem("Shooter") {
 
             }
         }
+    }
+
+    override fun onDisable() {
+        OI.operatorController.rumble = 0.0
+        super.onDisable()
     }
 
     fun rebuildCurves() {

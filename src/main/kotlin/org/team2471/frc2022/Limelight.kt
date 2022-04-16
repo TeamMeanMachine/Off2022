@@ -120,8 +120,8 @@ object Limelight : Subsystem("Front Limelight") {
                 theta += 180.0
             }
             return Vector2(
-                (distance.asFeet * theta.degrees.sin()),
-                (distance.asFeet * theta.degrees.cos())
+                ((distance.asFeet+2.25) * theta.degrees.sin()),
+                ((distance.asFeet+2.25) * theta.degrees.cos())
             )
         }
 
@@ -132,8 +132,8 @@ object Limelight : Subsystem("Front Limelight") {
 
     val targetPoint
         get() = Vector2(
-            distance.asFeet * sin(targetAngle.asRadians),
-            distance.asFeet * cos(targetAngle.asRadians)
+            (distance.asFeet+2.25) * sin(targetAngle.asRadians),
+            (distance.asFeet+2.25) * cos(targetAngle.asRadians)
         ) + Drive.position
 
 
