@@ -164,6 +164,7 @@ object Climb : Subsystem("Climb") {
                             if (OI.operatorRightX.absoluteValue > 0.1) {
                                 angleSetpoint += OI.operatorRightX * 0.1
                                 bungeeTakeOver = false
+                                println("operatorRightX")
                             }
                             val power = anglePDController.update(angleSetpoint - angle)
                             angleSetPower(power + angleFeedForward)
@@ -184,6 +185,7 @@ object Climb : Subsystem("Climb") {
                         }
                         heightMotor.setPositionSetpoint(heightSetpoint)
                     }
+//                    println("angleOutput: ${angleMotor.output}")
                 }
         }
     }

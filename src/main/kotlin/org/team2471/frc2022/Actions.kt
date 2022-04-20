@@ -274,11 +274,11 @@ suspend fun performClimb() {
         OI.operatorController.rumble = 0.5
         var loop = 0
         var lasTroll = Climb.roll
+        Climb.bungeeTakeOver = false
         while (Climb.climbIsPrepped) {
             Climb.climbStage = 0
             while (Climb.climbStage < 6 && Climb.climbIsPrepped) {
                 if (OI.operatorController.rightBumper) {  //rightBumper instead of leftTrigger
-                    if (loop == 0) Climb.bungeeTakeOver = false
                     println("Trigger climb stage ${Climb.climbStage}, loop $loop, roll is ${Climb.roll}")
                     when (Climb.climbStage) {
                         0 -> {
