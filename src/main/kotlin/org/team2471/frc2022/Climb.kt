@@ -160,12 +160,15 @@ object Climb : Subsystem("Climb") {
 //                    println("angle: $angle      f: $angleFeedForward")
 
                     angleMotor.setRawOffset(angle.degrees)
-                    if (OI.operatorController.leftBumper || (climbMode && !bungeeTakeOver)) {
-                            if (OI.operatorRightX.absoluteValue > 0.1) angleSetpoint += OI.operatorRightX * 0.1
+                    if ((climbMode && !bungeeTakeOver) || OI.operatorRightX.absoluteValue > 0.1) {
+                            if (OI.operatorRightX.absoluteValue > 0.1) {
+                                angleSetpoint += OI.operatorRightX * 0.1
+                                bungeeTakeOver = false
+                            }
                             val power = anglePDController.update(angleSetpoint - angle)
                             angleSetPower(power + angleFeedForward)
 //                        angleMotor.setPositionSetpoint(angleSetpoint, angleFeedForward)
-//                        angleMotor.setPositionSetpoint(angleSetpoint)
+//                        angleMotor.setPositionSetpoint(angleSetpoint)F
                             //                        println("pdController setting angle power to ${power + angleFeedForward}")
                     } else if (!tuningMode) {
                         angleSetPower(0.0)
@@ -205,7 +208,11 @@ object Climb : Subsystem("Climb") {
     }
 
     fun angleSetPower(power: Double) {
-        angleMotor.setPercentOutput(power)
+        if (!bungeeTakeOver) {
+            angleMotor.setPercentOutput(power)
+        } else {
+            angleMotor.setPercentOutput(0.0)
+        }
     }
 
     fun zeroClimb() {
@@ -265,14 +272,18 @@ object Climb : Subsystem("Climb") {
 
     fun updatePositions() {
         heightMotor.setPositionSetpoint(heightSetpoint)
-        if (isAngleMotorControlled) {
-            angleMotor.setPositionSetpoint(angleSetpoint, angleFeedForward)
+        if (!bungeeTakeOver) {
+            if (isAngleMotorControlled) {
+                angleMotor.setPositionSetpoint(angleSetpoint, angleFeedForward)
 //            println("motor setting angle power to ${angleMotor.output}")
-        } else {
-            val power = anglePDController.update(angleSetpoint - angle)
-            angleSetPower(power + angleFeedForward)
-            //feedforward for this not tested!!
+            } else {
+                val power = anglePDController.update(angleSetpoint - angle)
+                angleSetPower(power + angleFeedForward)
+                //feedforward for this not tested!!
 //            println("pdController setting angle power to ${power + angleFeedForward}")
+            }
+        } else {
+            angleSetPower(0.0)
         }
     }
 

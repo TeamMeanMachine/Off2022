@@ -20,6 +20,7 @@ fun intake() {
     Intake.changeAngle(Intake.PIVOT_INTAKE)
     Climb.climbMode = false
     Climb.climbIsPrepped = false
+    Climb.bungeeTakeOver = false
 }
 
 fun catch() {
@@ -31,6 +32,7 @@ fun catch() {
         Intake.changeAngle(Intake.PIVOT_CATCH)
         Climb.climbMode = false
         Climb.climbIsPrepped = false
+        Climb.bungeeTakeOver = false
     }
 }
 
@@ -43,6 +45,7 @@ fun armUp() {
         Intake.changeAngle(Intake.PIVOT_STORE)
         Climb.climbMode = false
         Climb.climbIsPrepped = false
+        Climb.bungeeTakeOver = false
     }
 }
 
@@ -55,6 +58,7 @@ fun powerSave() {
         Intake.changeAngle(Intake.PIVOT_BOTTOM)
         Climb.climbMode = false
         Climb.climbIsPrepped = false
+        Climb.bungeeTakeOver = false
         Intake.resetPivotOffset()
     }
 }
@@ -333,14 +337,19 @@ suspend fun performClimb() {
                             if (loop == 0) delay(0.2) else delay(0.1)
                         }
                         4 -> {
+                            Climb.bungeeTakeOver = true
                             goToPose(Pose.TRAVERSE_PULL_MID, false, 0.5)
                             if (loop == 0) delay(0.24) else delay(0.04)
                         }
-                        5 -> goToPose(Pose.TRAVERSE_PULL_UP, false, 0.5)
+                        5 -> {
+                            goToPose(Pose.TRAVERSE_PULL_UP, false, 0.5)
+                            Climb.bungeeTakeOver = false
+                        }
 
                         else -> println("Climb Stage Complete")
                     }
                 }
+                println("let go of rightBumper")
                 Climb.climbStage += 1
             }
             loop += 1
