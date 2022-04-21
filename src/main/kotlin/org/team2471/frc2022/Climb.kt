@@ -212,10 +212,8 @@ object Climb : Subsystem("Climb") {
     fun angleSetPower(power: Double) {
         if (!bungeeTakeOver) {
             angleMotor.setPercentOutput(power)
-            println("NOT bungeeTakeOver in setPower")
         } else {
             angleMotor.setPercentOutput(0.0)
-            println("bungeeTakeOver in setPower")
         }
     }
 

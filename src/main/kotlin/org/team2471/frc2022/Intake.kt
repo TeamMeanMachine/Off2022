@@ -63,7 +63,7 @@ object Intake : Subsystem("Intake") {
     const val PIVOT_BOTTOM = 0.0
     const val PIVOT_CATCH = 0.0
 
-    val defaultPivotIntake = 25.0
+    val defaultPivotIntake = 26.5
     val PIVOT_INTAKE
         get() = if (isCompBot) intakePresetEntry.getDouble(defaultPivotIntake) else 16.0
     val PIVOT_STORE = if (isCompBot) 110.0 else 98.0

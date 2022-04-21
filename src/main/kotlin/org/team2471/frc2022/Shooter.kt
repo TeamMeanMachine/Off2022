@@ -169,7 +169,7 @@ object Shooter : Subsystem("Shooter") {
         }
 
     var pitchPDEnable = true
-    val pitchPDController = PDController(0.05, 0.11) //0.06, 0.095) //0.055, 0.03) //0.06, 0.0) // d 0.1
+    val pitchPDController = PDController(0.05, 0.095) //.11) //0.06, 0.095) //0.055, 0.03) //0.06, 0.0) // d 0.1
     const val K_PITCH_FEED_FORWARD = -0.22
     val pitchIsReady : Boolean
         get() {
