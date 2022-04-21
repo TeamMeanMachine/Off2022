@@ -280,7 +280,7 @@ object Climb : Subsystem("Climb") {
         periodic {
             if (tuningMode) {
                 println("is tuning mode")
-//                updatePositions()
+///                updatePositions()
             } else if (OI.operatorLeftY.absoluteValue > 0.1 || OI.operatorRightY.absoluteValue > 0.1) {
 //                heightSetpoint -= OI.operatorLeftY * 0.45
 //                angleSetpoint += OI.operatorRightY * 0.2
