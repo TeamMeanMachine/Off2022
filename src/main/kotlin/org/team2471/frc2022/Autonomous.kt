@@ -74,6 +74,7 @@ object AutoChooser {
         addOption("Middle 4 Ball", "middle4")
         addOption("Left Side 2 Auto", "leftSideAuto")
         addOption("Straight Back Shoot Auto", "straightBackShootAuto")
+        addOption("1 Ball", "other1")
 
 
 
@@ -136,6 +137,7 @@ object AutoChooser {
             "Carpet Bias Test" -> carpetBiasTest()
             "Right Side 5 Auto" -> right5v3()
             "Straight Back Shoot Auto" -> straightBackShootAuto()
+            "1 Ball" -> other1()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -289,6 +291,12 @@ object AutoChooser {
         }
     }
 
+//    suspend fun rightStraight() = use(Drive, Shooter, Intake, Feeder) {
+//        Limelight.backLedEnabled
+//        val auto = autonomi["Straight and Shoot Right"]
+//        if (auto !=)
+//    }
+
 //    suspend fun right5() = use(Intake, Shooter, Feeder, Drive) {
 //        println("In right5 auto.")
 //        val auto = autonomi["Right Side 5 Auto"]
@@ -319,13 +327,13 @@ object AutoChooser {
 //    }
 
 
-    suspend fun test8FtCircle() = use(Drive) {
-        val auto = autonomi["Tests"]
-        if (auto != null) {
-            val path = auto["8 Foot Circle"]
-            Drive.driveAlongPath(path, true)
+        suspend fun test8FtCircle() = use(Drive) {
+            val auto = autonomi["Tests"]
+            if (auto != null) {
+                val path = auto["8 Foot Circle"]
+                Drive.driveAlongPath(path, true)
+            }
         }
-    }
 
 
     suspend fun test90DegreeTurn() = use(Drive) {
@@ -361,6 +369,26 @@ object AutoChooser {
             autoShootv2(2, 4.0)
             Feeder.autoFeedMode = false
         }
+    }
+
+    suspend fun other1() = use(Intake, Shooter, Feeder, Drive) {
+        println("In other1 auto.")
+        val auto = autonomi["1 Ball"]
+        if (auto != null) {
+            Limelight.backLedEnabled = true
+            val firstAuto = auto["Path1"]
+            Drive.position = firstAuto.getPosition(0.0)
+            Drive.heading = firstAuto.headingCurve.getValue(0.0).degrees
+            parallel({
+                autoShootv2(1, 4.0, 1.0)
+            }, {
+                powerSave()
+                Intake.changeAngle(Intake.PIVOT_INTAKE)
+            })
+            intake()
+            Drive.driveAlongPath(auto["Path1"], false)
+        }
+        Feeder.autoFeedMode = false
     }
 
 //

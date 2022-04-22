@@ -14,6 +14,7 @@ import kotlin.math.absoluteValue
 
 fun intake() {
 //    Intake.resetPivotOffset()
+    println("intaking")
     Feeder.autoFeedMode = true
     Intake.setIntakePower(Intake.INTAKE_POWER)
     Intake.intakeState = Intake.Mode.INTAKE
@@ -26,6 +27,7 @@ fun intake() {
 fun catch() {
 //    Intake.resetPivotOffset()
     if (OI.driveLeftTrigger < 0.1) {
+        println("catching")
         Feeder.autoFeedMode = true
         Intake.setIntakePower(0.0)
         Intake.intakeState = Intake.Mode.CATCH
@@ -39,6 +41,7 @@ fun catch() {
 fun armUp() {
 //    Intake.resetPivotOffset()
     if (OI.driveLeftTrigger < 0.1) {
+        println("intake arm uping")
         Feeder.autoFeedMode = false
         Intake.setIntakePower(0.0)
         Intake.intakeState = Intake.Mode.STOW
@@ -51,6 +54,7 @@ fun armUp() {
 
 fun powerSave() {
     if (OI.driveLeftTrigger < 0.1) {
+        println("intake power saving")
         if (!Feeder.isAuto) Feeder.autoFeedMode = false
         Intake.setIntakePower(0.0)
         Intake.intakeState = Intake.Mode.POWERSAVE

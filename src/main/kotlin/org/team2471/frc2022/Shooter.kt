@@ -155,7 +155,7 @@ object Shooter : Subsystem("Shooter") {
                 val tempPitch = frontPitchCurve.getValue(Limelight.distance.asFeet + distFlyOffset)
                 field = tempPitch
             } else {
-                field = pitchSetpointEntry.getDouble(10.0)
+                field = 17.5
             }
             // don't allow values outside of range even with offset
             field = field.coerceIn(PITCH_LOW - distFlyOffset, PITCH_HIGH - distFlyOffset)
@@ -206,7 +206,7 @@ object Shooter : Subsystem("Shooter") {
             } else if (Limelight.useFrontLimelight/* && Limelight.hasValidFrontTarget*/) {
                 field = frontRPMCurve.getValue(Limelight.distance.asFeet + distFlyOffset) * frontLLRPMOffset
             } else {
-                field = rpmSetpointEntry.getDouble(5000.0)
+                field = 3200.0
             }
 //            field += rpmFlyOffset
             field += rpmSecondOffset
@@ -396,7 +396,7 @@ object Shooter : Subsystem("Shooter") {
                 allGoodEntry.setBoolean(allGood)
                 colorAlignedEntry.setBoolean(isCargoAlignedWithAlliance)
 
-                if (allGood && !Feeder.isAuto) {
+                if (allGood && DriverStation.isTeleop()) {
                     OI.driverController.rumble = 0.5
                 }
 
