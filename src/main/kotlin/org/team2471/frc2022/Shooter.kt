@@ -188,33 +188,31 @@ object Shooter : Subsystem("Shooter") {
 //        get() = rpmFlyOffsetCurve.getValue(Drive.filteredRadialVelocity)
     var rpmSecondOffset = 0.0
     var rpmSetpoint: Double = 0.0
-        get() {
-            if (tuningMode) {
-                field = rpmSetpointEntry.getDouble(5000.0)
-            } else if (Feeder.isAuto && useAutoOdomEntry.getBoolean(false)) {
-                field = autoOdomRPM
-            } else if (isKnownShot != knownShotType.NOTSET) {
-                field =  frontLLRPMOffset * when (isKnownShot) {
-                    knownShotType.FENDER -> 3200.0
-                    knownShotType.SAFE_FRONT -> 4000.0 //4200
-                    knownShotType.SAFE_BACK -> 3500.0
-                    knownShotType.WALL -> 3450.0
-                    else -> 3200.0
-                }
-            } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
-                field = backRPMCurve.getValue(Limelight.distance.asFeet + distFlyOffset) * backLLRPMOffset
-            } else if (Limelight.useFrontLimelight && Limelight.hasValidFrontTarget) {
-                field = frontRPMCurve.getValue(Limelight.distance.asFeet + distFlyOffset) * frontLLRPMOffset
-            } else {
-                field = 3200.0
-            }
-//            field += rpmFlyOffset
-            field += rpmSecondOffset
-            if (!tuningMode) {
-                rpmSetpointEntry.setDouble(field)
-            }
-            return field
-        }
+        get() = rpmSetpointEntry.getDouble(1300.0)
+//            else if (Feeder.isAuto && useAutoOdomEntry.getBoolean(false)) {
+//                field = autoOdomRPM
+//            } else if (isKnownShot != knownShotType.NOTSET) {
+//                field =  frontLLRPMOffset * when (isKnownShot) {
+//                    knownShotType.FENDER -> 3200.0
+//                    knownShotType.SAFE_FRONT -> 4000.0 //4200
+//                    knownShotType.SAFE_BACK -> 3500.0
+//                    knownShotType.WALL -> 3450.0
+//                    else -> 3200.0
+//                }
+//            } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
+//                field = backRPMCurve.getValue(Limelight.distance.asFeet + distFlyOffset) * backLLRPMOffset
+//            } else if (Limelight.useFrontLimelight && Limelight.hasValidFrontTarget) {
+//                field = frontRPMCurve.getValue(Limelight.distance.asFeet + distFlyOffset) * frontLLRPMOffset
+//            } else {
+//                field = 3200.0
+//            }
+////            field += rpmFlyOffset
+//            field += rpmSecondOffset
+//            if (!tuningMode) {
+//                rpmSetpointEntry.setDouble(field)
+//            }
+//            return field
+//        }
     var rpm: Double
         get() = shootingMotorOne.velocity
         set(value) {
@@ -443,12 +441,9 @@ object Shooter : Subsystem("Shooter") {
                     BLUE -> "blue"
                     else -> "notset"
                 }
-                val rpmBadShotAdjustment = if (isCargoAlignedWithAlliance) 1.0 else if (pitch > 0) 0.4 else 0.1
+//                val rpmBadShotAdjustment = if (isCargoAlignedWithAlliance) 1.0 else if (pitch > 0) 0.4 else 0.1
                 stagedColorString = "$stagedColorString $isCargoAlignedWithAlliance ${colorSensor.proximity}"
                 colorEntry.setString(stagedColorString)
-                if (rpmBadShotAdjustment < 1.0) {
-                    //println("intentional bad shot for $stagedColorString ${DriverStation.getAlliance()}")
-                }
                 // set rpm for shot
                 if (isCargoAlignedWithAlliance) {
                     if  (shootMode || tuningMode) {

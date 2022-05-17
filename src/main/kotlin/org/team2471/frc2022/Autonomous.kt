@@ -375,18 +375,19 @@ object AutoChooser {
         println("In other1 auto.")
         val auto = autonomi["1 Ball"]
         if (auto != null) {
+            intake()
             Limelight.backLedEnabled = true
             val firstAuto = auto["Path1"]
             Drive.position = firstAuto.getPosition(0.0)
             Drive.heading = firstAuto.headingCurve.getValue(0.0).degrees
+            delay(1.0)
+            Drive.driveAlongPath(auto["Path1"], false)
             parallel({
                 autoShootv2(1, 4.0, 1.0)
             }, {
                 powerSave()
                 Intake.changeAngle(Intake.PIVOT_INTAKE)
             })
-            intake()
-            Drive.driveAlongPath(auto["Path1"], false)
         }
         Feeder.autoFeedMode = false
     }
