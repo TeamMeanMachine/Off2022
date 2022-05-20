@@ -199,6 +199,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 //            odometer2Entry.setPersistent()
 //            odometer3Entry.setPersistent()
             println("in drive global scope")
+//
+//            SmartDashboard.setDefaultNumber("DemoSpeed", 0.4)
+            SmartDashboard.clearPersistent("DemoSpeed")
+
 
             val headingEntry = table.getEntry("Heading")
             val xEntry = table.getEntry("X")

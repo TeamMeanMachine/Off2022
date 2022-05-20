@@ -1,18 +1,15 @@
 package org.team2471.frc2022
 
-import edu.wpi.first.math.filter.LinearFilter
 import edu.wpi.first.networktables.EntryListenerFlags
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import org.team2471.frc.lib.control.PDConstantFController
 import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion_profiling.Autonomi
-import org.team2471.frc.lib.units.asFeet
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.measureTimeFPGA
@@ -74,7 +71,7 @@ object AutoChooser {
         addOption("Middle 4 Ball", "middle4")
         addOption("Left Side 2 Auto", "leftSideAuto")
         addOption("Straight Back Shoot Auto", "straightBackShootAuto")
-        addOption("1 Ball", "other1")
+        addOption("Rotary", "rotaryAuto")
 
 
 
@@ -137,7 +134,7 @@ object AutoChooser {
             "Carpet Bias Test" -> carpetBiasTest()
             "Right Side 5 Auto" -> right5v3()
             "Straight Back Shoot Auto" -> straightBackShootAuto()
-            "1 Ball" -> other1()
+            "Rotary" -> rotaryAuto()
             else -> println("No function found for ---->$selAuto<-----  ${Robot.recentTimeTaken()}")
         }
         SmartDashboard.putString("autoStatus", "complete")
@@ -369,6 +366,27 @@ object AutoChooser {
             autoShootv2(2, 4.0)
             Feeder.autoFeedMode = false
         }
+    }
+
+    suspend fun rotaryAuto() = use(Intake, Shooter, Feeder, Drive) {
+        println("In rotary auto.")
+        val auto = autonomi["Straight Back Shoot Auto Right"]
+        if (auto != null) {
+            intake()
+            Limelight.backLedEnabled = true
+            val firstAuto = auto["Straight Back and Shoot"]
+            Drive.position = firstAuto.getPosition(0.0)
+            Drive.heading = firstAuto.headingCurve.getValue(0.0).degrees
+            delay(2.0)
+            Drive.driveAlongPath(auto["Straight Back and Shoot"], false)
+            parallel({
+                autoShootv2(1, 4.0, 1.0)
+            }, {
+                powerSave()
+                Intake.changeAngle(Intake.PIVOT_INTAKE)
+            })
+        }
+        Feeder.autoFeedMode = false
     }
 
     suspend fun other1() = use(Intake, Shooter, Feeder, Drive) {
