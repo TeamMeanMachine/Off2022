@@ -361,14 +361,15 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             var turn = 0.0
             if (OI.driveRotation.absoluteValue > 0.001) {
                 turn = OI.driveRotation
-            } else if (Limelight.hasValidTarget && autoAim) {
-                turn = aimPDController.update(Limelight.aimError)
-//                println("LimeLightAimError=${Limelight.aimError}")
-            } else if (autoAim) {
-                var error = (position.angle.radians - heading).wrap()
-                if (error.asDegrees.absoluteValue > 90.0) error = (error - 180.0.degrees).wrap()
-                turn = aimPDController.update(error.asDegrees)
             }
+//            else if (Limelight.hasValidTarget && autoAim) {
+//                turn = aimPDController.update(Limelight.aimError)
+////                println("LimeLightAimError=${Limelight.aimError}")
+//            } else if (autoAim) {
+//                var error = (position.angle.radians - heading).wrap()
+//                if (error.asDegrees.absoluteValue > 90.0) error = (error - 180.0.degrees).wrap()
+//                turn = aimPDController.update(error.asDegrees)
+//            } //demo
 //            printEncoderValues()
 
             headingSetpoint = OI.driverController.povDirection

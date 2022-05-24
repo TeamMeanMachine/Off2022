@@ -134,35 +134,36 @@ object Shooter : Subsystem("Shooter") {
             pitchSetpoint = value
             field = value
         }
-    var pitchSetpoint = pitch
-        get() {
-            if (tuningMode) {
-                field = pitchSetpointEntry.getDouble(10.0)
-            } else if (isKnownShot != knownShotType.NOTSET) {
-                field = when (isKnownShot) {
-                    knownShotType.FENDER -> 17.5
-                    knownShotType.SAFE_FRONT -> 35.0
-                    knownShotType.SAFE_BACK -> -19.0
-                    knownShotType.WALL -> 35.0
-                    else -> 15.0
-                }
-            } else if (Feeder.isAuto && useAutoOdomEntry.getBoolean(false)) {
-                field = autoOdomPitch
-            } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
-                val tempPitch = backPitchCurve.getValue(Limelight.distance.asFeet + distFlyOffset)
-                field = tempPitch
-            } else if (Limelight.useFrontLimelight && Limelight.hasValidFrontTarget) {
-                val tempPitch = frontPitchCurve.getValue(Limelight.distance.asFeet + distFlyOffset)
-                field = tempPitch
-            } else {
-                field = 17.5
-            }
-            // don't allow values outside of range even with offset
-            field = field.coerceIn(PITCH_LOW - distFlyOffset, PITCH_HIGH - distFlyOffset)
-//            println("tuningMode $tuningMode     useFrontLL ${Limelight.useFrontLimelight}     frontTarget ${Limelight.hasValidFrontTarget}        backTarget ${Limelight.hasValidBackTarget}")
-            pitchSetpointEntry.setDouble(field)
-            return field
-        }
+    var pitchSetpoint = pitch //demo+
+        get() = pitchSetpointEntry.getDouble(20.0)
+//        {
+//            if (tuningMode) {
+//                field = pitchSetpointEntry.getDouble(10.0)
+//            } else if (isKnownShot != knownShotType.NOTSET) {
+//                field = when (isKnownShot) {
+//                    knownShotType.FENDER -> 17.5
+//                    knownShotType.SAFE_FRONT -> 35.0
+//                    knownShotType.SAFE_BACK -> -19.0
+//                    knownShotType.WALL -> 35.0
+//                    else -> 15.0
+//                }
+//            } else if (Feeder.isAuto && useAutoOdomEntry.getBoolean(false)) {
+//                field = autoOdomPitch
+//            } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
+//                val tempPitch = backPitchCurve.getValue(Limelight.distance.asFeet + distFlyOffset)
+//                field = tempPitch
+//            } else if (Limelight.useFrontLimelight && Limelight.hasValidFrontTarget) {
+//                val tempPitch = frontPitchCurve.getValue(Limelight.distance.asFeet + distFlyOffset)
+//                field = tempPitch
+//            } else {
+//                field = 17.5
+//            }
+//            // don't allow values outside of range even with offset
+//            field = field.coerceIn(PITCH_LOW - distFlyOffset, PITCH_HIGH - distFlyOffset)
+////            println("tuningMode $tuningMode     useFrontLL ${Limelight.useFrontLimelight}     frontTarget ${Limelight.hasValidFrontTarget}        backTarget ${Limelight.hasValidBackTarget}")
+//            pitchSetpointEntry.setDouble(field)
+//            return field
+//        }
         set(value) {
             field = value.coerceIn(PITCH_LOW, PITCH_HIGH)
             pitchSetpointEntry.setDouble(field)
@@ -187,7 +188,7 @@ object Shooter : Subsystem("Shooter") {
 //        get() = rpmFlyOffsetEntry.getDouble(0.0)
 //        get() = rpmFlyOffsetCurve.getValue(Drive.filteredRadialVelocity)
     var rpmSecondOffset = 0.0
-    var rpmSetpoint: Double = 0.0
+    var rpmSetpoint: Double = 0.0 //demo
         get() = rpmSetpointEntry.getDouble(1300.0)
 //            else if (Feeder.isAuto && useAutoOdomEntry.getBoolean(false)) {
 //                field = autoOdomRPM
@@ -310,7 +311,6 @@ object Shooter : Subsystem("Shooter") {
 //        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
 //        pitchFlyOffsetCurve.storeValue(0.0, 0.0)
 
-
         shootingMotorOne.config {
 //            followersInverted(true)
             coastMode()
@@ -352,6 +352,7 @@ object Shooter : Subsystem("Shooter") {
             backRPMOffsetEntry.setDouble(backLLRPMOffset)
             distanceEntry.setDoubleArray(doubleArrayOf(5.0, 10.0, 15.0, 20.0))
             distFlyOffsetEntry.setDouble(0.0)
+            pitchSetpointEntry.setDouble(20.0) //demo
 
 //            rpmFlyOffsetEntry.setDouble(rpmFlyOffset)
 
@@ -362,8 +363,10 @@ object Shooter : Subsystem("Shooter") {
             rpmSetpointEntry.setPersistent()
             useAutoOdomEntry.setPersistent()
 
-            pitchSetpoint = pitch
+//            pitchSetpoint = pitch  //demo
             pitchFilter.calculate(pitch)
+            SmartDashboard.setPersistent("Demo Speed")
+
             periodic {
                 if (pitchIsReady && pitchPDEnable && !Climb.climbIsPrepped && !tuningMode) {
                     val power = pitchPDController.update(pitchFilter.calculate(pitchSetpoint) - pitch) + linearMap(-30.0, 30.0, 0.1, 0.05, pitch) // mapping (-30.0, 30.0) to (0.1, 0.05)
