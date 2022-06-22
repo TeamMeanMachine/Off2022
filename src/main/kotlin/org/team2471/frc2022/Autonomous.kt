@@ -378,7 +378,7 @@ object AutoChooser {
             Drive.position = firstAuto.getPosition(0.0)
             Drive.heading = firstAuto.headingCurve.getValue(0.0).degrees
             delay(2.0)
-            Drive.driveAlongPath(auto["Straight Back and Shoot"], false)
+            Drive.driveAlongPath(auto["Straight Back and Shoot"], false, 7.0)
             parallel({
                 autoShootv2(1, 4.0, 1.0)
             }, {

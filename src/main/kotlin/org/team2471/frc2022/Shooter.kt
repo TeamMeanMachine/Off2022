@@ -134,8 +134,9 @@ object Shooter : Subsystem("Shooter") {
             pitchSetpoint = value
             field = value
         }
-    var pitchSetpoint = pitch //demo+
-        get() = pitchSetpointEntry.getDouble(20.0)
+    var pitchSetpoint = pitch //demo
+        get() = pitchSetpointEntry.getDouble(20.0) //normal demo
+//        get() = if (Feeder.isAuto) pitchSetpointEntry.getDouble(20.0) else backPitchCurve.getValue(Limelight.distance.asFeet + distFlyOffset) //rotary demo
 //        {
 //            if (tuningMode) {
 //                field = pitchSetpointEntry.getDouble(10.0)
@@ -365,7 +366,6 @@ object Shooter : Subsystem("Shooter") {
 
 //            pitchSetpoint = pitch  //demo
             pitchFilter.calculate(pitch)
-            SmartDashboard.setPersistent("Demo Speed")
 
             periodic {
                 if (pitchIsReady && pitchPDEnable && !Climb.climbIsPrepped && !tuningMode) {
