@@ -41,7 +41,7 @@ object Shooter : Subsystem("Shooter") {
     private val i2cPort: I2C.Port = I2C.Port.kMXP
     private val colorSensor = ColorSensorV3(i2cPort)
     val colorEntry = table.getEntry("Color")
-    val isKnownShot : knownShotType
+    val isKnownShot: knownShotType
         get() {
             return knownShotType.valueOf(SmartDashboard.getString("KnownShot/selected", "notset").uppercase())
         }
@@ -126,8 +126,9 @@ object Shooter : Subsystem("Shooter") {
 
     var distFlyOffset: Double = 0.0
         get() = 0.0 //distFlyOffsetEntry.getDouble(0.0)
-//        get() = distFlyOffsetCurve.getValue(Drive.radialVelocity)
-    var pitchOffset = if (isCompBot) 1.3 else - 76.0
+
+    //        get() = distFlyOffsetCurve.getValue(Drive.radialVelocity)
+    var pitchOffset = if (isCompBot) 1.3 else -76.0
     var pitch: Double = 0.0
         get() = (pitchEncoder.absolutePosition - 0.218) * 33.0 / 0.182 + pitchOffset
         set(value) {
@@ -135,36 +136,36 @@ object Shooter : Subsystem("Shooter") {
             field = value
         }
     var pitchSetpoint = pitch //demo
-        get() = pitchSetpointEntry.getDouble(20.0) //normal demo
-//        get() = if (Feeder.isAuto) pitchSetpointEntry.getDouble(20.0) else backPitchCurve.getValue(Limelight.distance.asFeet + distFlyOffset) //rotary demo
-//        {
-//            if (tuningMode) {
-//                field = pitchSetpointEntry.getDouble(10.0)
-//            } else if (isKnownShot != knownShotType.NOTSET) {
-//                field = when (isKnownShot) {
-//                    knownShotType.FENDER -> 17.5
-//                    knownShotType.SAFE_FRONT -> 35.0
-//                    knownShotType.SAFE_BACK -> -19.0
-//                    knownShotType.WALL -> 35.0
-//                    else -> 15.0
-//                }
-//            } else if (Feeder.isAuto && useAutoOdomEntry.getBoolean(false)) {
-//                field = autoOdomPitch
-//            } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
-//                val tempPitch = backPitchCurve.getValue(Limelight.distance.asFeet + distFlyOffset)
-//                field = tempPitch
-//            } else if (Limelight.useFrontLimelight && Limelight.hasValidFrontTarget) {
-//                val tempPitch = frontPitchCurve.getValue(Limelight.distance.asFeet + distFlyOffset)
-//                field = tempPitch
-//            } else {
-//                field = 17.5
-//            }
-//            // don't allow values outside of range even with offset
-//            field = field.coerceIn(PITCH_LOW - distFlyOffset, PITCH_HIGH - distFlyOffset)
-////            println("tuningMode $tuningMode     useFrontLL ${Limelight.useFrontLimelight}     frontTarget ${Limelight.hasValidFrontTarget}        backTarget ${Limelight.hasValidBackTarget}")
-//            pitchSetpointEntry.setDouble(field)
-//            return field
-//        }
+        //        get() = pitchSetpointEntry.getDouble(20.0) //normal demo
+        get() //= if (Feeder.isAuto) pitchSetpointEntry.getDouble(20.0) else backPitchCurve.getValue(Limelight.distance.asFeet + distFlyOffset) //rotary demo
+        {
+            if (tuningMode) {
+                field = pitchSetpointEntry.getDouble(10.0)
+            } else if (isKnownShot != knownShotType.NOTSET) {
+                field = when (isKnownShot) {
+                    knownShotType.FENDER -> 17.5
+                    knownShotType.SAFE_FRONT -> 35.0
+                    knownShotType.SAFE_BACK -> -19.0
+                    knownShotType.WALL -> 35.0
+                    else -> 15.0
+                }
+            } else if (Feeder.isAuto && useAutoOdomEntry.getBoolean(false)) {
+                field = autoOdomPitch
+            } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
+                val tempPitch = backPitchCurve.getValue(Limelight.distance.asFeet + distFlyOffset)
+                field = tempPitch
+            } else if (Limelight.useFrontLimelight && Limelight.hasValidFrontTarget) {
+                val tempPitch = frontPitchCurve.getValue(Limelight.distance.asFeet + distFlyOffset)
+                field = tempPitch
+            } else {
+                field = 17.5
+            }
+            // don't allow values outside of range even with offset
+            field = field.coerceIn(PITCH_LOW - distFlyOffset, PITCH_HIGH - distFlyOffset)
+//            println("tuningMode $tuningMode     useFrontLL ${Limelight.useFrontLimelight}     frontTarget ${Limelight.hasValidFrontTarget}        backTarget ${Limelight.hasValidBackTarget}")
+            pitchSetpointEntry.setDouble(field)
+            return field
+        }
         set(value) {
             field = value.coerceIn(PITCH_LOW, PITCH_HIGH)
             pitchSetpointEntry.setDouble(field)
@@ -173,14 +174,14 @@ object Shooter : Subsystem("Shooter") {
     var pitchPDEnable = true
     val pitchPDController = PDController(0.05, 0.095) //.11) //0.06, 0.095) //0.055, 0.03) //0.06, 0.0) // d 0.1
     const val K_PITCH_FEED_FORWARD = -0.22
-    val pitchIsReady : Boolean
+    val pitchIsReady: Boolean
         get() {
 //            println("${pitchPDEnable}     ${pitchSetpoint > PITCH_LOW}     ${pitchSetpoint < PITCH_HIGH}     ${pitchEncoder.isConnected}")
             return pitchPDEnable && pitch > (PITCH_LOW - 2.0) && pitchSetpoint < (PITCH_HIGH + 2.0) && pitchEncoder.isConnected
         }
     val backPitchCurve: MotionCurve = MotionCurve()
     val frontPitchCurve: MotionCurve = MotionCurve()
-    val frontRPMCurve:MotionCurve = MotionCurve()
+    val frontRPMCurve: MotionCurve = MotionCurve()
     val backRPMCurve: MotionCurve = MotionCurve()
 //    val rpmFlyOffsetCurve: MotionCurve = MotionCurve()
     val distFlyOffsetCurve: MotionCurve = MotionCurve()
@@ -190,31 +191,34 @@ object Shooter : Subsystem("Shooter") {
 //        get() = rpmFlyOffsetCurve.getValue(Drive.filteredRadialVelocity)
     var rpmSecondOffset = 0.0
     var rpmSetpoint: Double = 0.0 //demo
-        get() = rpmSetpointEntry.getDouble(1300.0)
-//            else if (Feeder.isAuto && useAutoOdomEntry.getBoolean(false)) {
-//                field = autoOdomRPM
-//            } else if (isKnownShot != knownShotType.NOTSET) {
-//                field =  frontLLRPMOffset * when (isKnownShot) {
-//                    knownShotType.FENDER -> 3200.0
-//                    knownShotType.SAFE_FRONT -> 4000.0 //4200
-//                    knownShotType.SAFE_BACK -> 3500.0
-//                    knownShotType.WALL -> 3450.0
-//                    else -> 3200.0
-//                }
-//            } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
-//                field = backRPMCurve.getValue(Limelight.distance.asFeet + distFlyOffset) * backLLRPMOffset
-//            } else if (Limelight.useFrontLimelight && Limelight.hasValidFrontTarget) {
-//                field = frontRPMCurve.getValue(Limelight.distance.asFeet + distFlyOffset) * frontLLRPMOffset
-//            } else {
-//                field = 3200.0
-//            }
-////            field += rpmFlyOffset
-//            field += rpmSecondOffset
-//            if (!tuningMode) {
-//                rpmSetpointEntry.setDouble(field)
-//            }
-//            return field
-//        }
+        get() {
+            if (tuningMode) {
+                rpmSetpointEntry.getDouble(1300.0)
+            } else if (Feeder.isAuto && useAutoOdomEntry.getBoolean(false)) {
+                field = autoOdomRPM
+            } else if (isKnownShot != knownShotType.NOTSET) {
+                field = frontLLRPMOffset * when (isKnownShot) {
+                    knownShotType.FENDER -> 3200.0
+                    knownShotType.SAFE_FRONT -> 4000.0 //4200
+                    knownShotType.SAFE_BACK -> 3500.0
+                    knownShotType.WALL -> 3450.0
+                    else -> 3200.0
+                }
+            } else if (!Limelight.useFrontLimelight && Limelight.hasValidBackTarget) {
+                field = backRPMCurve.getValue(Limelight.distance.asFeet + distFlyOffset) * backLLRPMOffset
+            } else if (Limelight.useFrontLimelight && Limelight.hasValidFrontTarget) {
+                field = frontRPMCurve.getValue(Limelight.distance.asFeet + distFlyOffset) * frontLLRPMOffset
+            } else {
+                field = 3200.0
+            }
+//            field += rpmFlyOffset
+            field += rpmSecondOffset
+            if (!tuningMode) {
+                rpmSetpointEntry.setDouble(field)
+            }
+            return field
+        }
+
     var rpm: Double
         get() = shootingMotorOne.velocity
         set(value) {
@@ -387,7 +391,7 @@ object Shooter : Subsystem("Shooter") {
                 rpmGood = filteredError < rpmMaxError
                 pitchGood = (pitchSetpoint - pitch).absoluteValue < pitchMaxError
                 shootMotorsGood = (rpm - shootingMotorTwo.velocity).absoluteValue < 50.0
-                isCargoAlignedWithAlliance = (allianceColor == cargoColor || cargoColor == NOTSET) //ignore color
+                isCargoAlignedWithAlliance = true // (allianceColor == cargoColor || cargoColor == NOTSET) //ignore color
                 allGood = shootMode && aimGood && rpmGood && pitchGood && shootMotorsGood
 
                 aimGoodEntry.setBoolean(aimGood)
