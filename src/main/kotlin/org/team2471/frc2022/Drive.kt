@@ -3,6 +3,7 @@ package org.team2471.frc2022
 import edu.wpi.first.math.filter.LinearFilter
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.networktables.EntryListenerFlags
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.*
@@ -44,6 +45,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val odometer1Entry = table.getEntry("Odometer 1")
     val odometer2Entry = table.getEntry("Odometer 2")
     val odometer3Entry = table.getEntry("Odometer 3")
+    val odometerResetEntry = table.getEntry("Odometer Reset")
 
     val radialVelocityEntry = table.getEntry("Radial Velocity")
     val angularVelocityEntry = table.getEntry("Angular Velocity")
@@ -136,7 +138,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     override val carpetFlow = if (DriverStation.getAlliance() == DriverStation.Alliance.Red) Vector2(0.0, 1.0) else Vector2(0.0, -1.0)
     override val kCarpet = 0.025 // how much downstream and upstream carpet directions affect the distance, for no effect, use  0.0 (2.5% more distance downstream)
-//    override val kTread = 0.0//.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
+//    override val kTread: Double
+//        get() = 1.0
+    override val kTread = 0.04 // how much of an effect treadWear has on distance (fully worn tread goes 4% less than full tread)  0.0 for no effect
 
     val autoPDController = PDConstantFController(0.015, 0.04, 0.05) //0.015, 0.012, 0.008)
     val teleopPDController =  PDConstantFController(0.012, 0.09, 0.05) //0.01, 0.05, 0.05)
@@ -185,6 +189,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             angleSpeedEntry.setDouble(0.0)
             radialSpeedEntry.setDouble(0.0)
         }
+
+        odometerResetEntry.setDouble(-1.0)
+        odometerResetEntry.addListener({ event -> Drive.resetOdometers() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
 
         angularVelocityCurve.setMarkBeginOrEndKeysToZeroSlope(false)
         angularVelocityCurve.storeValue(0.0, 0.0)
@@ -313,7 +320,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             }
         }
     }
-
+    fun resetOdometers() {
+        modules[0].odometer = odometerResetEntry.getDouble(0.0)
+        modules[1].odometer = odometerResetEntry.getDouble(0.0)
+        modules[2].odometer = odometerResetEntry.getDouble(0.0)
+        modules[3].odometer = odometerResetEntry.getDouble(0.0)
+    }
     fun getFieldOffsets(arrObjects : DoubleArray ): ArrayList<Double>{
         val sinRobot = sin(lastPosition.rotation.radians - 90.0.degrees.asRadians)
         val cosRobot = cos(lastPosition.rotation.radians - 90.0.degrees.asRadians)
@@ -485,7 +497,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         override val currDistance: Double
             get() = driveMotor.position
 
-        override var prevDistance: Double = 0.0
+        override var prevDistance: Double = driveMotor.position
 
         override var odometer: Double
             get() = odometerEntry.getDouble(0.0)
