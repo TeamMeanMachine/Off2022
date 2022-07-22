@@ -3,7 +3,6 @@ package org.team2471.frc2022
 import edu.wpi.first.math.filter.LinearFilter
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.networktables.EntryListenerFlags
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.*
@@ -45,7 +44,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val odometer1Entry = table.getEntry("Odometer 1")
     val odometer2Entry = table.getEntry("Odometer 2")
     val odometer3Entry = table.getEntry("Odometer 3")
-    val odometerResetEntry = table.getEntry("Odometer Reset")
 
     val radialVelocityEntry = table.getEntry("Radial Velocity")
     val angularVelocityEntry = table.getEntry("Angular Velocity")
@@ -190,9 +188,6 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             radialSpeedEntry.setDouble(0.0)
         }
 
-        odometerResetEntry.setDouble(-1.0)
-        odometerResetEntry.addListener({ event -> Drive.resetOdometers() }, EntryListenerFlags.kNew or EntryListenerFlags.kUpdate)
-
         angularVelocityCurve.setMarkBeginOrEndKeysToZeroSlope(false)
         angularVelocityCurve.storeValue(0.0, 0.0)
         //        angularVelocityCurve.storeValue()
@@ -320,12 +315,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             }
         }
     }
-    fun resetOdometers() {
-        modules[0].odometer = odometerResetEntry.getDouble(0.0)
-        modules[1].odometer = odometerResetEntry.getDouble(0.0)
-        modules[2].odometer = odometerResetEntry.getDouble(0.0)
-        modules[3].odometer = odometerResetEntry.getDouble(0.0)
-    }
+
     fun getFieldOffsets(arrObjects : DoubleArray ): ArrayList<Double>{
         val sinRobot = sin(lastPosition.rotation.radians - 90.0.degrees.asRadians)
         val cosRobot = cos(lastPosition.rotation.radians - 90.0.degrees.asRadians)
@@ -357,10 +347,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     override fun onDisable() {
-        if (odometer0Entry.getDouble(-1.0) >= 0.0) Preferences.setDouble("odometer 0", odometer0Entry.getDouble(-1.0))
-        if (odometer1Entry.getDouble(-1.0) >= 0.0) Preferences.setDouble("odometer 1", odometer1Entry.getDouble(-1.0))
-        if (odometer2Entry.getDouble(-1.0) >= 0.0) Preferences.setDouble("odometer 2", odometer2Entry.getDouble(-1.0))
-        if (odometer3Entry.getDouble(-1.0) >= 0.0) Preferences.setDouble("odometer 3", odometer3Entry.getDouble(-1.0))
+        if (odometer0Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 0", odometer0Entry.getDouble(0.0))
+        if (odometer1Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 1", odometer1Entry.getDouble(0.0))
+        if (odometer2Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 2", odometer2Entry.getDouble(0.0))
+        if (odometer3Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 3", odometer3Entry.getDouble(0.0))
         super.onDisable()
     }
 
@@ -497,7 +487,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
         override val currDistance: Double
             get() = driveMotor.position
 
-        override var prevDistance: Double = driveMotor.position
+        override var prevDistance: Double = 0.0
 
         override var odometer: Double
             get() = odometerEntry.getDouble(0.0)
