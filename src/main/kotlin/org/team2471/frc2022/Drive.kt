@@ -357,10 +357,10 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     }
 
     override fun onDisable() {
-        if (odometer0Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 0", odometer0Entry.getDouble(0.0))
-        if (odometer1Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 1", odometer1Entry.getDouble(0.0))
-        if (odometer2Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 2", odometer2Entry.getDouble(0.0))
-        if (odometer3Entry.getDouble(0.0) > 0.0) Preferences.setDouble("odometer 3", odometer3Entry.getDouble(0.0))
+        if (odometer0Entry.getDouble(-1.0) >= 0.0) Preferences.setDouble("odometer 0", odometer0Entry.getDouble(-1.0))
+        if (odometer1Entry.getDouble(-1.0) >= 0.0) Preferences.setDouble("odometer 1", odometer1Entry.getDouble(-1.0))
+        if (odometer2Entry.getDouble(-1.0) >= 0.0) Preferences.setDouble("odometer 2", odometer2Entry.getDouble(-1.0))
+        if (odometer3Entry.getDouble(-1.0) >= 0.0) Preferences.setDouble("odometer 3", odometer3Entry.getDouble(-1.0))
         super.onDisable()
     }
 

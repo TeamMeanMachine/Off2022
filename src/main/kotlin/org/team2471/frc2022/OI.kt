@@ -15,10 +15,10 @@ object OI {
 
 
     private val driveTranslationX: Double
-        get() = 0.3 *driverController.leftThumbstickX.deadband(deadBandDriver).squareWithSign()
+        get() = driverController.leftThumbstickX.deadband(deadBandDriver).squareWithSign()
 
     private val driveTranslationY: Double
-        get() = 0.3 * -driverController.leftThumbstickY.deadband(deadBandDriver).squareWithSign()
+        get() = -driverController.leftThumbstickY.deadband(deadBandDriver).squareWithSign()
 
     val driveTranslation: Vector2
         get() = Vector2(driveTranslationX, driveTranslationY) //does owen want this cubed?
