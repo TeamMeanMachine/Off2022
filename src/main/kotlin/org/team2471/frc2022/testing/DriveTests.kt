@@ -7,15 +7,12 @@ import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.input.Controller
 import org.team2471.frc.lib.math.Vector2
-import org.team2471.frc.lib.math.round
 import org.team2471.frc.lib.motion.following.drive
 import org.team2471.frc.lib.motion.following.resetOdometry
 import org.team2471.frc.lib.motion.following.tuneDrivePositionController
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.radians
 import org.team2471.frc.lib.util.Timer
-import org.team2471.frc2022.Limelight
-import org.team2471.frc2022.Shooter
 import kotlin.math.absoluteValue
 
 suspend fun Drive.steeringTests() = use(this) {
@@ -106,7 +103,6 @@ suspend fun Drive.driveCircle() = use(Drive) {
     var prevTime = 0.0
     var circlePosition = position
     var prevPosition = position
-    Shooter.shootMode = true
 
     val timer = Timer()
     timer.start()
@@ -141,13 +137,13 @@ suspend fun Drive.driveCircle() = use(Drive) {
             pathVelocity * parameters.kPositionFeedForward + positionError * parameters.kpPosition + deltaPositionError * parameters.kdPosition
 
         var turn = 0.0
-        if (Limelight.hasValidTarget) {
-            turn = aimPDController.update(Limelight.aimError)
-        } else {
-            var error = (position.angle.radians - heading).wrap()
-            if (error.asDegrees.absoluteValue > 90.0) error = (error - 180.0.degrees).wrap()
-            turn = aimPDController.update(error.asDegrees)
-        }
+//        if (Limelight.hasValidTarget) {
+//            turn = aimPDController.update(Limelight.aimError)
+//        } else {
+//            var error = (position.angle.radians - heading).wrap()
+//            if (error.asDegrees.absoluteValue > 90.0) error = (error - 180.0.degrees).wrap()
+//            turn = aimPDController.update(error.asDegrees)
+//        }
 
         // send it
         drive(translationControlField, turn, true)

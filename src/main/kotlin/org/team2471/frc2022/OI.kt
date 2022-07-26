@@ -52,15 +52,5 @@ object OI {
 
     init {
         driverController::back.whenTrue { Drive.zeroGyro(); Drive.initializeSteeringMotors() }
-        driverController::leftBumper.whenTrue { shootMode() }
-        driverController::x.whenTrue { Drive.position = Vector2(0.0, -12.0) }
-
-        operatorController::start.whenTrue { climbPrep() }
-        operatorController::b.whenTrue { intake() }
-        operatorController::a.whenTrue { catch() }
-        operatorController::y.whenTrue { armUp() }
-        operatorController::x.whenTrue { powerSave() }
-        operatorController::back.whenTrue { Climb.zeroClimb() }
-        operatorController::rightBumper.whenTrue { clearFeeder() }
     }
 }

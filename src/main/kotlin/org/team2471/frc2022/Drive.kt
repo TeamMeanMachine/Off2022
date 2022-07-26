@@ -32,14 +32,7 @@ import kotlin.math.sin
 object Drive : Subsystem("Drive"), SwerveDrive {
 
     val table = NetworkTableInstance.getDefault().getTable(name)
-    val redCargoEntry = table.getSubTable("Radar").getEntry("RedCargo")
-    val redFieldCargoEntry = table.getSubTable("Field").getEntry("RedCargo")
     val navXGyroEntry = table.getEntry("NavX Gyro")
-    val blueCargoEntry = table.getSubTable("Radar").getEntry("BlueCargo")
-    val robotsRadarEntry = table.getSubTable("Radar").getEntry("Robots")
-    val robotFieldEntry = table.getSubTable("Field").getEntry("Robot")
-    val robotsFieldEntry = table.getSubTable("Field").getEntry("Robots")
-    val blueFieldCargoEntry = table.getSubTable("Field").getEntry("BlueCargo")
     val odometer0Entry = table.getEntry("Odometer 0")
     val odometer1Entry = table.getEntry("Odometer 1")
     val odometer2Entry = table.getEntry("Odometer 2")
@@ -50,49 +43,13 @@ object Drive : Subsystem("Drive"), SwerveDrive {
     val angleSpeedEntry = table.getEntry("angleSpeed")
     val radialSpeedEntry = table.getEntry("radialSpeed")
 
-    val fieldObject = Field2d()
-    val radarObject = Field2d()
-
-    val limitingFactor : Double
-        get() = if (Climb.climbIsPrepped) 0.25 else 1.0
     val fieldDimensions = Vector2(26.9375.feet.asMeters,54.0.feet.asMeters)
     val fieldCenterOffset = fieldDimensions/2.0
     /**
      * Coordinates of modules
      * **/
     override val modules: Array<SwerveDrive.Module> = arrayOf(
-        Module(
-            MotorController(FalconID(Falcons.DRIVE_FRONTLEFT)),
-            MotorController(FalconID(Falcons.STEER_FRONTLEFT)),
-            Vector2(-11.5, 14.0),
-            (45.0).degrees,
-            AnalogSensors.SWERVE_FRONT_LEFT,
-            odometer0Entry
-        ),
-        Module(
-            MotorController(FalconID(Falcons.DRIVE_FRONTRIGHT)),
-            MotorController(FalconID(Falcons.STEER_FRONTRIGHT)),
-            Vector2(11.5, 14.0),
-            (135.0).degrees,
-            AnalogSensors.SWERVE_FRONT_RIGHT,
-            odometer1Entry
-        ),
-        Module(
-            MotorController(FalconID(Falcons.DRIVE_BACKRIGHT)),
-            MotorController(FalconID(Falcons.STEER_BACKRIGHT)),
-            Vector2(11.5, -14.0),
-            (-135.0).degrees,
-            AnalogSensors.SWERVE_BACK_RIGHT,
-            odometer2Entry
-        ),
-        Module(
-            MotorController(FalconID(Falcons.DRIVE_BACKLEFT)),
-            MotorController(FalconID(Falcons.STEER_BACKLEFT)),
-            Vector2(-11.5, -14.0),
-            (-45.0).degrees,
-            AnalogSensors.SWERVE_BACK_LEFT,
-            odometer3Entry
-        )
+
     )
 
     //    val gyro: Gyro? = null
@@ -220,10 +177,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
             SmartDashboard.setPersistent("Use Gyro")
             SmartDashboard.setPersistent("Gyro Type")
-            SmartDashboard.putData("Field", fieldObject)
-            SmartDashboard.setPersistent("Field")
-            SmartDashboard.putData("Radar", radarObject)
-            SmartDashboard.setPersistent("Radar")
+
 
 
             useGyroEntry.setBoolean(true)
@@ -256,7 +210,7 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 xEntry.setDouble(x)
                 yEntry.setDouble(y)
                 headingEntry.setDouble(heading.asDegrees)
-                aimErrorEntry.setDouble(Limelight.aimError)
+//                aimErrorEntry.setDouble(Limelight.aimError)
                 angleZeroEntry.setDouble((modules[0] as Module).analogAngle.asDegrees)
                 angleOneEntry.setDouble((modules[1] as Module).analogAngle.asDegrees)
                 angleTwoEntry.setDouble((modules[2] as Module).analogAngle.asDegrees)
@@ -276,34 +230,22 @@ object Drive : Subsystem("Drive"), SwerveDrive {
                 prevRadius = currRadius
                 prevAngle = currAngle
 
-                val lastRobotFieldXY = robotFieldEntry.getDoubleArray(defaultXYPos)
-                val lastX = lastRobotFieldXY[0]
-                val lastY = lastRobotFieldXY[1]
-                if (!Shooter.shootMode &&  lastX != 0.0 && lastY != 0.0 && robotHalfWidth < lastX && lastX < fieldDimensions.x - robotHalfWidth && robotHalfWidth < lastY && lastY < fieldDimensions.y - robotHalfWidth && (lastPosition.x != lastX || lastPosition.y != lastY)) {
-                    position = Vector2((lastX - fieldCenterOffset.x).meters.asFeet, (lastY - fieldCenterOffset.y).meters.asFeet)
-                    lastPosition = fieldObject.robotPose
-                    println("from fieldobject")
-                } else {
-                    val robotPose = Pose2d(
-                        position.x.feet.asMeters + fieldCenterOffset.x,
-                        position.y.feet.asMeters + fieldCenterOffset.y,
-                        -Rotation2d((heading - 90.0.degrees).asRadians)
-                    )
-                    fieldObject.robotPose = robotPose
-                    lastPosition = robotPose
-                }
-
-                val redCargoOnField = getFieldOffsets(redCargoEntry.getDoubleArray(emptyArray()).toDoubleArray())
-                val blueCargoOnField = getFieldOffsets(blueCargoEntry.getDoubleArray(emptyArray()).toDoubleArray())
-                val robotOnField = getFieldOffsets(robotsRadarEntry.getDoubleArray(emptyArray()).toDoubleArray())
+//                if (!Shooter.shootMode &&  lastX != 0.0 && lastY != 0.0 && robotHalfWidth < lastX && lastX < fieldDimensions.x - robotHalfWidth && robotHalfWidth < lastY && lastY < fieldDimensions.y - robotHalfWidth && (lastPosition.x != lastX || lastPosition.y != lastY)) {
+//                    position = Vector2((lastX - fieldCenterOffset.x).meters.asFeet, (lastY - fieldCenterOffset.y).meters.asFeet)
+//                    lastPosition = fieldObject.robotPose
+//                    println("from fieldobject")
+//                } else {
+//                    val robotPose = Pose2d(
+//                        position.x.feet.asMeters + fieldCenterOffset.x,
+//                        position.y.feet.asMeters + fieldCenterOffset.y,
+//                        -Rotation2d((heading - 90.0.degrees).asRadians)
+//                    )
+//                    fieldObject.robotPose = robotPose
+//                    lastPosition = robotPose
+//                }
 
 
-                redFieldCargoEntry.setDoubleArray(redCargoOnField.toDoubleArray())
-                blueFieldCargoEntry.setDoubleArray(blueCargoOnField.toDoubleArray())
-                robotsFieldEntry.setDoubleArray(robotOnField.toDoubleArray())
-
-                autoAim = Shooter.shootMode && Shooter.isKnownShot == Shooter.knownShotType.NOTSET
-                // println(gyro.getNavX().pitch.degrees)
+                 // println(gyro.getNavX().pitch.degrees)
 
 //                for (moduleCount in 0..3) {
 //                    val module = (modules[moduleCount] as Module)
@@ -365,21 +307,21 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             if (OI.driveRotation.absoluteValue > 0.001) {
                 turn = OI.driveRotation
             }
-            else if (Limelight.hasValidTarget && autoAim) {
-                turn = aimPDController.update(Limelight.aimError)
-//                println("LimeLightAimError=${Limelight.aimError}")
-            } else if (autoAim) {
-                var error = (position.angle.radians - heading).wrap()
-                if (error.asDegrees.absoluteValue > 90.0) error = (error - 180.0.degrees).wrap()
-                turn = aimPDController.update(error.asDegrees)
-            }
-//            printEncoderValues()
+//            else if (Limelight.hasValidTarget && autoAim) {
+//                turn = aimPDController.update(Limelight.aimError)
+////                println("LimeLightAimError=${Limelight.aimError}")
+//            } else if (autoAim) {
+//                var error = (position.angle.radians - heading).wrap()
+//                if (error.asDegrees.absoluteValue > 90.0) error = (error - 180.0.degrees).wrap()
+//                turn = aimPDController.update(error.asDegrees)
+//            }
+////            printEncoderValues()
 
             headingSetpoint = OI.driverController.povDirection
 
             drive(
-                OI.driveTranslation * limitingFactor,
-                turn * limitingFactor,
+                OI.driveTranslation,
+                turn,
                 SmartDashboard.getBoolean("Use Gyro", true) && !DriverStation.isAutonomous(),
                 false
             )
@@ -388,9 +330,9 @@ object Drive : Subsystem("Drive"), SwerveDrive {
 
     fun autoSteer() {
         var turn = 0.0
-        if (Limelight.hasValidTarget && (!Feeder.isAuto || !Shooter.useAutoOdomEntry.getBoolean(false))) {
-            turn = aimPDController.update(Limelight.aimError)
-        }
+//        if (Limelight.hasValidTarget && (!Feeder.isAuto || !Shooter.useAutoOdomEntry.getBoolean(false))) {
+//            turn = aimPDController.update(Limelight.aimError)
+//        }
         Drive.drive(
             Vector2(0.0,0.0),
             turn,
@@ -522,18 +464,12 @@ object Drive : Subsystem("Drive"), SwerveDrive {
             }
 
             val moduleContLimit: Int = when ((driveMotor.motorID as FalconID).value) {
-                Falcons.DRIVE_FRONTLEFT -> 60     //added 5 to all
-                Falcons.DRIVE_FRONTRIGHT -> 60   //
-                Falcons.DRIVE_BACKRIGHT -> 70     //
-                Falcons.DRIVE_BACKLEFT -> 70
+
                 else -> 55
             }
 
             val modulePeakLimit: Int = when ((driveMotor.motorID as FalconID).value) {
-                Falcons.DRIVE_FRONTLEFT -> 65    //added 5 to all
-                Falcons.DRIVE_FRONTRIGHT -> 65    //
-                Falcons.DRIVE_BACKRIGHT -> 75        //
-                Falcons.DRIVE_BACKLEFT -> 75
+
                 else -> 60
             }
 
