@@ -1,4 +1,4 @@
-package org.team2471.frc2022
+package org.team2471.off2022
 
 import edu.wpi.first.math.filter.LinearFilter
 import edu.wpi.first.math.geometry.Pose2d
@@ -6,7 +6,6 @@ import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.*
-import edu.wpi.first.wpilibj.smartdashboard.Field2d
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -49,7 +48,38 @@ object Drive : Subsystem("Drive"), SwerveDrive {
      * Coordinates of modules
      * **/
     override val modules: Array<SwerveDrive.Module> = arrayOf(
-
+        Module(
+            MotorController(FalconID(Falcons.DRIVE_FRONTLEFT)),
+            MotorController(FalconID(Falcons.STEER_FRONTLEFT)),
+            Vector2(-11.875, 11.875),
+            (45.0).degrees,
+            AnalogSensors.SWERVE_FRONT_LEFT,
+            odometer0Entry
+        ),
+        Module(
+            MotorController(FalconID(Falcons.DRIVE_FRONTRIGHT)),
+            MotorController(FalconID(Falcons.STEER_FRONTRIGHT)),
+            Vector2(11.875, 11.875),
+            (135.0).degrees,
+            AnalogSensors.SWERVE_FRONT_RIGHT,
+            odometer1Entry
+        ),
+        Module(
+            MotorController(FalconID(Falcons.DRIVE_BACKRIGHT)),
+            MotorController(FalconID(Falcons.STEER_BACKRIGHT)),
+            Vector2(11.875, -11.875),
+            (-135.0).degrees,
+            AnalogSensors.SWERVE_BACK_RIGHT,
+            odometer2Entry
+        ),
+        Module(
+            MotorController(FalconID(Falcons.DRIVE_BACKLEFT)),
+            MotorController(FalconID(Falcons.STEER_BACKLEFT)),
+            Vector2(-11.875, -11.875),
+            (-45.0).degrees,
+            AnalogSensors.SWERVE_BACK_LEFT,
+            odometer3Entry
+        )
     )
 
     //    val gyro: Gyro? = null

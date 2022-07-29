@@ -1,17 +1,13 @@
-package org.team2471.frc2022
+package org.team2471.off2022
 
 import edu.wpi.first.networktables.EntryListenerFlags
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import org.team2471.frc.lib.coroutines.delay
-import org.team2471.frc.lib.coroutines.parallel
 import org.team2471.frc.lib.framework.use
 import org.team2471.frc.lib.motion.following.driveAlongPath
 import org.team2471.frc.lib.motion_profiling.Autonomi
-import org.team2471.frc.lib.units.degrees
-import org.team2471.frc.lib.util.Timer
 import org.team2471.frc.lib.util.measureTimeFPGA
 import java.io.File
 

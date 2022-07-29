@@ -1,7 +1,7 @@
-package org.team2471.frc2022.testing
+package org.team2471.off2022.testing
 
-import org.team2471.frc2022.Drive
-import org.team2471.frc2022.OI
+import org.team2471.off2022.Drive
+import org.team2471.off2022.OI
 import org.team2471.frc.lib.coroutines.delay
 import org.team2471.frc.lib.coroutines.periodic
 import org.team2471.frc.lib.framework.use
@@ -13,7 +13,6 @@ import org.team2471.frc.lib.motion.following.tuneDrivePositionController
 import org.team2471.frc.lib.units.degrees
 import org.team2471.frc.lib.units.radians
 import org.team2471.frc.lib.util.Timer
-import kotlin.math.absoluteValue
 
 suspend fun Drive.steeringTests() = use(this) {
     println("Got into steeringTests. Hi")
